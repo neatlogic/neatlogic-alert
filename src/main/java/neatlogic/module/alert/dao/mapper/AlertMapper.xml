@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+    <select id="getAlertByUniqueKey" parameterType="java.lang.String" resultType="neatlogic.framework.alert.dto.AlertVo">
+        select id,
+               alert_count as alertCount
+        from alert
+        where unique_key = #{value}
+    </select>
+
+    <update id="updateAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert
+        set level       = #{level},
+            title       = #{title},
+            alert_time  = #{alertTime},
+            type        = #{type},
+            status      = #{status},
+            source      = #{source},
+            entity_type = #{entityType},
+            entity_name = #{entityName},
+            ip          = #{ip},
+            port        = #{port}
+        where id = #{id}
+    </update>
+
+    <insert id="insertAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        insert into alert
+        (id,
+         level,
+         title,
+         alert_time,
+         type,
+         status,
+         source,
+         is_delete,
+         unique_key,
+         entity_type,
+         entity_name,
+         ip,
+         port)
+        values (#{id},
+                #{level},
+                #{title},
+                #{alertTime},
+                #{type},
+                #{status},
+                #{source},
+                0,
+                #{uniqueKey},
+                #{entityType},
+                #{entityName},
+                #{ip},
+                #{port})
+    </insert>
+
+    <insert id="insertAlertError" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo">
+        insert into alert_error
+        (id,
+         content,
+         type,
+         time,
+         error)
+        values (#{id},
+                #{content, typeHandler=CompressHandler},
+                #{type},
+                #{time},
+                #{error, typeHandler=CompressHandler})
+    </insert>
+
+</mapper>

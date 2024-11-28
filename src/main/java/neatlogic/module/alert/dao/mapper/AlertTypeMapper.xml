@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertTypeMapper">
+    <select id="searchAlertTypeCount" parameterType="neatlogic.framework.alert.dto.AlertTypeVo" resultType="int">
+        select count(1)
+        from alert_type
+        <include refid="searchAlertTypeSql"></include>
+    </select>
+
+    <select id="searchAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo"
+            resultType="neatlogic.framework.alert.dto.AlertTypeVo">
+        select id,
+        name,
+        label,
+        is_active as isActive,
+        file_id as fileId,
+        lcd,
+        lcu,
+        fcd,
+        fcu
+        from alert_type
+        <include refid="searchAlertTypeSql"></include>
+        order by id desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <sql id="searchAlertTypeSql">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (name like concat(#{keyword}, '%') or label like concat(#{keyword}, '%'))
+            </if>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
+        </where>
+    </sql>
+
+    <select id="getAlertTypeByName" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertTypeVo">
+        select id,
+               name,
+               label,
+               file_id   AS fileId,
+               is_active as isActive,
+               lcd,
+               lcu,
+               fcd,
+               fcu
+        from alert_type
+        where name = #{value}
+    </select>
+
+    <select id="getAlertTypeById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertTypeVo">
+        select id,
+               name,
+               label,
+               file_id   AS fileId,
+               is_active as isActive,
+               lcd,
+               lcu,
+               fcd,
+               fcu
+        from alert_type
+        where id = #{value}
+    </select>
+
+    <select id="checkAlertTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertTypeVo" resultType="int">
+        select count(1)
+        from alert_type
+        where id != #{id}
+          and name = #{name}
+    </select>
+
+    <update id="updateAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo">
+        update alert_type
+        set name      = #{name},
+            label     = #{label},
+            file_id   = #{fileId},
+            is_active = #{isActive},
+            lcd       = now(),
+            lcu       = #{lcu}
+        where id = #{id}
+    </update>
+
+    <insert id="insertAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo">
+        insert into alert_type
+        (id,
+         name,
+         label,
+         file_id,
+         is_active,
+         fcd,
+         fcu)
+        values (#{id},
+                #{name},
+                #{label},
+                #{fileId},
+                #{isActive},
+                now(),
+                #{fcu})
+    </insert>
+
+    <delete id="deleteAlertTypeById" parameterType="java.lang.Long">
+        delete
+        from alert_type
+        where id = #{value}
+    </delete>
+
+</mapper>
