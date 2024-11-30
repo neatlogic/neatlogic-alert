@@ -16,7 +16,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
-    <select id="getAlertByUniqueKey" parameterType="java.lang.String" resultType="neatlogic.framework.alert.dto.AlertVo">
+    <select id="selectAlert" parameterType="neatlogic.framework.alert.dto.AlertVo"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
+        select id,
+        level,
+        title,
+        alert_time as alertTime,
+        type,
+        status,
+        source,
+        unique_key as uniqueKey,
+        alert_count as alertCount,
+        entity_type as entityType,
+        enity_name as entityName,
+        ip,
+        port
+        from alert
+        where
+        id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        order by alert_time desc
+    </select>
+
+    <select id="getAlertByUniqueKey" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
         select id,
                alert_count as alertCount
         from alert
@@ -37,6 +62,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             port        = #{port}
         where id = #{id}
     </update>
+
+    <insert id="saveAlertAttr" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        insert into alert_attr
+            (alert_id, content)
+        values (#{id}, #{attrObjStr,typeHandler=CompressHandler})
+        ON DUPLICATE KEY UPDATE content = #{attrObjStr,typeHandler=CompressHandler}
+    </insert>
 
     <insert id="insertAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">
         insert into alert
@@ -68,18 +100,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{port})
     </insert>
 
-    <insert id="insertAlertError" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo">
-        insert into alert_error
+    <insert id="insertAlertOrigin" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo">
+        insert into alert_origin
         (id,
          content,
          type,
          time,
-         error)
+         error,
+         status)
         values (#{id},
                 #{content, typeHandler=CompressHandler},
                 #{type},
                 #{time},
-                #{error, typeHandler=CompressHandler})
+                #{error, typeHandler=CompressHandler},
+                #{status})
     </insert>
+
+    <delete id="deleteAlertAttr" parameterType="java.lang.Long">
+        delete
+        from alert_attr
+        where alert_id = #{value}
+    </delete>
 
 </mapper>

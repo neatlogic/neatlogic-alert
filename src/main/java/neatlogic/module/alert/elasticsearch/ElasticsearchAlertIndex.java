@@ -18,9 +18,10 @@
 package neatlogic.module.alert.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import com.alibaba.fastjson.JSON;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
@@ -31,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -52,17 +51,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("id", p -> p.long_(l -> l))                        // bigint -> long
                         .properties("level", p -> p.integer(i -> i))                  // int -> integer
                         .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))                     // varchar -> text
-                        .properties("alert_time", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss"))) // datetime -> date
+                        .properties("alertTime", p -> p.date(d -> d)) // datetime -> date
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
                         .properties("source", p -> p.keyword(k -> k))                 // varchar -> keyword
-                        .properties("is_delete", p -> p.boolean_(b -> b))             // tinyint -> boolean
-                        .properties("unique_key", p -> p.keyword(k -> k))             // char -> keyword
-                        .properties("alert_count", p -> p.integer(i -> i))            // int -> integer
-                        .properties("entity_type", p -> p.keyword(k -> k))            // varchar -> keyword
-                        .properties("entity_name", p -> p.text(t -> t))               // varchar -> text
+                        .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
+                        .properties("alertCount", p -> p.integer(i -> i))            // int -> integer
+                        .properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
+                        .properties("entityName", p -> p.text(t -> t))               // varchar -> text
                         .properties("ip", p -> p.keyword(k -> k))                     // varchar -> keyword
                         .properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
+                        .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
             if (elasticsearchVo.getConfig().containsKey("numberOfShards")) {
@@ -83,10 +82,10 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     protected void myCreateDocument(AlertVo alertVo) throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
         ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         // 准备文档数据
-        Map<String, Object> document = new HashMap<>();
+        /*Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
         document.put("level", alertVo.getLevel());
         document.put("title", alertVo.getTitle());
@@ -101,6 +100,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("entity_name", alertVo.getEntityName());
         document.put("ip", alertVo.getIp());
         document.put("port", alertVo.getPort());
+        document.put("attrObj", alertVo.getAttrObj());*/
+        Map<String, Object> document = JSON.parseObject(JSON.toJSONString(alertVo));
 
 
         // 创建或更新文档
@@ -111,6 +112,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                 .build();
 
         // 执行请求
-        IndexResponse response = client.index(request);
+        client.index(request);
     }
 }

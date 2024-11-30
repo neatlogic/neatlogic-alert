@@ -10,5 +10,9 @@ public interface AlertMapper {
 
     void insertAlert(AlertVo alertVo);
 
-    void insertAlertError(OriginalAlertVo originalAlertVo);
+    void saveAlertAttr(AlertVo alertVo);
+
+    void insertAlertOrigin(OriginalAlertVo originalAlertVo);
+
+    void deleteAlertAttr(Long alertId);
 }

@@ -17,9 +17,9 @@
 
 package neatlogic.module.alert.api.alert;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
+import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.Description;
@@ -28,19 +28,17 @@ import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
-import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
+import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import java.io.IOException;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
 public class SearchAlertApi extends PrivateApiComponentBase {
 
-    @Resource
-    private AlertTypeMapper alertTypeMapper;
 
     @Override
     public String getToken() {
@@ -58,16 +56,18 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "alertType", desc = "告警类型", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "alertContent", desc = "告警内容", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "alertTime", desc = "告警时间，不提供自动生成", type = ApiParamType.LONG),
+            @Param(name = "title", desc = "标题", type = ApiParamType.STRING),
+            @Param(name = "type", desc = "告警类型", type = ApiParamType.LONG),
+            @Param(name = "status", desc = "状态", type = ApiParamType.STRING),
+            @Param(name = "level", desc = "级别", type = ApiParamType.INTEGER),
+            @Param(name = "entityType", desc = "对象类型", type = ApiParamType.STRING),
+            @Param(name = "entityName", desc = "对象名称", type = ApiParamType.STRING)
     })
-    @Description(desc = "推送告警")
+    @Description(desc = "查询告警")
     @Override
-    public Object myDoService(JSONObject jsonObj) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        JSONObject obj = new JSONObject();
-        return null;
+    public Object myDoService(JSONObject jsonObj) throws IOException {
+        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        return index.searchDocument(jsonObj, 1, 20);
     }
 
 }

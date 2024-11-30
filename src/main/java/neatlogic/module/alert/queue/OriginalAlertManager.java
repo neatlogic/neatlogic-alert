@@ -23,6 +23,7 @@ import neatlogic.framework.alert.adaptor.core.AlertAdaptorManager;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
+import neatlogic.framework.alert.enums.AlertOriginStatus;
 import neatlogic.framework.alert.exception.alerttype.AlertTypeNotFoundException;
 import neatlogic.framework.asynchronization.queue.NeatLogicBlockingQueue;
 import neatlogic.framework.asynchronization.thread.NeatLogicThread;
@@ -34,6 +35,7 @@ import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,14 +74,19 @@ public class OriginalAlertManager {
                         originalAlertVo = alertQueue.take();
                         new Handler(originalAlertVo).execute();
                         //CachedThreadPool.execute(new Builder(rebuildAuditVo));
+                        originalAlertVo.setStatus(AlertOriginStatus.SUCCEED.getValue());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
                     } catch (Exception e) {
+                        logger.error(e.getMessage(), e);
                         if (originalAlertVo != null) {
-                            originalAlertVo.setError(e.getMessage());
-                            alertMapper.insertAlertError(originalAlertVo);
+                            originalAlertVo.setError(ExceptionUtils.getStackTrace(e));
+                            originalAlertVo.setStatus(AlertOriginStatus.FAILED.getValue());
+
                         }
+                    } finally {
+                        alertMapper.insertAlertOrigin(originalAlertVo);
                     }
                 }
             }

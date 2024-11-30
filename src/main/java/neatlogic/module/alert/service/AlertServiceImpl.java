@@ -24,6 +24,7 @@ import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.queue.AlertActionManager;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -42,6 +43,11 @@ public class AlertServiceImpl implements IAlertService {
             alertMapper.updateAlert(alertVo);
         } else {
             alertMapper.insertAlert(alertVo);
+        }
+        if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
+            alertMapper.saveAlertAttr(alertVo);
+        }else{
+            alertMapper.deleteAlertAttr(alertVo.getId());
         }
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         if (indexHandler == null) {
