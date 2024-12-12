@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertLevelMapper">
+    <select id="getAlertLevelByLevel" parameterType="java.lang.Integer" resultType="neatlogic.framework.alert.dto.AlertLevelVo">
+        select id,
+               level,
+               name,
+               label,
+               color
+        from alert_level
+        where level = #{value}
+    </select>
+
+    <select id="getAlertLevelById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertLevelVo">
+        select id,
+               level,
+               name,
+               label,
+               color
+        from alert_level
+        where id = #{value}
+    </select>
+
+    <select id="listAlertLevel" parameterType="neatlogic.framework.alert.dto.AlertLevelVo"
+            resultType="neatlogic.framework.alert.dto.AlertLevelVo">
+        select id,
+               level,
+               name,
+               label,
+               color
+        from alert_level
+        order by level
+    </select>
+
+    <select id="checkAlertLevelIsExists" parameterType="neatlogic.framework.alert.dto.AlertLevelVo" resultType="int">
+        select count(1)
+        from alert_level
+        where level = #{level}
+          and id != #{id}
+    </select>
+
+    <select id="checkAlertLevelNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertLevelVo" resultType="int">
+        select count(1)
+        from alert_level
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <insert id="saveAlertLevel" parameterType="neatlogic.framework.alert.dto.AlertLevelVo">
+        insert into alert_level (id,
+                                 level,
+                                 name,
+                                 label,
+                                 color)
+        values (#{id},
+                #{level},
+                #{name},
+                #{label},
+                #{color})
+        ON DUPLICATE KEY UPDATE label = #{label},
+                                color = #{color}
+    </insert>
+
+    <delete id="deleteAlertLevel" parameterType="java.lang.Long">
+        delete
+        from alert_level
+        where id = #{value}
+    </delete>
+</mapper>

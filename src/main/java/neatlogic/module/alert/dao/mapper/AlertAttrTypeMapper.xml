@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper">
+    <select id="checkAttrTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo" resultType="int">
+        select count(1)
+        from alert_attrtype
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <sql id="searchAttrTypeSql">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (name like concat('%',#{keyword},'%') or label like concat('%',#{keyword},'%'))
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
+        </where>
+    </sql>
+
+    <select id="getAttrTypeById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+        select id,
+               name,
+               label,
+               type,
+               is_active as isActive,
+               config
+        from alert_attrtype
+        where id = #{value}
+    </select>
+
+    <select id="searchAttrTypeCount" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo" resultType="int">
+        select count(1) from alert_attrtype
+        <include refid="searchAttrTypeSql"></include>
+    </select>
+
+    <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+        select id,
+               name,
+               label,
+               type,
+               is_active as isActive,
+               config
+        from alert_attrtype
+        order by id desc
+    </select>
+
+    <select id="searchAttrType" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo"
+            resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+        select id,
+        name,
+        label,
+        type,
+        is_active as isActive,
+        config
+        from alert_attrtype
+        <include refid="searchAttrTypeSql"></include>
+        order by id desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <insert id="saveAlertAttrType" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+        insert into alert_attrtype
+        (id,
+         name,
+         label,
+         type,
+         is_active,
+         config)
+        values (#{id},
+                #{name},
+                #{label},
+                #{type},
+                #{isActive},
+                #{configStr, typeHandler=CompressHandler})
+        ON DUPLICATE KEY UPDATE name      = #{name},
+                                label     = #{label},
+                                type      = #{type},
+                                is_active = #{isActive},
+                                config    = #{configStr, typeHandler=CompressHandler}
+    </insert>
+
+    <delete id="deleteAttrTypeById" parameterType="java.lang.Long">
+        delete
+        from alert_attrtype
+        where id = #{value}
+    </delete>
+</mapper>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertViewMapper">
+    <resultMap id="alertViewResultMap" type="neatlogic.framework.alert.dto.AlertViewVo">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="label" property="label"/>
+        <result column="fcu" property="fcu"/>
+        <result column="fcd" property="fcd"/>
+        <result column="lcu" property="lcu"/>
+        <result column="isActive" property="isActive"/>
+        <result column="configStr" property="configStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
+        <collection property="alertViewAuthList" ofType="neatlogic.framework.alert.dto.AlertViewAuthVo">
+            <id column="authUuid" property="authUuid"/>
+            <id column="authType" property="authType"/>
+            <id column="viewId" property="viewId"/>
+        </collection>
+    </resultMap>
+
+    <select id="getAlertViewById" parameterType="java.lang.Long" resultMap="alertViewResultMap">
+        select a.id,
+               a.name,
+               a.label,
+               a.fcu,
+               a.fcd,
+               a.lcu,
+               a.lcd,
+               a.is_active as isActive,
+               a.config    as configStr,
+               b.view_id   as viewId,
+               b.auth_type as authType,
+               b.auth_uuid as authUuid
+        from alert_view a
+                 left join alert_view_auth b on a.id = b.view_id
+        where a.id = #{value}
+    </select>
+
+    <select id="getAlertViewByName" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertViewVo">
+        select a.id,
+               a.name,
+               a.label,
+               a.fcu,
+               a.fcd,
+               a.lcu,
+               a.lcd,
+               a.is_active as isActive,
+               a.config    as configStr
+        from alert_view a
+        where a.name = #{value}
+    </select>
+
+    <select id="listAlertView" parameterType="neatlogic.framework.alert.dto.AlertViewVo"
+            resultType="neatlogic.framework.alert.dto.AlertViewVo">
+        select
+        a.id,
+        a.name,
+        a.label,
+        a.fcu,
+        a.fcd,
+        a.lcu,
+        a.lcd,
+        a.is_active as isActive
+        from alert_view a
+        left join alert_view_auth b on a.id = b.view_id
+        <where>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
+            <if test="!isAdmin">
+                and (
+                (b.auth_type = 'common' and b.auth_uuid = 'alluser')
+                <if test="userId != null and userId != ''">
+                    or (b.auth_type = 'user' and b.auth_uuid = #{userId})
+                </if>
+                <if test="teamUuidList != null and teamUuidList.size() > 0">
+                    or (b.auth_type = 'team' and b.auth_uuid in
+                    <foreach collection="teamUuidList" open="(" close=")" separator="," item="item">#{item}</foreach>)
+                </if>
+                <if test="roleUuidList != null and roleUuidList.size() > 0">
+                    or (b.auth_type = 'role' and b.auth_uuid in
+                    <foreach collection="roleUuidList" open="(" close=")" separator="," item="item">#{item}</foreach>)
+                </if>
+                )
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+
+    <insert id="saveAlertView" parameterType="neatlogic.framework.alert.dto.AlertViewVo">
+        insert into alert_view
+        (id,
+         name,
+         label,
+         config,
+         is_active,
+         fcd,
+         fcu)
+        values (#{id},
+                #{name},
+                #{label},
+                #{configStr, typeHandler=CompressHandler},
+                #{isActive},
+                now(),
+                #{fcu})
+        ON DUPLICATE KEY UPDATE label     = #{label},
+                                config    = #{configStr, typeHandler=CompressHandler},
+                                is_active = #{isActive},
+                                lcu       = #{lcu},
+                                lcd       = now()
+    </insert>
+
+    <insert id="insertAlertViewAuth" parameterType="neatlogic.framework.alert.dto.AlertViewAuthVo">
+        insert into alert_view_auth
+        (view_id,
+         auth_type,
+         auth_uuid)
+        values (#{viewId},
+                #{authType},
+                #{authUuid})
+    </insert>
+
+    <delete id="deleteAlertViewAuthByViewId" parameterType="java.lang.Long">
+        delete
+        from alert_view_auth
+        where view_id = #{value}
+    </delete>
+
+
+</mapper>

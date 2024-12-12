@@ -20,7 +20,11 @@ package neatlogic.module.alert.service;
 import neatlogic.framework.alert.dto.AlertVo;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 public interface IAlertService {
     @Transactional
     void saveAlert(AlertVo alertVo);
+
+    List<AlertVo> searchAlert(AlertVo alertVo);
 }

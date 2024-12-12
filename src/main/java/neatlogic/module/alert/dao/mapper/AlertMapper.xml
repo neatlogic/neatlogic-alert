@@ -16,22 +16,62 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
-    <select id="selectAlert" parameterType="neatlogic.framework.alert.dto.AlertVo"
-            resultType="neatlogic.framework.alert.dto.AlertVo">
-        select id,
-        level,
-        title,
-        alert_time as alertTime,
-        type,
-        status,
-        source,
-        unique_key as uniqueKey,
-        alert_count as alertCount,
-        entity_type as entityType,
-        enity_name as entityName,
-        ip,
-        port
-        from alert
+    <resultMap id="alertResultMap" type="neatlogic.framework.alert.dto.AlertVo">
+        <id column="id" property="id"/>
+        <result column="level" property="level"/>
+        <result column="title" property="title"/>
+        <result column="alertTime" property="alertTime"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="source" property="source"/>
+        <result column="uniqueKey" property="uniqueKey"/>
+        <result column="alertCount" property="alertCount"/>
+        <result column="entityType" property="entityType"/>
+        <result column="entityName" property="entityName"/>
+        <result column="ip" property="port"/>
+        <result column="content" property="attrObjStr"/>
+    </resultMap>
+
+    <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
+        select a.id,
+               a.level,
+               a.title,
+               a.alert_time  as alertTime,
+               a.type,
+               a.status,
+               a.source,
+               a.unique_key  as uniqueKey,
+               a.alert_count as alertCount,
+               a.entity_type as entityType,
+               a.entity_name as entityName,
+               a.ip,
+               a.port,
+               b.content
+        from (select * from alert order by alert_time limit #{startNum}, #{pageSize}) a
+                 left join alert_attr b on a.id =
+                                           b.alert_id
+        order by alert_time desc
+    </select>
+
+
+    <select id="selectAlertById" parameterType="neatlogic.framework.alert.dto.AlertVo"
+            resultMap="alertResultMap">
+        select
+        a.id,
+        a.level,
+        a.title,
+        a.alert_time as alertTime,
+        a.type,
+        a.status,
+        a.source,
+        a.unique_key as uniqueKey,
+        a.alert_count as alertCount,
+        a.entity_type as entityType,
+        a.entity_name as entityName,
+        a.ip,
+        a.port,
+        b.content
+        from alert a left join alert_attr b on a.id = b.alert_id
         where
         id in
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
@@ -115,6 +155,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{error, typeHandler=CompressHandler},
                 #{status})
     </insert>
+
 
     <delete id="deleteAlertAttr" parameterType="java.lang.Long">
         delete

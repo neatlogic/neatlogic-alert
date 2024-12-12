@@ -18,16 +18,21 @@
 package neatlogic.module.alert.service;
 
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.queue.AlertActionManager;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AlertServiceImpl implements IAlertService {
@@ -56,5 +61,21 @@ public class AlertServiceImpl implements IAlertService {
         indexHandler.createDocument(alertVo);
         AfterTransactionJob<AlertVo> job = new AfterTransactionJob<>("AFTER-SAVE-ALERT");
         job.execute(alertVo, AlertActionManager::handler);
+    }
+
+    @Override
+    public List<AlertVo> searchAlert(AlertVo alertVo) {
+
+        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        IndexResultVo indexResultVo = index.searchDocument(alertVo, 1, 20);
+        if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
+            alertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
+            alertVo.setCurrentPage(indexResultVo.getCurrentPage());
+            alertVo.setPageCount(indexResultVo.getPageCount());
+            alertVo.setRowNum(indexResultVo.getRowNum());
+           return alertMapper.selectAlertById(alertVo);
+
+        }
+        return new ArrayList<>();
     }
 }
