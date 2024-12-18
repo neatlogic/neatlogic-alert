@@ -15,19 +15,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.service;
+package neatlogic.module.alert.event;
 
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
-import org.springframework.transaction.annotation.Transactional;
+import neatlogic.framework.alert.event.AlertEventHandlerBase;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
+@Component
+public class AlertSendMailEventHandler extends AlertEventHandlerBase {
+    @Override
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
+        System.out.println("我要发送邮件了，报警是" + alertVo.getTitle());
+        return alertVo;
+    }
 
-public interface IAlertService {
-    @Transactional
-    void saveAlert(AlertVo alertVo);
+    @Override
+    public String getName() {
+        return "EMAIL";
+    }
 
-    List<AlertVo> searchAlert(AlertVo alertVo);
+    @Override
+    public String getLabel() {
+        return "发送邮件";
+    }
 
-    List<AlertEventHandlerVo> listAlertEventHandler(AlertEventHandlerVo alertEventHandlerVo);
 }

@@ -77,6 +77,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
+            @Param(name = "fromAlertId", desc = "来源告警id", type = ApiParamType.LONG),
             @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
             @Param(name = "mode", desc = "搜索模式", type = ApiParamType.STRING, rule = "simple,advanced"),
             @Param(name = "viewName", desc = "视图", type = ApiParamType.STRING),
@@ -112,10 +113,12 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             }
         } else {
             for (AlertAttrDefineVo attr : attrList) {
-                theadList.add(new JSONObject() {{
-                    this.put("key", attr.getName());
-                    this.put("title", attr.getLabel());
-                }});
+                if (!attr.getName().equals("const_id")) {
+                    theadList.add(new JSONObject() {{
+                        this.put("key", attr.getName());
+                        this.put("title", attr.getLabel());
+                    }});
+                }
             }
             for (AlertAttrTypeVo alertAttrType : alertAttrTypeList) {
                 theadList.add(new JSONObject() {{

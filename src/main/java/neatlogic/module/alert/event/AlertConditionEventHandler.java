@@ -15,19 +15,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.service;
+package neatlogic.module.alert.event;
 
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
-import org.springframework.transaction.annotation.Transactional;
+import neatlogic.framework.alert.event.AlertEventHandlerBase;
+import neatlogic.module.alert.service.IAlertService;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
+import javax.annotation.Resource;
 
-public interface IAlertService {
-    @Transactional
-    void saveAlert(AlertVo alertVo);
+@Component
+public class AlertConditionEventHandler extends AlertEventHandlerBase {
+    @Resource
+    private IAlertService alertService;
 
-    List<AlertVo> searchAlert(AlertVo alertVo);
+    @Override
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
+        return alertVo;
+    }
 
-    List<AlertEventHandlerVo> listAlertEventHandler(AlertEventHandlerVo alertEventHandlerVo);
+    @Override
+    public String getName() {
+        return "CONDITION";
+    }
+
+    @Override
+    public String getLabel() {
+        return "条件分支";
+    }
+
 }

@@ -74,7 +74,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
         List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
         for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
-            attrList.add(new AlertAttrDefineVo("attr_" + attrTypeVo.getName(), attrTypeVo.getLabel()));
+            attrList.add(new AlertAttrDefineVo("attr_" + attrTypeVo.getName(), attrTypeVo.getLabel(), "attr", attrTypeVo.getType()));
         }
         return attrList;
     }

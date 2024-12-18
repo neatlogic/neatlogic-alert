@@ -83,6 +83,11 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
+    public Boolean needPage(AlertVo alertVo) {
+        return alertVo.getFromAlertId() == null;
+    }
+
+    @Override
     public Query buildQuery(AlertVo alertVo) {
         JSONObject rule = new JSONObject();
 
@@ -238,11 +243,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                 }
             }
 
-        } /*else {
-            return new Query.Builder()
-                    .matchAll(ma -> ma)
-                    .build();
-        }*/
+        }
+        //最后处理fromAlertId
+        if (alertVo.getFromAlertId() == null) {
+            boolQueryBuilder.must(new Query.Builder()
+                    .bool(b -> b.mustNot(q -> q.exists(e -> e.field("fromAlertId"))))
+                    .build());
+        } else {
+            boolQueryBuilder.must(new Query.Builder()
+                    .bool(b -> b.must(q -> q.term(t -> t.field("fromAlertId").value(alertVo.getFromAlertId()))))
+                    .build());
+        }
 
         finalQueryBuilder.bool(boolQueryBuilder.build());
         return finalQueryBuilder.build();
@@ -303,6 +314,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                 .index(this.getIndexName())
                 .mappings(m -> m
                         .properties("id", p -> p.long_(l -> l))                        // bigint -> long
+                        .properties("fromAlertId", p -> p.long_(l -> l))
                         .properties("level", p -> p.integer(i -> i))                  // int -> integer
                         .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))                     // varchar -> text
                         .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm"))) // datetime -> date
@@ -310,10 +322,9 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
                         .properties("source", p -> p.keyword(k -> k))                 // varchar -> keyword
                         .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
-                        .properties("alertCount", p -> p.integer(i -> i))            // int -> integer
                         .properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
                         .properties("entityName", p -> p.text(t -> t))               // varchar -> text
-                        .properties("ip", p -> p.keyword(k -> k))                     // varchar -> keyword
+                        .properties("ip", p -> p.text(k -> k))                     // varchar -> keyword
                         .properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
                         .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
                 );
@@ -355,6 +366,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         // 准备文档数据
         Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
+        document.put("fromAlertId", alertVo.getFromAlertId());
         document.put("level", alertVo.getLevel());
         document.put("title", alertVo.getTitle());
         document.put("alertTime", sdf.format(alertVo.getAlertTime()));

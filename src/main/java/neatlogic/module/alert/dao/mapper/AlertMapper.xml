@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
     <resultMap id="alertResultMap" type="neatlogic.framework.alert.dto.AlertVo">
         <id column="id" property="id"/>
+        <result column="fromAlertId" property="fromAlertId"/>
+        <result column="childAlertCount" property="childAlertCount"/>
         <result column="level" property="level"/>
         <result column="title" property="title"/>
         <result column="alertTime" property="alertTime"/>
@@ -30,20 +32,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="entityName" property="entityName"/>
         <result column="ip" property="port"/>
         <result column="content" property="attrObjStr"/>
+        <association property="alertType" javaType="neatlogic.framework.alert.dto.AlertTypeVo">
+            <result column="alertTypeName" property="name"/>
+            <result column="alertTypeLabel" property="label"/>
+            <result column="alertTypeId" property="id"/>
+        </association>
+        <association property="alertLevel" javaType="neatlogic.framework.alert.dto.AlertLevelVo">
+            <result column="alertLevel" property="level"/>
+            <result column="alertLevelName" property="name"/>
+            <result column="alertLevelColor" property="color"/>
+            <result column="alertLevelLabel" property="label"/>
+        </association>
     </resultMap>
 
     <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
         select a.id,
                a.level,
                a.title,
-               a.alert_time  as alertTime,
+               a.alert_time                                                                          as alertTime,
+               (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
+               (select x.from_alert_id
+                from alert_rel x
+                where x.to_alert_id = a.id
+                limit 1)                                                                             as fromAlertId,
                a.type,
                a.status,
                a.source,
-               a.unique_key  as uniqueKey,
-               a.alert_count as alertCount,
-               a.entity_type as entityType,
-               a.entity_name as entityName,
+               a.unique_key                                                                          as uniqueKey,
+               a.alert_count                                                                         as alertCount,
+               a.entity_type                                                                         as entityType,
+               a.entity_name                                                                         as entityName,
                a.ip,
                a.port,
                b.content
@@ -53,37 +71,58 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by alert_time desc
     </select>
 
+    <sql id="searchAlertColumn">
+        select a.id,
+               (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
+               (select x.from_alert_id from alert_rel x where x.to_alert_id = a.id limit 1)          as fromAlertId,
+               a.level,
+               a.title,
+               a.alert_time                                                                          as alertTime,
+               a.type,
+               d.id                                                                                  as alertTypeId,
+               d.name                                                                                as alertTypeName,
+               d.label                                                                               as alertTypeLabel,
+               a.status,
+               a.source,
+               a.unique_key                                                                          as uniqueKey,
+               a.alert_count                                                                         as alertCount,
+               a.entity_type                                                                         as entityType,
+               a.entity_name                                                                         as entityName,
+               a.ip,
+               a.port,
+               b.content,
+               c.level                                                                               as alertLevel,
+               c.name                                                                                as alertLevelName,
+               c.label                                                                               as alertLevelLabel,
+               c.color                                                                               as alertLevelColor
+        from alert a
+                 left join alert_attr b on a.id = b.alert_id
+                 left join alert_level c on a.level = c.level
+                 left join alert_type d on a.type = d.id
+    </sql>
+
 
     <select id="selectAlertById" parameterType="neatlogic.framework.alert.dto.AlertVo"
             resultMap="alertResultMap">
-        select
-        a.id,
-        a.level,
-        a.title,
-        a.alert_time as alertTime,
-        a.type,
-        a.status,
-        a.source,
-        a.unique_key as uniqueKey,
-        a.alert_count as alertCount,
-        a.entity_type as entityType,
-        a.entity_name as entityName,
-        a.ip,
-        a.port,
-        b.content
-        from alert a left join alert_attr b on a.id = b.alert_id
+        <include refid="searchAlertColumn"></include>
         where
-        id in
+        a.id in
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-        order by alert_time desc
+        order by a.alert_time desc
     </select>
+
+    <select id="getAlertById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertVo">
+        <include refid="searchAlertColumn"></include>
+        where a.id = #{value}
+        order by a.alert_time desc
+    </select>
+
 
     <select id="getAlertByUniqueKey" parameterType="java.lang.String"
             resultType="neatlogic.framework.alert.dto.AlertVo">
-        select id,
-               alert_count as alertCount
+        select id
         from alert
         where unique_key = #{value}
     </select>
@@ -108,6 +147,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             (alert_id, content)
         values (#{id}, #{attrObjStr,typeHandler=CompressHandler})
         ON DUPLICATE KEY UPDATE content = #{attrObjStr,typeHandler=CompressHandler}
+    </insert>
+
+    <insert id="saveAlertRel" parameterType="neatlogic.framework.alert.dto.AlertRelVo">
+        insert ignore into alert_rel
+            (from_alert_id, to_alert_id)
+        values (#{fromAlertId}, #{toAlertId})
     </insert>
 
     <insert id="insertAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">

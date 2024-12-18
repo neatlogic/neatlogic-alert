@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         from alert_type
         <include refid="searchAlertTypeSql"></include>
         order by id desc
-        limit #{startNum}, #{pageSize}
+        <!--limit #{startNum}, #{pageSize}-->
     </select>
 
     <sql id="searchAlertTypeSql">
