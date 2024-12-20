@@ -45,6 +45,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </association>
     </resultMap>
 
+    <select id="getAlertOriginById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertOriginVo">
+        select id,
+               content as contentStr,
+               type,
+               time,
+               error,
+               status
+        from alert_origin
+        where id = #{id}
+    </select>
+
     <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
         select a.id,
                a.level,
@@ -102,7 +113,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </sql>
 
 
-    <select id="selectAlertById" parameterType="neatlogic.framework.alert.dto.AlertVo"
+    <select id="getAlertByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo"
             resultMap="alertResultMap">
         <include refid="searchAlertColumn"></include>
         where
@@ -113,7 +124,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by a.alert_time desc
     </select>
 
-    <select id="getAlertById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertVo">
+    <select id="getAlertById" parameterType="java.lang.Long" resultMap="alertResultMap">
         <include refid="searchAlertColumn"></include>
         where a.id = #{value}
         order by a.alert_time desc
@@ -125,6 +136,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         select id
         from alert
         where unique_key = #{value}
+        order by id
+        limit 1
     </select>
 
     <update id="updateAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">

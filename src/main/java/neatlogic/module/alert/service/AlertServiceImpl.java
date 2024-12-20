@@ -86,8 +86,7 @@ public class AlertServiceImpl implements IAlertService {
             alertVo.setCurrentPage(indexResultVo.getCurrentPage());
             alertVo.setPageCount(indexResultVo.getPageCount());
             alertVo.setRowNum(indexResultVo.getRowNum());
-            return alertMapper.selectAlertById(alertVo);
-
+            return alertMapper.getAlertByIdList(alertVo);
         }
         return new ArrayList<>();
     }

@@ -22,6 +22,10 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
+import neatlogic.framework.alert.event.AlertEventHandlerFactory;
+import neatlogic.framework.alert.event.IAlertEventHandler;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerNotFoundException;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerNotSupportException;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
@@ -76,6 +80,14 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         AlertEventHandlerVo alertEventHandlerVo = JSON.toJavaObject(jsonObj, AlertEventHandlerVo.class);
+        IAlertEventHandler handler = AlertEventHandlerFactory.getHandler(alertEventHandlerVo.getHandler());
+        if (handler == null) {
+            throw new AlertEventHandlerNotFoundException(alertEventHandlerVo.getEvent());
+        }
+
+        if (!handler.supportEventTypes().contains(alertEventHandlerVo.getEvent())) {
+            throw new AlertEventHandlerNotSupportException(handler.getLabel(), alertEventHandlerVo.getEvent());
+        }
         //先删除所有子组件
         AlertEventHandlerVo param = new AlertEventHandlerVo();
         param.setParentId(alertEventHandlerVo.getId());

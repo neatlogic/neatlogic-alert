@@ -55,7 +55,7 @@ public class GetAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG)
+            @Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG),
     })
     @Output({
             @Param(explode = AlertVo.class)

@@ -1,5 +1,6 @@
 package neatlogic.module.alert.dao.mapper;
 
+import neatlogic.framework.alert.dto.AlertOriginVo;
 import neatlogic.framework.alert.dto.AlertRelVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
@@ -7,9 +8,11 @@ import neatlogic.framework.alert.dto.OriginalAlertVo;
 import java.util.List;
 
 public interface AlertMapper {
+    AlertOriginVo getAlertOriginById(Long id);
+
     List<AlertVo> searchAlert(AlertVo alertVo);
 
-    List<AlertVo> selectAlertById(AlertVo alertVo);
+    List<AlertVo> getAlertByIdList(AlertVo alertVo);
 
     AlertVo getAlertById(Long id);
 

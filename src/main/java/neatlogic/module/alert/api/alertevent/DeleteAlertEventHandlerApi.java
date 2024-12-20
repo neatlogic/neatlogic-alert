@@ -18,35 +18,37 @@
 package neatlogic.module.alert.api.alertevent;
 
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertEventPluginVo;
-import neatlogic.framework.alert.event.AlertEventHandlerFactory;
-import neatlogic.framework.alert.event.IAlertEventHandler;
+import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
+import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.restful.annotation.*;
+import neatlogic.framework.restful.annotation.Description;
+import neatlogic.framework.restful.annotation.Input;
+import neatlogic.framework.restful.annotation.OperationType;
+import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.annotation.Resource;
 
 @Service
-@AuthAction(action = ALERT_BASE.class)
-@OperationType(type = OperationTypeEnum.SEARCH)
-public class ListAlertEventPluginApi extends PrivateApiComponentBase {
-
+@AuthAction(action = ALERT_EVENT_MODIFY.class)
+@OperationType(type = OperationTypeEnum.DELETE)
+@Transactional
+public class DeleteAlertEventHandlerApi extends PrivateApiComponentBase {
+    @Resource
+    private AlertEventMapper alertEventMapper;
 
     @Override
     public String getToken() {
-        return "alert/event/plugin/list";
+        return "alert/event/handler/delete";
     }
 
     @Override
     public String getName() {
-        return "列出所有告警事件插件";
+        return "删除事件组件";
     }
 
     @Override
@@ -54,19 +56,14 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "eventName", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING)})
-    @Output({@Param(explode = AlertEventPluginVo[].class)})
-    @Description(desc = "列出所有告警事件插件")
+    @Input({
+            @Param(name = "id", desc = "id", type = ApiParamType.LONG, isRequired = true)
+    })
+    @Description(desc = "删除事件组件")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
-        String eventName = jsonObj.getString("eventName");
-        List<IAlertEventHandler> handlerList = AlertEventHandlerFactory.getHandlerList(eventName);
-        List<AlertEventPluginVo> pluginList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(handlerList)) {
-            for (IAlertEventHandler handler : handlerList) {
-                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel()));
-            }
-        }
-        return pluginList;
+        Long id = jsonObj.getLong("id");
+        alertEventMapper.deleteAlertEventHandlerById(id);
+        return null;
     }
 }

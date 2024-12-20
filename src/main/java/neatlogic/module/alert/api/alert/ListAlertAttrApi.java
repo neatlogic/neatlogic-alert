@@ -21,21 +21,23 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
 import neatlogic.framework.alert.dto.AlertAttrDefineVo;
 import neatlogic.framework.alert.dto.AlertAttrTypeVo;
+import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.restful.annotation.Description;
-import neatlogic.framework.restful.annotation.Input;
-import neatlogic.framework.restful.annotation.OperationType;
-import neatlogic.framework.restful.annotation.Param;
+import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.dao.mapper.AlertViewMapper;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AuthAction(action = ALERT_VIEW_MODIFY.class)
@@ -44,6 +46,9 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+
+    @Resource
+    private AlertViewMapper alertViewMapper;
 
     @Override
     public String getToken() {
@@ -61,20 +66,29 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "title", desc = "标题", type = ApiParamType.STRING),
-            @Param(name = "type", desc = "告警类型", type = ApiParamType.LONG),
-            @Param(name = "status", desc = "状态", type = ApiParamType.STRING),
-            @Param(name = "level", desc = "级别", type = ApiParamType.INTEGER),
-            @Param(name = "entityType", desc = "对象类型", type = ApiParamType.STRING),
-            @Param(name = "entityName", desc = "对象名称", type = ApiParamType.STRING)
+            @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG)
     })
+    @Output({@Param(explode = AlertAttrDefineVo[].class)})
     @Description(desc = "返回告警属性列表")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
+        Long viewId = jsonObj.getLong("viewId");
         List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
         List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
         for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
             attrList.add(new AlertAttrDefineVo("attr_" + attrTypeVo.getName(), attrTypeVo.getLabel(), "attr", attrTypeVo.getType()));
+        }
+        if (viewId != null) {
+            AlertViewVo alertViewVo = alertViewMapper.getAlertViewById(viewId);
+            List<AlertAttrDefineVo> finalAttrList = new ArrayList<>();
+            if (alertViewVo != null && MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
+                for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
+                    String attr = alertViewVo.getConfig().getJSONArray("attrList").getString(i);
+                    Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();
+                    op.ifPresent(finalAttrList::add);
+                }
+            }
+            return finalAttrList;
         }
         return attrList;
     }

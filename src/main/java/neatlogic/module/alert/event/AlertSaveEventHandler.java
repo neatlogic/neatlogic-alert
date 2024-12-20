@@ -31,7 +31,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class AlertSaveEventHandler extends AlertEventHandlerBase {
@@ -44,13 +46,6 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Override
     public boolean isUnique() {
         return true;
-    }
-
-    @Override
-    public List<AlertEventType> excludeEvent() {
-        return new ArrayList<AlertEventType>() {{
-            this.add(AlertEventType.ALERT_SAVE);
-        }};
     }
 
     @Override
@@ -101,6 +96,13 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Override
     public String getLabel() {
         return "保存告警";
+    }
+
+    @Override
+    public Set<String> supportEventTypes() {
+        return new HashSet<String>() {{
+            this.add(AlertEventType.ALERT_INPUT.getName());
+        }};
     }
 
 }

@@ -15,38 +15,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.api.alertevent;
+package neatlogic.module.alert.api.alert;
 
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertEventPluginVo;
-import neatlogic.framework.alert.event.AlertEventHandlerFactory;
-import neatlogic.framework.alert.event.IAlertEventHandler;
+import neatlogic.framework.alert.dto.AlertOriginVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import org.apache.commons.collections4.CollectionUtils;
+import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.annotation.Resource;
+import java.io.IOException;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
-public class ListAlertEventPluginApi extends PrivateApiComponentBase {
+public class GetAlertOriginApi extends PrivateApiComponentBase {
 
+    @Resource
+    private AlertMapper alertMapper;
 
     @Override
     public String getToken() {
-        return "alert/event/plugin/list";
+        return "/alert/alertorigin/get";
     }
 
     @Override
     public String getName() {
-        return "列出所有告警事件插件";
+        return "获取告警原始数据";
     }
 
     @Override
@@ -54,19 +54,15 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "eventName", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING)})
-    @Output({@Param(explode = AlertEventPluginVo[].class)})
-    @Description(desc = "列出所有告警事件插件")
+    @Input({
+            @Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG),
+    })
+    @Output({
+            @Param(explode = AlertOriginVo.class)
+    })
+    @Description(desc = "获取告警原始数据")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws Exception {
-        String eventName = jsonObj.getString("eventName");
-        List<IAlertEventHandler> handlerList = AlertEventHandlerFactory.getHandlerList(eventName);
-        List<AlertEventPluginVo> pluginList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(handlerList)) {
-            for (IAlertEventHandler handler : handlerList) {
-                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel()));
-            }
-        }
-        return pluginList;
+    public Object myDoService(JSONObject jsonObj) throws IOException {
+        return alertMapper.getAlertOriginById(jsonObj.getLong("id"));
     }
 }

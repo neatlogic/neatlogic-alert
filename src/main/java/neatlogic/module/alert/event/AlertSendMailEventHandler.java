@@ -20,13 +20,17 @@ package neatlogic.module.alert.event;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
+import neatlogic.framework.alert.event.AlertEventType;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
-        System.out.println("我要发送邮件了，报警是" + alertVo.getTitle());
+        //System.out.println(alertEventHandlerVo.getEvent() + ":::我要发送邮件了，报警是" + alertVo.getTitle());
         return alertVo;
     }
 
@@ -38,6 +42,16 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     @Override
     public String getLabel() {
         return "发送邮件";
+    }
+
+    @Override
+    public Set<String> supportEventTypes() {
+        return new HashSet<String>() {{
+            this.add(AlertEventType.ALERT_INPUT.getName());
+            this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_DELETE.getName());
+            this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
+        }};
     }
 
 }
