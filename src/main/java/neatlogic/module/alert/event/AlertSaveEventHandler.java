@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.util.Md5Util;
@@ -84,6 +85,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         if (StringUtils.isBlank(alertVo.getUniqueKey())) {
             alertVo.generateUniqueKey();
         }
+        alertVo.setStatus(AlertStatus.NEW.getValue());
         alertService.saveAlert(alertVo);
         return alertVo;
     }
