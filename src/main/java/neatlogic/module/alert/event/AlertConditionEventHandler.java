@@ -127,6 +127,8 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                 if (isValid) {
                     IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
                     AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+                    //重复使用父事件的id
+                    subAlertEventHandlerVo.setId(alertEventHandlerVo.getId());
                     subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
                     subAlertEventHandlerVo.setName(handlerObj.getString("name"));
                     subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));

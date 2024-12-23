@@ -20,16 +20,19 @@ package neatlogic.module.alert.event;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertAttrDefineVo;
-import neatlogic.framework.alert.dto.AlertAttrTypeVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.asynchronization.threadlocal.TenantContext;
+import neatlogic.framework.scheduler.core.IJob;
+import neatlogic.framework.scheduler.core.SchedulerManager;
+import neatlogic.framework.scheduler.dto.JobObject;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.schedule.handler.AlertEventSendMailScheduleJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
@@ -48,6 +51,12 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
+    @Resource
+    private AlertEventMapper alertEventMapper;
+
+    @Resource
+    protected SchedulerManager schedulerManager;
+
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
@@ -57,6 +66,8 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             JSONArray ccUserList = config.getJSONArray("ccUserList");
             String title = config.getString("title");
             String content = config.getString("content");
+            Integer interval = config.getInteger("interval");
+            JSONArray statusList = config.getJSONArray("statusList");
             JSONObject paramObj = new JSONObject();
             JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
             for (AlertAttrDefineVo attr : attrList) {
@@ -82,13 +93,43 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                 }
             }
 
-            try {
-                if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
+
+            if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
+                try {
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
                 }
-            } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                if (interval != null && CollectionUtils.isNotEmpty(statusList)) {
+                    AlertEventHandlerDataVo dataVo = new AlertEventHandlerDataVo();
+                    dataVo.setAlertId(alertVo.getId());
+                    dataVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
+                    dataVo.setData(config);
+                    alertEventMapper.insertAlertEventHandlerData(dataVo);
+
+                    //加载定时作业
+                    IJob jobHandler = SchedulerManager.getHandler(AlertEventSendMailScheduleJob.class.getName());
+                    schedulerManager.loadJob(new JobObject.Builder(alertVo.getId().toString(), jobHandler.getGroupName(), jobHandler.getClassName())
+                            .addData("alertId", alertVo.getId())
+                            .addData("alertEventHandlerId", alertEventHandlerVo.getId())
+                            .withIntervalInSeconds(interval * 60)
+                            .build());
+                    System.out.println("##############创建作业");
+
+                }
             }
+
+            if (interval == null || CollectionUtils.isEmpty(statusList)) {
+                alertEventMapper.deleteAlertEventHandlerData(alertVo.getId(), alertEventHandlerVo.getId());
+                IJob jobHandler = SchedulerManager.getHandler(AlertEventSendMailScheduleJob.class.getName());
+                if (jobHandler != null) {
+                    String tenantUuid = TenantContext.get().getTenantUuid();
+                    JobObject jobObject = new JobObject.Builder(alertVo.getId().toString(), tenantUuid + "-ALERT-EVENT-MAIL", jobHandler.getClassName(), tenantUuid).build();
+                    schedulerManager.unloadJob(jobObject);
+                    System.out.println("##############删除作业1");
+                }
+            }
+
         }
         return alertVo;
     }
