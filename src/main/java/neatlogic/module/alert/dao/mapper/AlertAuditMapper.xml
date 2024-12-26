@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertAuditMapper">
+
+    <sql id="searchAlertAudit">
+        <where>
+            alert_id = #{alertId}
+        </where>
+    </sql>
+
+    <select id="selectAlertAuditCount" parameterType="neatlogic.framework.alert.dto.AlertAuditVo" resultType="int">
+        select count(1)
+        from alert_audit
+        <include refid="searchAlertAudit"></include>
+    </select>
+
+    <select id="selectAlertAudit" parameterType="neatlogic.framework.alert.dto.AlertAuditVo"
+            resultType="neatlogic.framework.alert.dto.AlertAuditVo">
+        select
+        id,
+        alert_id as alertId,
+        input_user as inputUser,
+        input_from as inputFrom,
+        input_time as inputTime,
+        attr_name as attrName,
+        old_value as oldValueListStr,
+        new_value as newValueListStr
+        from alert_audit
+        <include refid="searchAlertAudit"></include>
+        order by id desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <insert id="insertAlertAudit" parameterType="neatlogic.framework.alert.dto.AlertAuditVo">
+        insert into alert_audit
+        (id,
+         alert_id,
+         input_user,
+         input_from,
+         input_time,
+         attr_name,
+         old_value,
+         new_value)
+        values (#{id},
+                #{alertId},
+                #{inputUser},
+                #{inputFrom},
+                now(),
+                #{attrName},
+                #{oldValueListStr, typeHandler=CompressHandler},
+                #{newValueListStr, typeHandler=CompressHandler})
+    </insert>
+
+</mapper>

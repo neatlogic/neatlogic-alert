@@ -180,7 +180,6 @@ public class AlertEventSendMailScheduleJob extends JobBase {
 
             try {
                 if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
-                    System.out.println("#########发送邮件2");
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
                 } else {
                     needRun = false;

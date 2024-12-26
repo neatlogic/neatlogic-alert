@@ -25,6 +25,9 @@ import java.util.List;
 
 public interface IAlertService {
     @Transactional
+    void handleAlert(AlertVo alertVo);
+
+    @Transactional
     void saveAlert(AlertVo alertVo);
 
     List<AlertVo> searchAlert(AlertVo alertVo);

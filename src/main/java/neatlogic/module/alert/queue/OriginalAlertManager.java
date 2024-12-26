@@ -68,7 +68,7 @@ public class OriginalAlertManager {
 
     @PostConstruct
     public void init() {
-        Thread t = new Thread(new NeatLogicThread("ALERT-MANAGER") {
+        Thread t = new Thread(new NeatLogicThread("ALERT-ORIGIN-MANAGER") {
             @Override
             protected void execute() {
                 OriginalAlertVo originalAlertVo = null;

@@ -18,26 +18,31 @@
 package neatlogic.module.alert.service;
 
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertRelVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
+import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
+import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
+import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
+import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
+import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
-import neatlogic.module.alert.queue.AlertActionManager;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +51,60 @@ public class AlertServiceImpl implements IAlertService {
     private AlertMapper alertMapper;
 
     @Resource
+    private AlertCommentMapper alertCommentMapper;
+
+    @Resource
+    private AlertAuditMapper alertAuditMapper;
+    @Resource
     private AlertEventMapper alertEventMapper;
+
+    @Override
+    public void handleAlert(AlertVo alertVo) {
+        AlertVo oldAlertVo = alertMapper.getAlertById(alertVo.getId());
+        if (oldAlertVo == null) {
+            throw new AlertNotFoundException(alertVo.getId());
+        }
+        boolean hasChange = false;
+        if (!oldAlertVo.getStatus().equalsIgnoreCase(alertVo.getStatus())) {
+            hasChange = true;
+            String oldStatus = oldAlertVo.getStatus();
+            oldAlertVo.setStatus(alertVo.getStatus());
+            alertMapper.updateAlertStatus(alertVo);
+
+            AlertAuditVo alertAuditVo = new AlertAuditVo();
+            alertAuditVo.setAlertId(alertVo.getId());
+            alertAuditVo.setAttrName("const_status");
+            alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
+            alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
+            alertAuditVo.addOldValue(oldStatus);
+            alertAuditVo.addNewValue(alertVo.getStatus());
+            alertAuditMapper.insertAlertAudit(alertAuditVo);
+
+            AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
+
+            if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
+                AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-STATUS-UPDATER");
+                afterTransactionJob.execute(new ChildAlertStatusUpdateJob(alertVo));
+            }
+        }
+
+        if (StringUtils.isNotBlank(alertVo.getComment())) {
+            hasChange = true;
+            AlertCommentVo alertCommentVo = new AlertCommentVo();
+            alertCommentVo.setComment(alertVo.getComment());
+            alertCommentVo.setAlertId(alertVo.getId());
+            alertCommentVo.setCommentUser(UserContext.get().getUserUuid(true));
+            alertCommentMapper.insertAlertComment(alertCommentVo);
+        }
+
+        if (hasChange) {
+            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+            if (indexHandler == null) {
+                throw new ElasticSearchIndexNotFoundException("ALERT");
+            }
+            indexHandler.createDocument(alertVo.getId());
+        }
+    }
 
     @Override
     public void saveAlert(AlertVo alertVo) {
@@ -72,13 +130,10 @@ public class AlertServiceImpl implements IAlertService {
             throw new ElasticSearchIndexNotFoundException("ALERT");
         }
         indexHandler.createDocument(alertVo);
-        AfterTransactionJob<AlertVo> job = new AfterTransactionJob<>("AFTER-SAVE-ALERT");
-        job.execute(alertVo, AlertActionManager::handler);
     }
 
     @Override
     public List<AlertVo> searchAlert(AlertVo alertVo) {
-
         IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
         IndexResultVo indexResultVo = index.searchDocument(alertVo, 1, 20);
         if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {

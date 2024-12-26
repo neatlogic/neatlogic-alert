@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertCommentMapper">
+    <sql id="searchAlertComment">
+        <where>
+            <if test="alertId != null">
+                alert_id = #{alertId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="searchAlertCommentCount" parameterType="neatlogic.framework.alert.dto.AlertCommentVo" resultType="int">
+        select count(1)
+        from alert_comment
+        <include refid="searchAlertComment"></include>
+    </select>
+
+    <select id="searchAlertComment" parameterType="neatlogic.framework.alert.dto.AlertCommentVo"
+            resultType="neatlogic.framework.alert.dto.AlertCommentVo">
+        select
+        id,
+        alert_id as alertId,
+        comment,
+        comment_time as commentTime,
+        comment_user as commentUser
+        from alert_comment
+        <include refid="searchAlertComment"></include>
+        order by id desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="getAlertCommentByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertCommentVo">
+        select id,
+               alert_id     as alertId,
+               comment,
+               comment_time as commentTime,
+               comment_user as commentUser
+        from alert_comment
+        where alert_id = #{value}
+        order by id desc
+    </select>
+
+    <insert id="insertAlertComment" parameterType="neatlogic.framework.alert.dto.AlertCommentVo">
+        insert into alert_comment
+        (id,
+         alert_id,
+         comment,
+         comment_time,
+         comment_user)
+        values (#{id},
+                #{alertId},
+                #{comment},
+                now(),
+                #{commentUser})
+    </insert>
+</mapper>

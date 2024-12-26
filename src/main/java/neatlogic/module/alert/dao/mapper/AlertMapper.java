@@ -8,6 +8,8 @@ import neatlogic.framework.alert.dto.OriginalAlertVo;
 import java.util.List;
 
 public interface AlertMapper {
+    List<AlertVo> getAlertByParentId(Long parentId);
+
     AlertOriginVo getAlertOriginById(Long id);
 
     List<AlertVo> searchAlert(AlertVo alertVo);
@@ -18,9 +20,10 @@ public interface AlertMapper {
 
     AlertVo getAlertByUniqueKey(String uniqueKey);
 
-    void updateAlert(AlertVo alertVo);
+    void updateAlertStatus(AlertVo alertVo);
 
     void saveAlertRel(AlertRelVo alertRelVo);
+
 
     void insertAlert(AlertVo alertVo);
 

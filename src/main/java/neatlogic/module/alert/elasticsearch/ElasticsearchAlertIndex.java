@@ -36,6 +36,7 @@ import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentEx
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
+import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,6 +61,9 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Resource
     private AlertMapper alertMapper;
+
+    @Resource
+    private AlertCommentMapper alertCommentMapper;
 
     @Override
     public String getName() {
@@ -132,32 +136,40 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         Query query = null;
                         switch (expression) {
                             case "equal":
-                                query = new Query.Builder()
-                                        .bool(b -> b.should(values.stream()
-                                                .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
-                                                .collect(Collectors.toList())))
-                                        .build();
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.should(values.stream()
+                                                    .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
+                                                    .collect(Collectors.toList())))
+                                            .build();
+                                }
                                 break;
                             case "notequal":
-                                query = new Query.Builder()
-                                        .bool(b -> b.mustNot(values.stream()
-                                                .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
-                                                .collect(Collectors.toList())))
-                                        .build();
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.mustNot(values.stream()
+                                                    .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
+                                                    .collect(Collectors.toList())))
+                                            .build();
+                                }
                                 break;
                             case "like":
-                                query = new Query.Builder()
-                                        .bool(b -> b.should(values.stream()
-                                                .map(value -> Query.of(q -> q.match(w -> w.field(transformField(field)).query(value.toString()).operator(Operator.And))))
-                                                .collect(Collectors.toList())))
-                                        .build();
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.should(values.stream()
+                                                    .map(value -> Query.of(q -> q.match(w -> w.field(transformField(field)).query(value.toString()).operator(Operator.And))))
+                                                    .collect(Collectors.toList())))
+                                            .build();
+                                }
                                 break;
                             case "notlike":
-                                query = new Query.Builder()
-                                        .bool(b -> b.mustNot(values.stream()
-                                                .map(value -> Query.of(q -> q.match(w -> w.field(transformField(field)).query(value.toString()))))
-                                                .collect(Collectors.toList())))
-                                        .build();
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.mustNot(values.stream()
+                                                    .map(value -> Query.of(q -> q.match(w -> w.field(transformField(field)).query(value.toString()))))
+                                                    .collect(Collectors.toList())))
+                                            .build();
+                                }
                                 break;
                             case "range":
                                 if (values.size() == 2) {
@@ -282,6 +294,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         while (CollectionUtils.isNotEmpty(alertList)) {
             for (AlertVo alert : alertList) {
                 if (isAll || !this.isDocumentExists(alert)) {
+                    alert.setCommentList(alertCommentMapper.getAlertCommentByAlertId(alertVo.getId()));
                     this.createDocument(alert);
                 }
             }
@@ -373,14 +386,15 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("type", alertVo.getType());
         document.put("status", alertVo.getStatus());
         document.put("source", alertVo.getSource());
-        document.put("isDelete", false);
+        //document.put("isDelete", false);
         document.put("uniqueKey", alertVo.getUniqueKey());
-        document.put("alertCount", alertVo.getAlertCount());
+        //document.put("alertCount", alertVo.getAlertCount());
         document.put("entityType", alertVo.getEntityType());
         document.put("entityName", alertVo.getEntityName());
         document.put("ip", alertVo.getIp());
         document.put("port", alertVo.getPort());
         document.put("attrObj", alertVo.getAttrObj());
+        document.put("commentList", alertVo.getCommentList());
         //Map<String, Object> document = JSON.parseObject(JSON.toJSONString(alertVo));
 
 
@@ -397,6 +411,15 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             //throw new ElasticSearchCreateDocumentException(e);
+        }
+    }
+
+    @Override
+    protected void myCreateDocument(Long targetId) {
+        AlertVo alertVo = alertMapper.getAlertById(targetId);
+        if (alertVo != null) {
+            alertVo.setCommentList(alertCommentMapper.getAlertCommentByAlertId(targetId));
+            this.myCreateDocument(alertVo);
         }
     }
 }
