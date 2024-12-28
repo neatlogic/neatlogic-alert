@@ -97,11 +97,13 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
+                    //System.out.println("#################发送邮件成功Event：" + alertVo.getId());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
                 if (interval != null && CollectionUtils.isNotEmpty(statusList)) {
                     AlertEventHandlerDataVo dataVo = new AlertEventHandlerDataVo();
+                    dataVo.setHandler(alertEventHandlerVo.getHandler());
                     dataVo.setAlertId(alertVo.getId());
                     dataVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
                     dataVo.setData(config);
@@ -114,8 +116,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                             .addData("alertEventHandlerId", alertEventHandlerVo.getId())
                             .withIntervalInSeconds(interval * 60)
                             .build());
-                    System.out.println("##############创建作业");
-
+                    //System.out.println("##############创建作业Event：" + alertVo.getId());
                 }
             }
 
@@ -126,7 +127,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                     String tenantUuid = TenantContext.get().getTenantUuid();
                     JobObject jobObject = new JobObject.Builder(alertVo.getId().toString(), tenantUuid + "-ALERT-EVENT-MAIL", jobHandler.getClassName(), tenantUuid).build();
                     schedulerManager.unloadJob(jobObject);
-                    System.out.println("##############删除作业1");
+                    //System.out.println("##############删除作业Event：" + alertVo.getId());
                 }
             }
 
@@ -152,6 +153,18 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
+    }
+
+    @Override
+    public List<AlertEventHandlerConfigVo> getHandlerConfig(AlertEventHandlerVo alertEventHandlerVo) {
+        List<AlertEventHandlerConfigVo> configList = new ArrayList<>();
+        AlertEventHandlerConfigVo alertEventHandlerConfigVo = new AlertEventHandlerConfigVo();
+        alertEventHandlerConfigVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
+        alertEventHandlerConfigVo.setUuid(alertEventHandlerVo.getUuid());
+        alertEventHandlerConfigVo.setHandler(alertEventHandlerVo.getHandler());
+        alertEventHandlerConfigVo.setConfig(alertEventHandlerVo.getConfig());
+        configList.add(alertEventHandlerConfigVo);
+        return configList;
     }
 
 }

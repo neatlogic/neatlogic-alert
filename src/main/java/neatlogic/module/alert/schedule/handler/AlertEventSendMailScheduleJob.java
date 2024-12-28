@@ -21,10 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
-import neatlogic.framework.alert.dto.AlertAttrDefineVo;
-import neatlogic.framework.alert.dto.AlertAttrTypeVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerDataVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.scheduler.core.JobBase;
@@ -63,28 +60,65 @@ public class AlertEventSendMailScheduleJob extends JobBase {
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
 
+    private JSONObject getConfig(Long alertId, Long alertEventHandlerId) {
+        JSONObject config = null;
+        AlertEventHandlerVo alertEventHandlerVo = alertEventMapper.getAlertEventHandlerById(alertEventHandlerId);
+        if (alertEventHandlerVo != null) {
+            config = alertEventHandlerVo.getConfig();
+        } else {
+            AlertEventHandlerDataVo alertEventHandlerDataVo = alertEventMapper.getAlertEventHandlerData(alertId, alertEventHandlerId);
+            if (alertEventHandlerDataVo != null) {
+                config = alertEventHandlerDataVo.getData();
+            }
+        }
+        return config;
+    }
+
     @Override
     public Boolean isMyHealthy(JobObject jobObject) {
         Long alertId = (Long) jobObject.getData("alertId");
         Long alertEventHandlerId = (Long) jobObject.getData("alertEventHandlerId");
-        AlertEventHandlerDataVo alertEventHandlerDataVo = alertEventMapper.getAlertEventHandlerData(alertId, alertEventHandlerId);
-        return alertEventHandlerDataVo != null &&
-                MapUtils.isNotEmpty(alertEventHandlerDataVo.getData()) &&
-                alertEventHandlerDataVo.getData().getInteger("interval") != null &&
-                CollectionUtils.isNotEmpty(alertEventHandlerDataVo.getData().getJSONArray("statusList"));
+        JSONObject config = getConfig(alertId, alertEventHandlerId);
+        boolean needRun = true;
 
+        AlertVo alertVo = alertMapper.getAlertById(alertId);
+
+        if (alertVo == null || MapUtils.isEmpty(config)) {
+            needRun = false;
+        }
+
+        if (needRun) {
+            if (CollectionUtils.isEmpty(config.getJSONArray("statusList"))) {
+                needRun = false;
+            }
+        }
+
+
+        if (needRun) {
+            JSONArray statusList = config.getJSONArray("statusList");
+            if (!statusList.contains(alertVo.getStatus())) {
+                needRun = false;
+            }
+        }
+        if (!needRun) {
+            //System.out.println("#########################删除作业Health Job：" + alertId);
+            schedulerManager.unloadJob(jobObject);
+            //删除event数据
+            alertEventMapper.deleteAlertEventHandlerData(alertId, alertEventHandlerId);
+        }
+        return needRun;
     }
 
     @Override
     public void reloadJob(JobObject jobObject) {
         Long alertId = (Long) jobObject.getData("alertId");
         Long alertEventHandlerId = (Long) jobObject.getData("alertEventHandlerId");
-        AlertEventHandlerDataVo alertEventHandlerDataVo = alertEventMapper.getAlertEventHandlerData(alertId, alertEventHandlerId);
-        if (alertEventHandlerDataVo != null &&
-                alertEventHandlerDataVo.getData() != null &&
-                alertEventHandlerDataVo.getData().getInteger("interval") != null) {
+        JSONObject config = getConfig(alertId, alertEventHandlerId);
+
+        if (MapUtils.isNotEmpty(config) &&
+                config.getInteger("interval") != null) {
             String tenantUuid = TenantContext.get().getTenantUuid();
-            Integer interval = alertEventHandlerDataVo.getData().getInteger("interval");
+            Integer interval = config.getInteger("interval");
             JobObject newJobObject = new JobObject.Builder(alertId.toString(), this.getGroupName(), this.getClassName(), tenantUuid)
                     .withIntervalInSeconds(interval * 60).build();
             schedulerManager.loadJob(newJobObject);
@@ -98,19 +132,30 @@ public class AlertEventSendMailScheduleJob extends JobBase {
         List<AlertEventHandlerDataVo> alertEventHandlerDataList = alertEventMapper.listAlertEventHandlerData();
         if (CollectionUtils.isNotEmpty(alertEventHandlerDataList)) {
             for (AlertEventHandlerDataVo alertEventHandlerDataVo : alertEventHandlerDataList) {
-                JSONObject config = alertEventHandlerDataVo.getData();
-                Integer interval = config.getInteger("interval");
-                JSONArray statusList = config.getJSONArray("statusList");
-                if (interval != null && CollectionUtils.isNotEmpty(statusList)) {
-                    AlertVo alertVo = alertMapper.getAlertById(alertEventHandlerDataVo.getAlertId());
-                    if (alertVo != null && statusList.contains(alertVo.getStatus())) {
-                        JobObject newJobObject = new JobObject.Builder(alertEventHandlerDataVo.getAlertId().toString(), this.getGroupName(), this.getClassName(), tenantUuid)
-                                .withIntervalInSeconds(interval * 60)
-                                .addData("alertId", alertEventHandlerDataVo.getAlertId())
-                                .addData("alertEventHandlerId", alertEventHandlerDataVo.getAlertEventHandlerId()).build();
-                        schedulerManager.loadJob(newJobObject);
+                //优先使用AlertEventHandler的设置，没有才使用data的设置
+                JSONObject config;
+                AlertEventHandlerVo alertEventHandlerVo = alertEventMapper.getAlertEventHandlerById(alertEventHandlerDataVo.getAlertEventHandlerId());
+                if (alertEventHandlerVo != null) {
+                    config = alertEventHandlerVo.getConfig();
+                } else {
+                    config = alertEventHandlerDataVo.getData();
+                }
+                if (MapUtils.isNotEmpty(config)) {
+                    Integer interval = config.getInteger("interval");
+                    JSONArray statusList = config.getJSONArray("statusList");
+                    if (interval != null && CollectionUtils.isNotEmpty(statusList)) {
+                        AlertVo alertVo = alertMapper.getAlertById(alertEventHandlerDataVo.getAlertId());
+                        if (alertVo != null && statusList.contains(alertVo.getStatus())) {
+                            JobObject newJobObject = new JobObject.Builder(alertEventHandlerDataVo.getAlertId().toString(), this.getGroupName(), this.getClassName(), tenantUuid)
+                                    .withIntervalInSeconds(interval * 60)
+                                    .addData("alertId", alertEventHandlerDataVo.getAlertId())
+                                    .addData("alertEventHandlerId", alertEventHandlerDataVo.getAlertEventHandlerId()).build();
+                            //System.out.println("#########初始化作业Job" + alertEventHandlerDataVo.getAlertId() + "-" + alertEventHandlerDataVo.getAlertEventHandlerId());
+                            schedulerManager.loadJob(newJobObject);
+                        }
                     }
                 }
+                //TODO 考虑是否需要补充删除data的逻辑
             }
         }
     }
@@ -119,27 +164,24 @@ public class AlertEventSendMailScheduleJob extends JobBase {
     public void executeInternal(JobExecutionContext context, JobObject jobObject) {
         Long alertId = (Long) jobObject.getData("alertId");
         Long alertEventHandlerId = (Long) jobObject.getData("alertEventHandlerId");
-        AlertEventHandlerDataVo alertEventHandlerDataVo = alertEventMapper.getAlertEventHandlerData(alertId, alertEventHandlerId);
-        AlertVo alertVo = alertMapper.getAlertById(alertId);
-        JSONObject config = null;
         boolean needRun = true;
+        JSONObject config = getConfig(alertId, alertEventHandlerId);
 
-        if (alertVo == null || alertEventHandlerDataVo == null) {
+        AlertVo alertVo = alertMapper.getAlertById(alertId);
+
+        if (alertVo == null || MapUtils.isEmpty(config)) {
             needRun = false;
         }
 
         if (needRun) {
-            config = alertEventHandlerDataVo.getData();
-            if (MapUtils.isEmpty(config) ||
-                    config.getInteger("interval") == null ||
-                    CollectionUtils.isEmpty(config.getJSONArray("statusList"))) {
+            if (CollectionUtils.isEmpty(config.getJSONArray("statusList"))) {
                 needRun = false;
             }
         }
 
 
         if (needRun) {
-            JSONArray statusList = alertEventHandlerDataVo.getData().getJSONArray("statusList");
+            JSONArray statusList = config.getJSONArray("statusList");
             if (!statusList.contains(alertVo.getStatus())) {
                 needRun = false;
             }
@@ -180,6 +222,7 @@ public class AlertEventSendMailScheduleJob extends JobBase {
 
             try {
                 if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
+                    //System.out.println("############发送邮件成功Job：" + alertVo.getId());
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
                 } else {
                     needRun = false;
@@ -189,8 +232,10 @@ public class AlertEventSendMailScheduleJob extends JobBase {
             }
         }
         if (!needRun) {
-            System.out.println("##############删除作业2");
+            //System.out.println("###########删除作业Job：" + alertId);
             schedulerManager.unloadJob(jobObject);
+            //删除event数据
+            alertEventMapper.deleteAlertEventHandlerData(alertId, alertEventHandlerId);
         }
     }
 

@@ -92,6 +92,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by alert_time desc
     </select>
 
+    <select id="checkAlertIsExists" parameterType="java.lang.Long" resultType="int">
+        select count(1)
+        from alert
+        where id = #{value}
+    </select>
+
     <sql id="searchAlertColumn">
         select a.id,
                (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,

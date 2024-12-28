@@ -20,10 +20,8 @@ package neatlogic.module.alert.event;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertAttrDefineVo;
-import neatlogic.framework.alert.dto.AlertAttrTypeVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.dto.condition.ConditionGroupVo;
 import neatlogic.framework.alert.dto.condition.ConditionVo;
 import neatlogic.framework.alert.enums.AlertAttr;
@@ -52,9 +50,11 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
+    @Resource
+    private AlertEventMapper alertEventMapper;
+
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
-        //System.out.println(alertEventHandlerVo.getEvent() + ":::::::::::" + alertEventHandlerVo.getConfig());
         if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
             JSONArray eventConditionList = alertEventHandlerVo.getConfig().getJSONArray("conditionList");
             for (int e = 0; e < eventConditionList.size(); e++) {
@@ -126,14 +126,10 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                 }
                 if (isValid) {
                     IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
-                    AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
-                    //重复使用父事件的id
-                    subAlertEventHandlerVo.setId(alertEventHandlerVo.getId());
-                    subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
-                    subAlertEventHandlerVo.setName(handlerObj.getString("name"));
-                    subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
-                    subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
-                    alertVo = eventHandler.trigger(subAlertEventHandlerVo, alertVo);
+                    AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+                    if (subHandler != null) {
+                        alertVo = eventHandler.trigger(subHandler, alertVo);
+                    }
                 }
             }
         }
@@ -158,6 +154,53 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
+    }
+
+    @Override
+    public void makeupChildHandler(AlertEventHandlerVo alertEventHandlerVo) {
+        if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
+            JSONArray eventConditionList = alertEventHandlerVo.getConfig().getJSONArray("conditionList");
+            for (int e = 0; e < eventConditionList.size(); e++) {
+                JSONObject eventConditionObj = eventConditionList.getJSONObject(e);
+                JSONObject handlerObj = eventConditionObj.getJSONObject("handler");
+                IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+
+                subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
+                subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
+                subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
+                eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+            }
+        }
+    }
+
+    @Override
+    public List<AlertEventHandlerConfigVo> getHandlerConfig(AlertEventHandlerVo alertEventHandlerVo) {
+        List<AlertEventHandlerConfigVo> configList = new ArrayList<>();
+        if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
+            JSONArray eventConditionList = alertEventHandlerVo.getConfig().getJSONArray("conditionList");
+            for (int e = 0; e < eventConditionList.size(); e++) {
+                JSONObject eventConditionObj = eventConditionList.getJSONObject(e);
+                JSONObject handlerObj = eventConditionObj.getJSONObject("handler");
+                IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+                //重复使用父事件的id
+                subAlertEventHandlerVo.setId(alertEventHandlerVo.getId());
+                subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                configList.addAll(eventHandler.getHandlerConfig(subAlertEventHandlerVo));
+            }
+        }
+        return configList;
     }
 
 }

@@ -88,35 +88,55 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
         if (!handler.supportEventTypes().contains(alertEventHandlerVo.getEvent())) {
             throw new AlertEventHandlerNotSupportException(handler.getLabel(), alertEventHandlerVo.getEvent());
         }
-        //先删除所有子组件
-        AlertEventHandlerVo param = new AlertEventHandlerVo();
-        param.setParentId(alertEventHandlerVo.getId());
-        List<AlertEventHandlerVo> subHandlerList = alertEventMapper.listEventHandler(param);
-        if (CollectionUtils.isNotEmpty(subHandlerList)) {
-            for (AlertEventHandlerVo subHandler : subHandlerList) {
-                alertEventMapper.deleteAlertEventHandlerById(subHandler.getId());
-            }
-        }
+
         Integer sort = alertEventMapper.getAlertEventHandlerMaxSort(alertEventHandlerVo);
         if (sort == null) {
             sort = 0;
         }
         sort++;
         alertEventHandlerVo.setSort(sort);
+        handler.makeupChildHandler(alertEventHandlerVo);
         alertEventMapper.saveAlertEventHandler(alertEventHandlerVo);
         saveSubHandler(alertEventHandlerVo.getId(), alertEventHandlerVo);
         return alertEventHandlerVo.getId();
     }
 
     private void saveSubHandler(Long parentId, AlertEventHandlerVo alertEventHandlerVo) {
+        //只获取直系子handler
+        List<AlertEventHandlerVo> subHandlerList = alertEventMapper.getAlertEventHandlerByParentId(alertEventHandlerVo.getId());
+
         if (CollectionUtils.isNotEmpty(alertEventHandlerVo.getHandlerList())) {
+            //根据uuid过滤出需要删除的直系子handler
+            if (CollectionUtils.isNotEmpty(subHandlerList)) {
+                subHandlerList.removeAll(alertEventHandlerVo.getHandlerList());
+            }
             int sort = 1;
             for (AlertEventHandlerVo handlerVo : alertEventHandlerVo.getHandlerList()) {
+                AlertEventHandlerVo oldHandlerVo = alertEventMapper.getAlertEventHandlerByUuid(handlerVo.getUuid());
+                if(oldHandlerVo!=null){
+                    handlerVo.setId(oldHandlerVo.getId());
+                }
                 handlerVo.setParentId(parentId);
                 handlerVo.setSort(sort);
                 alertEventMapper.saveAlertEventHandler(handlerVo);
                 saveSubHandler(handlerVo.getId(), handlerVo);
                 sort += 1;
+            }
+        }
+
+        //删除没有用的子组件
+        if (CollectionUtils.isNotEmpty(subHandlerList)) {
+            for (AlertEventHandlerVo subHandler : subHandlerList) {
+                AlertEventHandlerVo param = new AlertEventHandlerVo();
+                param.setParentId(subHandler.getId());
+                //级联查出所有子模块再删除
+                List<AlertEventHandlerVo> subSubHandlerList = alertEventMapper.listEventHandler(param);
+                if (CollectionUtils.isNotEmpty(subSubHandlerList)) {
+                    for (AlertEventHandlerVo subSubHandler : subSubHandlerList) {
+                        alertEventMapper.deleteAlertEventHandlerById(subSubHandler.getId());
+                    }
+                }
+                alertEventMapper.deleteAlertEventHandlerById(subHandler.getId());
             }
         }
     }
