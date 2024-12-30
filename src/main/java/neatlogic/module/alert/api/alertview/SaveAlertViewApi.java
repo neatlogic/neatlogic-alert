@@ -47,7 +47,7 @@ public class SaveAlertViewApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "alert/alert/view/save";
+        return "alert/view/save";
     }
 
     @Override

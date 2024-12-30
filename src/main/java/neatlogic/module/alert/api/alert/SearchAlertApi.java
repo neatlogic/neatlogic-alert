@@ -63,7 +63,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "/alert/alert/search";
+        return "/alert/search";
     }
 
     @Override

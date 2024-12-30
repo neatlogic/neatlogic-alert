@@ -42,7 +42,7 @@ public class ListAlertViewApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "/alert/alert/view/list";
+        return "/alert/view/list";
     }
 
     @Override

@@ -41,7 +41,7 @@ public class HandleAlertApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "alert/alert/handle";
+        return "alert/handle";
     }
 
     @Override

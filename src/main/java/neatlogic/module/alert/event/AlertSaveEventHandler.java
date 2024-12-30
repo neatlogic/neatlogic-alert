@@ -25,7 +25,6 @@ import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.util.Md5Util;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -41,8 +40,6 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
-    @Resource
-    private AlertMapper alertMapper;
 
     @Override
     public boolean isUnique() {

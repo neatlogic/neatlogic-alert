@@ -91,6 +91,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         return alertVo.getFromAlertId() == null;
     }
 
+
+
     @Override
     public Query buildQuery(AlertVo alertVo) {
         JSONObject rule = new JSONObject();

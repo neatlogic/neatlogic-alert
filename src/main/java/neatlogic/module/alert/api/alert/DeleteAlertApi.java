@@ -17,40 +17,31 @@
 
 package neatlogic.module.alert.api.alert;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
 import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
-import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
+import neatlogic.module.alert.service.IAlertService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.DELETE)
+@Transactional
 public class DeleteAlertApi extends PrivateApiComponentBase {
 
     @Resource
-    private AlertMapper alertMapper;
-
-    @Resource
-    private AlertTypeMapper alertTypeMapper;
-
-    @Resource
-    private FileMapper fileMapper;
+    private IAlertService alertService;
 
     @Override
     public String getToken() {
@@ -68,14 +59,15 @@ public class DeleteAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG)
+            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG),
+            @Param(name = "isDeleteChildAlert", isRequired = true, rule = "0,1", desc = "是否删除子告警", type = ApiParamType.INTEGER)
     })
     @Description(desc = "删除告警")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
-        AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
-        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-        index.deleteDocument(alertVo);
+        Long alertId = jsonObj.getLong("id");
+        Integer isDeleteChildAlert = jsonObj.getInteger("isDeleteChildAlert");
+        alertService.deleteAlert(alertId, Objects.equals(1, isDeleteChildAlert));
         return null;
     }
 

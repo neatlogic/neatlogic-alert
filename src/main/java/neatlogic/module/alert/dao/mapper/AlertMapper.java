@@ -8,6 +8,10 @@ import neatlogic.framework.alert.dto.OriginalAlertVo;
 import java.util.List;
 
 public interface AlertMapper {
+    List<Long> listToAlertIdByFromAlertId(Long fromAlertId);
+
+    List<Long> listAllToAlertIdByFromAlertId(Long fromAlertId);
+
     int checkAlertIsExists(Long id);
 
     List<AlertVo> getAlertByParentId(Long parentId);
@@ -26,12 +30,13 @@ public interface AlertMapper {
 
     void saveAlertRel(AlertRelVo alertRelVo);
 
-
     void insertAlert(AlertVo alertVo);
 
     void saveAlertAttr(AlertVo alertVo);
 
     void insertAlertOrigin(OriginalAlertVo originalAlertVo);
+
+    void deleteAlertById(Long alertId);
 
     void deleteAlertAttr(Long alertId);
 

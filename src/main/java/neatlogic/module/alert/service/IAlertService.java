@@ -21,9 +21,13 @@ import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface IAlertService {
+    @Transactional
+    void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException;
+
     @Transactional
     void handleAlert(AlertVo alertVo);
 

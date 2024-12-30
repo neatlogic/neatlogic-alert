@@ -17,6 +17,12 @@
 
 package neatlogic.module.alert.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.InlineScript;
+import co.elastic.clients.elasticsearch._types.Script;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventManager;
@@ -25,7 +31,9 @@ import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
+import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
+import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
@@ -36,9 +44,12 @@ import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +58,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class AlertServiceImpl implements IAlertService {
+    private final Logger logger = LoggerFactory.getLogger(AlertServiceImpl.class);
     @Resource
     private AlertMapper alertMapper;
 
@@ -57,6 +69,49 @@ public class AlertServiceImpl implements IAlertService {
     private AlertAuditMapper alertAuditMapper;
     @Resource
     private AlertEventMapper alertEventMapper;
+
+    @Override
+    public void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException {
+        AlertVo alertVo = alertMapper.getAlertById(alertId);
+        if (alertVo != null) {
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            if (isDeleteChildAlert) {
+                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
+                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                    for (Long toAlertId : toAlertIdList) {
+                        deleteAlert(toAlertId, false);
+                    }
+                }
+            } else {
+                //删除es中fromAlertId，只需要查询直系子节点
+                List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertVo.getId());
+                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                    ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+                    BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+                    for (Long toAlertId : toAlertIdList) {
+                        bulkRequestBuilder.operations(op -> op.update(u -> u
+                                .index(index.getIndexName())
+                                .id(toAlertId.toString())
+                                .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
+                        ));
+                    }
+                    // 执行批量请求
+                    BulkRequest bulkRequest = bulkRequestBuilder.build();
+                    BulkResponse result = client.bulk(bulkRequest);
+                    if (result.errors()) {
+                        for (BulkResponseItem item : result.items()) {
+                            if (item.error() != null) {
+                                throw new ElasticSearchDeleteFieldException(item.id(), "fromAlertId", item.error().reason());
+                            }
+                        }
+                    }
+                }
+            }
+            index.deleteDocument(alertVo);
+            alertMapper.deleteAlertById(alertVo.getId());
+            AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, alertVo);
+        }
+    }
 
     @Override
     public void handleAlert(AlertVo alertVo) {
@@ -135,7 +190,7 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public List<AlertVo> searchAlert(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-        IndexResultVo indexResultVo = index.searchDocument(alertVo, 1, 20);
+        IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
         if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
             alertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
             alertVo.setCurrentPage(indexResultVo.getCurrentPage());

@@ -16,10 +16,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+    <select id="listToAlertIdByFromAlertId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        SELECT to_alert_id
+        FROM alert_rel
+        WHERE from_alert_id = #{value}
+    </select>
+
+    <select id="listAllToAlertIdByFromAlertId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        WITH RECURSIVE AlertCTE AS (SELECT to_alert_id
+                                    FROM alert_rel
+                                    WHERE from_alert_id = #{value}
+                                    UNION ALL
+                                    SELECT ar.to_alert_id
+                                    FROM alert_rel ar
+                                             INNER JOIN
+                                         AlertCTE a
+                                         ON
+                                             ar.from_alert_id = a.to_alert_id)
+        SELECT DISTINCT to_alert_id
+        FROM AlertCTE
+    </select>
+
     <select id="getAlertByParentId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertVo">
         select a.id,
                a.status
-        from alert a join alert_rel b on a.id = b.to_alert_id
+        from alert a
+                 join alert_rel b on a.id = b.to_alert_id
         where b.from_alert_id = #{value}
     </select>
 
@@ -51,7 +73,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <result column="alertLevelLabel" property="label"/>
         </association>
     </resultMap>
-
 
 
     <select id="getAlertOriginById" parameterType="java.lang.Long"
@@ -163,7 +184,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </update>
 
 
-
     <insert id="saveAlertAttr" parameterType="neatlogic.framework.alert.dto.AlertVo">
         insert into alert_attr
             (alert_id, content)
@@ -228,6 +248,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         delete
         from alert_attr
         where alert_id = #{value}
+    </delete>
+
+    <delete id="deleteAlertById" parameterType="java.lang.Long">
+        delete a,b,c,d,e,f,g,h
+        from alert a
+                 left join alert_rel b on a.id = b.from_alert_id
+                 left join alert_rel c on a.id = c.to_alert_id
+                 left join alert_origin d on a.id = d.id
+                 left join alert_event_handler_data e on a.id = e.alert_id
+                 left join alert_attr f on a.id = f.alert_id
+                 left join alert_audit g on a.id = g.alert_id
+                 left join alert_comment h on a.id = h.alert_id
+        where a.id = #{value}
     </delete>
 
 </mapper>

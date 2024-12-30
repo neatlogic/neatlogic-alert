@@ -41,7 +41,7 @@ public class GetAlertApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "/alert/alert/get";
+        return "/alert/get";
     }
 
     @Override
