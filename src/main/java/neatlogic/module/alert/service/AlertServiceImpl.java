@@ -23,6 +23,7 @@ import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventManager;
@@ -50,6 +51,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -163,24 +165,34 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public void saveAlert(AlertVo alertVo) {
-        AlertVo oldAlertVo = alertMapper.getAlertByUniqueKey(alertVo.getUniqueKey());
-        if (oldAlertVo != null) {
-            if (oldAlertVo.getId().equals(alertVo.getId())) {
-                return;
+        IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+        if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            AlertVo oldAlertVo = alertMapper.getAlertByUniqueKey(alertVo.getUniqueKey());
+            if (oldAlertVo != null) {
+                oldAlertVo.setUpdateTime(alertVo.getUpdateTime());
+                if (oldAlertVo.getId().equals(alertVo.getId())) {
+                    return;
+                }
+                AlertRelVo alertRelVo = new AlertRelVo();
+                alertRelVo.setFromAlertId(oldAlertVo.getId());
+                alertRelVo.setToAlertId(alertVo.getId());
+                alertMapper.saveAlertRel(alertRelVo);
+                alertVo.setFromAlertId(oldAlertVo.getId());
+
+                alertMapper.updateAlertUpdateTime(oldAlertVo);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                indexHandler.updateDocument(oldAlertVo.getId(), new JSONObject() {{
+                    this.put("updateTime", sdf.format(oldAlertVo.getUpdateTime()));
+                }});
             }
-            AlertRelVo alertRelVo = new AlertRelVo();
-            alertRelVo.setFromAlertId(oldAlertVo.getId());
-            alertRelVo.setToAlertId(alertVo.getId());
-            alertMapper.saveAlertRel(alertRelVo);
-            alertVo.setFromAlertId(oldAlertVo.getId());
         }
+
         alertMapper.insertAlert(alertVo);
         AlertEventManager.doEvent(AlertEventType.ALERT_SAVE, alertVo);
 
         if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
             alertMapper.saveAlertAttr(alertVo);
         }
-        IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         if (indexHandler == null) {
             throw new ElasticSearchIndexNotFoundException("ALERT");
         }

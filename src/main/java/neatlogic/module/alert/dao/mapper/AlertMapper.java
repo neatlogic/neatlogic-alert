@@ -26,6 +26,8 @@ public interface AlertMapper {
 
     AlertVo getAlertByUniqueKey(String uniqueKey);
 
+    void updateAlertUpdateTime(AlertVo alertVo);
+
     void updateAlertStatus(AlertVo alertVo);
 
     void saveAlertRel(AlertRelVo alertRelVo);

@@ -79,9 +79,9 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(key));
             }
         }
-        if (StringUtils.isBlank(alertVo.getUniqueKey())) {
+        /*if (StringUtils.isBlank(alertVo.getUniqueKey())) {
             alertVo.generateUniqueKey();
-        }
+        }*/
         alertVo.setStatus(AlertStatus.NEW.getValue());
         alertService.saveAlert(alertVo);
         return alertVo;

@@ -92,7 +92,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
 
-
     @Override
     public Query buildQuery(AlertVo alertVo) {
         JSONObject rule = new JSONObject();
@@ -152,6 +151,54 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                             .bool(b -> b.mustNot(values.stream()
                                                     .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
                                                     .collect(Collectors.toList())))
+                                            .build();
+                                }
+                                break;
+                            case "gt":
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.must(
+                                                    Query.of(q -> q.range(r -> r
+                                                            .field(transformField(field))
+                                                            .gt(JsonData.of(values.getString(0)))
+                                                    ))
+                                            ))
+                                            .build();
+                                }
+                                break;
+                            case "lt":
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.must(
+                                                    Query.of(q -> q.range(r -> r
+                                                            .field(transformField(field))
+                                                            .lt(JsonData.of(values.getString(0)))
+                                                    ))
+                                            ))
+                                            .build();
+                                }
+                                break;
+                            case "gte":
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.must(
+                                                    Query.of(q -> q.range(r -> r
+                                                            .field(transformField(field))
+                                                            .gte(JsonData.of(values.getString(0)))
+                                                    ))
+                                            ))
+                                            .build();
+                                }
+                                break;
+                            case "lte":
+                                if (CollectionUtils.isNotEmpty(values)) {
+                                    query = new Query.Builder()
+                                            .bool(b -> b.must(
+                                                    Query.of(q -> q.range(r -> r
+                                                            .field(transformField(field))
+                                                            .lte(JsonData.of(values.getString(0)))
+                                                    ))
+                                            ))
                                             .build();
                                 }
                                 break;
@@ -331,7 +378,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("id", p -> p.long_(l -> l))                        // bigint -> long
                         .properties("fromAlertId", p -> p.long_(l -> l))
                         .properties("level", p -> p.integer(i -> i))                  // int -> integer
-                        .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))                     // varchar -> text
+                        .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
+                        .properties("updateTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm")))// varchar -> text
                         .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm"))) // datetime -> date
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
@@ -384,6 +432,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("fromAlertId", alertVo.getFromAlertId());
         document.put("level", alertVo.getLevel());
         document.put("title", alertVo.getTitle());
+        document.put("updateTime", sdf.format(alertVo.getUpdateTime()));
         document.put("alertTime", sdf.format(alertVo.getAlertTime()));
         document.put("type", alertVo.getType());
         document.put("status", alertVo.getStatus());

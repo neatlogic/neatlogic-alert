@@ -129,6 +129,10 @@ public class OriginalAlertManager {
                         alertVo.setAlertTime(new Date());
                     }
 
+                    if (alertVo.getUpdateTime() == null) {
+                        alertVo.setUpdateTime(alertVo.getAlertTime());
+                    }
+
                     alertVo.setId(originalAlertVo.getId());
                     AlertEventManager.doEvent(AlertEventType.ALERT_INPUT, alertVo);
                 }

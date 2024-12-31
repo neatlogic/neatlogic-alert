@@ -51,6 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="childAlertCount" property="childAlertCount"/>
         <result column="level" property="level"/>
         <result column="title" property="title"/>
+        <result column="updateTime" property="updateTime"/>
         <result column="alertTime" property="alertTime"/>
         <result column="type" property="type"/>
         <result column="status" property="status"/>
@@ -91,6 +92,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         select a.id,
                a.level,
                a.title,
+               a.update_time                                                                         as updateTime,
                a.alert_time                                                                          as alertTime,
                (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
                (select x.from_alert_id
@@ -110,7 +112,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         from (select * from alert order by alert_time limit #{startNum}, #{pageSize}) a
                  left join alert_attr b on a.id =
                                            b.alert_id
-        order by alert_time desc
+        order by update_time desc
     </select>
 
     <select id="checkAlertIsExists" parameterType="java.lang.Long" resultType="int">
@@ -125,6 +127,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                (select x.from_alert_id from alert_rel x where x.to_alert_id = a.id limit 1)          as fromAlertId,
                a.level,
                a.title,
+               a.update_time                                                                         as updateTime,
                a.alert_time                                                                          as alertTime,
                a.type,
                d.id                                                                                  as alertTypeId,
@@ -158,13 +161,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-        order by a.alert_time desc
+        order by a.update_time desc
     </select>
 
     <select id="getAlertById" parameterType="java.lang.Long" resultMap="alertResultMap">
         <include refid="searchAlertColumn"></include>
         where a.id = #{value}
-        order by a.alert_time desc
+        order by a.update_time desc
     </select>
 
 
@@ -180,6 +183,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     <update id="updateAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert
         set status = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="updateAlertUpdateTime" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert
+        set update_time = #{updateTime}
         where id = #{id}
     </update>
 
@@ -202,6 +211,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         (id,
          level,
          title,
+         update_time,
          alert_time,
          type,
          status,
@@ -215,6 +225,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         values (#{id},
                 #{level},
                 #{title},
+                #{updateTime},
                 #{alertTime},
                 #{type},
                 #{status},
