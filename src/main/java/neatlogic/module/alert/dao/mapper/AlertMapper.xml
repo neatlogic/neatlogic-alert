@@ -73,6 +73,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <result column="alertLevelColor" property="color"/>
             <result column="alertLevelLabel" property="label"/>
         </association>
+        <collection property="userList" ofType="neatlogic.framework.alert.dto.AlertUserVo">
+            <id column="alertUserId" property="userId"/>
+            <id column="alertUserAlertId" property="alertId"/>
+            <result column="alertUserName" property="userName"/>
+        </collection>
+        <collection property="teamList" ofType="neatlogic.framework.alert.dto.AlertTeamVo">
+            <id column="alertTeamUuid" property="teamUuid"/>
+            <id column="alertTeamAlertId" property="alertId"/>
+            <result column="alertTeamName" property="teamName"/>
+        </collection>
     </resultMap>
 
 
@@ -89,30 +99,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </select>
 
     <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
-        select a.id,
-               a.level,
-               a.title,
-               a.update_time                                                                         as updateTime,
-               a.alert_time                                                                          as alertTime,
-               (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
-               (select x.from_alert_id
-                from alert_rel x
-                where x.to_alert_id = a.id
-                limit 1)                                                                             as fromAlertId,
-               a.type,
-               a.status,
-               a.source,
-               a.unique_key                                                                          as uniqueKey,
-               a.alert_count                                                                         as alertCount,
-               a.entity_type                                                                         as entityType,
-               a.entity_name                                                                         as entityName,
-               a.ip,
-               a.port,
-               b.content
-        from (select * from alert order by alert_time limit #{startNum}, #{pageSize}) a
-                 left join alert_attr b on a.id =
-                                           b.alert_id
-        order by update_time desc
+        <include refid="searchAlertColumn"></include>
+        JOIN
+        (select id from alert order by update_time limit #{startNum}, #{pageSize}) tmp
+        ON a.id = tmp.id
+        order by a.update_time desc
     </select>
 
     <select id="checkAlertIsExists" parameterType="java.lang.Long" resultType="int">
@@ -145,11 +136,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                c.level                                                                               as alertLevel,
                c.name                                                                                as alertLevelName,
                c.label                                                                               as alertLevelLabel,
-               c.color                                                                               as alertLevelColor
+               c.color                                                                               as alertLevelColor,
+               au.user_id                                                                            as alertUserId,
+               au.alert_id                                                                           as alertUserAlertId,
+               at.team_uuid                                                                          as alertTeamUuid,
+               at.alert_id                                                                           as alertTeamAlertId,
+               (select name from team x where x.uuid = at.team_uuid)                                 as alertTeamName
         from alert a
                  left join alert_attr b on a.id = b.alert_id
                  left join alert_level c on a.level = c.level
                  left join alert_type d on a.type = d.id
+                 left join alert_user au on a.id = au.alert_id
+                 left join alert_team at on a.id = at.alert_id
     </sql>
 
 

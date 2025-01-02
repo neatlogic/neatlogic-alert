@@ -25,6 +25,8 @@ import neatlogic.framework.alert.dto.AlertUserVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -51,6 +53,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
         if (MapUtils.isNotEmpty(config)) {
             JSONArray userIdList = config.getJSONArray("userIdList");
             JSONArray teamIdList = config.getJSONArray("teamIdList");
+            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
             if (CollectionUtils.isNotEmpty(userIdList)) {
                 for (int i = 0; i < userIdList.size(); i++) {
                     String userId = userIdList.getString(i);
@@ -69,6 +72,10 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                     alertMapper.insertAlertTeam(alertTeamVo);
                 }
             }
+            indexHandler.updateDocument(alertVo.getId(), new JSONObject() {{
+                this.put("userList", userIdList);
+                this.put("teamList", teamIdList);
+            }});
         }
         return alertVo;
     }
@@ -94,5 +101,4 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_SAVE.getName());
         }};
     }
-
 }

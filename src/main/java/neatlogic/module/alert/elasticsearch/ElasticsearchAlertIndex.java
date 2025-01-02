@@ -91,6 +91,27 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         return alertVo.getFromAlertId() == null;
     }
 
+    private JSONArray convertValue(String field, JSONArray value) {
+        if (Objects.equals(field, "const_userList")) {
+            if (CollectionUtils.isNotEmpty(value)) {
+                JSONArray newValue = new JSONArray();
+                for (int i = 0; i < value.size(); i++) {
+                    newValue.add(value.getString(i).replace("user#", ""));
+                }
+                return newValue;
+            }
+        } else if (Objects.equals(field, "const_teamList")) {
+            if (CollectionUtils.isNotEmpty(value)) {
+                JSONArray newValue = new JSONArray();
+                for (int i = 0; i < value.size(); i++) {
+                    newValue.add(value.getString(i).replace("team#", ""));
+                }
+                return newValue;
+            }
+        }
+        return value;
+    }
+
 
     @Override
     public Query buildQuery(AlertVo alertVo) {
@@ -128,8 +149,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         JSONObject condition = conditionList.getJSONObject(j);
                         String expression = condition.getString("expression");
                         String field = condition.getString("id");
-                        JSONArray values = condition.getJSONArray("valueList");
-
+                        JSONArray values = convertValue(field, condition.getJSONArray("valueList"));
+                        //转换成可以可以搜索的值
                         if (StringUtils.isBlank(field) || StringUtils.isBlank(expression)) {
                             continue; // 跳过无效条件
                         }
@@ -265,6 +286,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                             } else if ("or".equalsIgnoreCase(rel)) {
                                 conditionBoolQueryBuilder.should(currentQuery);
                                 conditionBoolQueryBuilder.should(nextQuery);
+                                conditionBoolQueryBuilder.minimumShouldMatch("1");
                             } else {
                                 throw new IllegalArgumentException("Unsupported conditionRel: " + rel);
                             }
@@ -292,6 +314,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         } else if ("or".equalsIgnoreCase(rel)) {
                             boolQueryBuilder.should(currentQuery);
                             boolQueryBuilder.should(nextQuery);
+                            boolQueryBuilder.minimumShouldMatch("1");
                         } else {
                             throw new IllegalArgumentException("Unsupported conditionRel: " + rel);
                         }
@@ -389,6 +412,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("entityName", p -> p.text(t -> t))               // varchar -> text
                         .properties("ip", p -> p.text(k -> k))                     // varchar -> keyword
                         .properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
+                        .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
+                        .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
@@ -432,21 +457,20 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("fromAlertId", alertVo.getFromAlertId());
         document.put("level", alertVo.getLevel());
         document.put("title", alertVo.getTitle());
-        document.put("updateTime", sdf.format(alertVo.getUpdateTime()));
-        document.put("alertTime", sdf.format(alertVo.getAlertTime()));
+        document.put("updateTime", alertVo.getUpdateTime() != null ? sdf.format(alertVo.getUpdateTime()) : null);
+        document.put("alertTime", alertVo.getAlertTime() != null ? sdf.format(alertVo.getAlertTime()) : null);
         document.put("type", alertVo.getType());
         document.put("status", alertVo.getStatus());
         document.put("source", alertVo.getSource());
-        //document.put("isDelete", false);
         document.put("uniqueKey", alertVo.getUniqueKey());
-        //document.put("alertCount", alertVo.getAlertCount());
         document.put("entityType", alertVo.getEntityType());
         document.put("entityName", alertVo.getEntityName());
         document.put("ip", alertVo.getIp());
         document.put("port", alertVo.getPort());
         document.put("attrObj", alertVo.getAttrObj());
         document.put("commentList", alertVo.getCommentList());
-        //Map<String, Object> document = JSON.parseObject(JSON.toJSONString(alertVo));
+        document.put("userList", alertVo.getUserIdList());
+        document.put("teamList", alertVo.getTeamIdList());
 
 
         // 创建或更新文档
@@ -459,6 +483,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         // 执行请求
         try {
             client.index(request);
+            System.out.println("create " + alertVo.getId());
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             //throw new ElasticSearchCreateDocumentException(e);
