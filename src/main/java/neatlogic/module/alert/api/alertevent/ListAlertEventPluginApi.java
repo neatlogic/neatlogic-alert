@@ -64,7 +64,7 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         List<AlertEventPluginVo> pluginList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(handlerList)) {
             for (IAlertEventHandler handler : handlerList) {
-                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel()));
+                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel(),handler.getIcon()));
             }
         }
         return pluginList;

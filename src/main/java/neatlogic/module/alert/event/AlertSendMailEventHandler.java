@@ -146,6 +146,11 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getIcon() {
+        return "tsfont-mail-o";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());

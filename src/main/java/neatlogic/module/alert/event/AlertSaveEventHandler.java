@@ -94,7 +94,12 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "保存告警";
+        return "创建告警";
+    }
+
+    @Override
+    public String getIcon() {
+        return "tsfont-plus-o";
     }
 
     @Override

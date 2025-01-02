@@ -17,14 +17,11 @@
 
 package neatlogic.module.alert.event;
 
-import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.module.alert.service.IAlertService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -32,8 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class AlertDeleteEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertDeleteEventHandler.class);
+public class AlertApplyEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
@@ -45,34 +41,29 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
-        JSONObject config = alertEventHandlerVo.getConfig();
-        try {
-            alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
+
         return alertVo;
     }
 
     @Override
     public String getName() {
-        return "DELETE";
+        return "APPLY";
     }
 
     @Override
     public String getLabel() {
-        return "删除告警";
+        return "分配处理人";
     }
 
     @Override
     public String getIcon() {
-        return "tsfont-trash-o";
+        return "tsfont-team-s";
     }
 
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
-            this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
+            this.add(AlertEventType.ALERT_SAVE.getName());
         }};
     }
 
