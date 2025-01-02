@@ -192,6 +192,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where id = #{id}
     </update>
 
+    <insert id="insertAlertUser" parameterType="neatlogic.framework.alert.dto.AlertUserVo">
+        insert ignore into alert_user (alert_id, user_id)
+        values (#{alertId}, #{userId})
+    </insert>
+
+    <insert id="insertAlertTeam" parameterType="neatlogic.framework.alert.dto.AlertTeamVo">
+        insert ignore into alert_team (alert_id, team_uuid)
+        values (#{alertId}, #{teamUuid})
+    </insert>
+
 
     <insert id="saveAlertAttr" parameterType="neatlogic.framework.alert.dto.AlertVo">
         insert into alert_attr
