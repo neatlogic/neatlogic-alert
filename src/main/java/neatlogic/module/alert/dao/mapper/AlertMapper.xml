@@ -16,6 +16,48 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+    <sql id="searchAlertOriginSql">
+        <where>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="source != null and source != ''">
+                and source = #{source}
+            </if>
+            <if test="timeRange != null">
+                <if test="timeRange.size() > 0">
+                    and time &gt;= STR_TO_DATE(#{timeRange[0]}, '%Y-%m-%d %H:%i')
+                </if>
+                <if test="timeRange.size() > 1">
+                    and time &lt;= STR_TO_DATE(#{timeRange[1]}, '%Y-%m-%d %H:%i')
+                </if>
+            </if>
+        </where>
+    </sql>
+
+    <select id="searchAlertOrigin" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo"
+            resultType="neatlogic.framework.alert.dto.OriginalAlertVo">
+        select
+        id,
+        content,
+        type,
+        time,
+        error,
+        status,
+        source
+        from alert_origin
+        <include refid="searchAlertOriginSql"></include>
+        order by time desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="searchAlertOriginCount" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo"
+            resultType="int">
+        select count(1)
+        from alert_origin
+        <include refid="searchAlertOriginSql"></include>
+    </select>
+
     <select id="listToAlertIdByFromAlertId" parameterType="java.lang.Long" resultType="java.lang.Long">
         SELECT to_alert_id
         FROM alert_rel
@@ -87,13 +129,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 
     <select id="getAlertOriginById" parameterType="java.lang.Long"
-            resultType="neatlogic.framework.alert.dto.AlertOriginVo">
+            resultType="neatlogic.framework.alert.dto.OriginalAlertVo">
         select id,
-               content as contentStr,
+               content,
                type,
                time,
                error,
-               status
+               status,
+               source
         from alert_origin
         where id = #{id}
     </select>
@@ -262,6 +305,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{status})
     </insert>
 
+    <delete id="deleteAlertUserByAlertId" parameterType="java.lang.Long">
+        delete
+        from alert_user
+        where alert_id = #{value}
+    </delete>
+
+    <delete id="deleteAlertTeamByAlertId" parameterType="java.lang.Long">
+        delete
+        from alert_team
+        where alert_id = #{value}
+    </delete>
 
     <delete id="deleteAlertAttr" parameterType="java.lang.Long">
         delete

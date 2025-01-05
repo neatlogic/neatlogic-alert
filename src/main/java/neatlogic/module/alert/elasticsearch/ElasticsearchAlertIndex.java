@@ -483,10 +483,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         // 执行请求
         try {
             client.index(request);
-            System.out.println("create " + alertVo.getId());
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            //throw new ElasticSearchCreateDocumentException(e);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 

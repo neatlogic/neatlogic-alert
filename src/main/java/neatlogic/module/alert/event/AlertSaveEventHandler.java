@@ -24,6 +24,7 @@ import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.common.util.TransactionDebugUtils;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
@@ -42,12 +43,8 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    public boolean isUnique() {
-        return true;
-    }
-
-    @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
+        TransactionDebugUtils.printTransactionInfo("SAVE ALERT");
         JSONObject config = alertEventHandlerVo.getConfig();
         //根据唯一规则计算uniquekey
         if (config != null && config.getJSONArray("uniqueAttrList") != null) {

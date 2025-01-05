@@ -25,6 +25,7 @@ import neatlogic.framework.alert.dto.AlertUserVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
@@ -43,12 +44,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    public boolean isUnique() {
-        return true;
-    }
-
-    @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
             JSONArray userIdList = config.getJSONArray("userIdList");

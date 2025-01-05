@@ -23,11 +23,13 @@ import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
@@ -52,10 +54,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -121,6 +120,17 @@ public class AlertServiceImpl implements IAlertService {
         if (oldAlertVo == null) {
             throw new AlertNotFoundException(alertVo.getId());
         }
+        boolean hasRole = false;
+        if (CollectionUtils.isNotEmpty(oldAlertVo.getUserList())) {
+            hasRole = oldAlertVo.getUserList().stream().anyMatch(d -> d.getUserId().equals(UserContext.get().getUserUuid(true)));
+        }
+        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getTeamIdList())) {
+            List<String> userTeamList = UserContext.get().getTeamUuidList();
+            hasRole = oldAlertVo.getTeamList().stream().anyMatch(d -> userTeamList.contains(d.getTeamUuid()));
+        }
+        if (!hasRole) {
+            throw new AlertHasNotAuthException();
+        }
         boolean hasChange = false;
         if (!oldAlertVo.getStatus().equalsIgnoreCase(alertVo.getStatus())) {
             hasChange = true;
@@ -142,6 +152,64 @@ public class AlertServiceImpl implements IAlertService {
             if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
                 AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-STATUS-UPDATER");
                 afterTransactionJob.execute(new ChildAlertStatusUpdateJob(alertVo));
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(alertVo.getApplyUserList())) {
+            List<String> mergedUserIdList = new ArrayList<>();
+            if (alertVo.getApplyUserType().equals("replace")) {
+                alertMapper.deleteAlertUserByAlertId(alertVo.getId());
+            } else {
+                mergedUserIdList = alertVo.getUserIdList();
+            }
+            for (String userId : alertVo.getApplyUserList()) {
+                AlertUserVo alertUserVo = new AlertUserVo();
+                alertUserVo.setAlertId(alertVo.getId());
+                alertUserVo.setUserId(userId);
+                alertMapper.insertAlertUser(alertUserVo);
+                if (!mergedUserIdList.contains(userId)) {
+                    mergedUserIdList.add(userId);
+                }
+            }
+            boolean isEqual = new HashSet<>(alertVo.getUserIdList()).equals(new HashSet<>(mergedUserIdList));
+            if (!isEqual) {
+                AlertAuditVo alertAuditVo = new AlertAuditVo();
+                alertAuditVo.setAlertId(alertVo.getId());
+                alertAuditVo.setAttrName("const_userList");
+                alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
+                alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
+                alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getUserIdList())));
+                alertAuditVo.setNewValueList(JSON.parseArray(JSON.toJSONString(mergedUserIdList)));
+                alertAuditMapper.insertAlertAudit(alertAuditVo);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(alertVo.getApplyTeamList())) {
+            List<String> mergedTeamIdList = new ArrayList<>();
+            if (alertVo.getApplyTeamType().equals("replace")) {
+                alertMapper.deleteAlertTeamByAlertId(alertVo.getId());
+            } else {
+                mergedTeamIdList = alertVo.getTeamIdList();
+            }
+            for (String teamUuid : alertVo.getApplyTeamList()) {
+                AlertTeamVo alertTeamVo = new AlertTeamVo();
+                alertTeamVo.setAlertId(alertVo.getId());
+                alertTeamVo.setTeamUuid(teamUuid);
+                alertMapper.insertAlertTeam(alertTeamVo);
+                if (!mergedTeamIdList.contains(teamUuid)) {
+                    mergedTeamIdList.add(teamUuid);
+                }
+            }
+            boolean isEqual = new HashSet<>(alertVo.getTeamIdList()).equals(new HashSet<>(mergedTeamIdList));
+            if (!isEqual) {
+                AlertAuditVo alertAuditVo = new AlertAuditVo();
+                alertAuditVo.setAlertId(alertVo.getId());
+                alertAuditVo.setAttrName("const_teamList");
+                alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
+                alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
+                alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getTeamIdList())));
+                alertAuditVo.setNewValueList(JSON.parseArray(JSON.toJSONString(mergedTeamIdList)));
+                alertAuditMapper.insertAlertAudit(alertAuditVo);
             }
         }
 

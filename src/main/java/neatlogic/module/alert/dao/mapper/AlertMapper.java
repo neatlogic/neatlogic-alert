@@ -5,6 +5,10 @@ import neatlogic.framework.alert.dto.*;
 import java.util.List;
 
 public interface AlertMapper {
+    List<OriginalAlertVo> searchAlertOrigin(OriginalAlertVo alertOriginVo);
+
+    int searchAlertOriginCount(OriginalAlertVo alertOriginVo);
+
     List<Long> listToAlertIdByFromAlertId(Long fromAlertId);
 
     List<Long> listAllToAlertIdByFromAlertId(Long fromAlertId);
@@ -13,7 +17,7 @@ public interface AlertMapper {
 
     List<AlertVo> getAlertByParentId(Long parentId);
 
-    AlertOriginVo getAlertOriginById(Long id);
+    OriginalAlertVo getAlertOriginById(Long id);
 
     List<AlertVo> searchAlert(AlertVo alertVo);
 
@@ -43,4 +47,7 @@ public interface AlertMapper {
 
     void deleteAlertAttr(Long alertId);
 
+    void deleteAlertUserByAlertId(Long alertId);
+
+    void deleteAlertTeamByAlertId(Long alertId);
 }

@@ -39,11 +39,6 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    public boolean isUnique() {
-        return true;
-    }
-
-    @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         try {

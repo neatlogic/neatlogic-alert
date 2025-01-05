@@ -18,7 +18,7 @@
 package neatlogic.module.alert.api.alert;
 
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
+import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertAttrDefineVo;
 import neatlogic.framework.alert.dto.AlertAttrTypeVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@AuthAction(action = ALERT_VIEW_MODIFY.class)
+@AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
 public class ListAlertAttrApi extends PrivateApiComponentBase {
 
