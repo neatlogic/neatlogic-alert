@@ -58,7 +58,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     protected SchedulerManager schedulerManager;
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
@@ -97,8 +97,11 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
+                    config.put("result", true);
                     //System.out.println("#################发送邮件成功Event：" + alertVo.getId());
                 } catch (Exception ex) {
+                    config.put("result", false);
+                    config.put("error", ex.getMessage());
                     logger.error(ex.getMessage(), ex);
                 }
                 if (interval != null && CollectionUtils.isNotEmpty(statusList)) {
@@ -130,7 +133,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                     //System.out.println("##############删除作业Event：" + alertVo.getId());
                 }
             }
-
+            alertEventHandlerAuditVo.setResult(config);
         }
         return alertVo;
     }

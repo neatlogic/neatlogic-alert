@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
         select id,
+               parent_id        AS parentId,
                alert_id         AS alertId,
                event,
                handler,
@@ -28,7 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                start_time       AS startTime,
                end_time         AS endTime,
                status,
-               error
+               error,
+               result           AS resultStr
         from alert_event_handler_audit
         where alert_id = #{alertId}
         order by id

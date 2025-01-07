@@ -27,10 +27,13 @@ import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
@@ -66,6 +69,19 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         AlertEventHandlerAuditVo alertEventHandlerAuditVo = JSON.toJavaObject(jsonObj, AlertEventHandlerAuditVo.class);
-        return alertAuditMapper.searchAlertEventAudit(alertEventHandlerAuditVo);
+        List<AlertEventHandlerAuditVo> auditList = alertAuditMapper.searchAlertEventAudit(alertEventHandlerAuditVo);
+        List<AlertEventHandlerAuditVo> rootAuditList = auditList.stream().filter(d -> d.getParentId() == null).collect(Collectors.toList());
+        makeupChildAudit(rootAuditList, auditList);
+        return rootAuditList;
+    }
+
+    private void makeupChildAudit(List<AlertEventHandlerAuditVo> parentAuditList, List<AlertEventHandlerAuditVo> allAuditList) {
+        for (AlertEventHandlerAuditVo auditVo : parentAuditList) {
+            List<AlertEventHandlerAuditVo> childAuditList = allAuditList.stream().filter(d -> d.getParentId() != null && d.getParentId().equals(auditVo.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(childAuditList)) {
+                auditVo.setChildAuditList(childAuditList);
+                makeupChildAudit(childAuditList, allAuditList);
+            }
+        }
     }
 }
