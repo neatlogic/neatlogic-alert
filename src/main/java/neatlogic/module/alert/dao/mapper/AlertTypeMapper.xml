@@ -65,18 +65,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where name = #{value}
     </select>
 
-    <select id="getAlertTypeById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertTypeVo">
-        select id,
-               name,
-               label,
-               file_id   AS fileId,
-               is_active as isActive,
-               lcd,
-               lcu,
-               fcd,
-               fcu
-        from alert_type
-        where id = #{value}
+    <resultMap id="alertTypeMap" type="neatlogic.framework.alert.dto.AlertTypeVo">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="label" column="label"/>
+        <result property="fileId" column="fileId"/>
+        <result property="isActive" column="isActive"/>
+        <result property="lcd" column="lcd"/>
+        <result property="lcu" column="lcu"/>
+        <result property="fcd" column="fcd"/>
+        <result property="fcu" column="fcu"/>
+        <collection property="attrTypeList" ofType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+            <id property="id" column="attrTypeId"/>
+            <result property="name" column="attrTypeName"/>
+            <result property="label" column="attrTypeLabel"/>
+            <result property="type" column="attrTypeType"/>
+            <result property="configStr" column="attrTypeConfigStr"/>
+        </collection>
+        <collection property="attrTypeIdList" ofType="java.lang.Long">
+            <id column="attrTypeId"/>
+        </collection>
+    </resultMap>
+
+    <select id="getAlertTypeById" parameterType="java.lang.Long" resultMap="alertTypeMap">
+        select a.id,
+               a.name,
+               a.label,
+               a.file_id   AS fileId,
+               a.is_active as isActive,
+               a.lcd,
+               a.lcu,
+               a.fcd,
+               a.fcu,
+               c.id        as attrTypeId,
+               c.name      as attrTypeName,
+               c.label     as attrTypeLabel,
+               c.type      as attrTypeType,
+               c.config    as attrTypeConfigStr
+        from alert_type a
+                 left join alert_type_attrtype b on a.id = b.alerttype_id
+                 left join alert_attrtype c on b.attrtype_id = c.id and c.is_active = 1
+        where a.id = #{value}
     </select>
 
     <select id="checkAlertTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertTypeVo" resultType="int">
@@ -114,6 +143,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 now(),
                 #{fcu})
     </insert>
+
+    <insert id="insertAlertTypeAttrType">
+        insert ignore into alert_type_attrtype (alerttype_id, attrtype_id, sort)
+        values (#{alertTypeId}, #{attrTypeId}, #{sort})
+    </insert>
+
+    <delete id="deleteAlertTypeAttrTypeByAlertTypeId" parameterType="java.lang.Long">
+        delete
+        from alert_type_attrtype
+        where alerttype_id = #{value}
+    </delete>
 
     <delete id="deleteAlertTypeById" parameterType="java.lang.Long">
         delete

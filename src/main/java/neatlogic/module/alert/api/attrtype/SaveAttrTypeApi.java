@@ -58,12 +58,15 @@ public class SaveAttrTypeApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
-            @Param(name = "currentPage", desc = "当前页", type = ApiParamType.INTEGER),
-            @Param(name = "pageSize", desc = "每页大小", type = ApiParamType.INTEGER)
+            @Param(name = "id", type = ApiParamType.LONG, desc = "id,不提供代表添加"),
+            @Param(name = "name", isRequired = true, desc = "唯一标识", type = ApiParamType.STRING),
+            @Param(name = "label", isRequired = true, desc = "名称", type = ApiParamType.STRING),
+            @Param(name = "isActive", isRequired = true, rule = "0,1", desc = "是否激活", type = ApiParamType.INTEGER),
+            @Param(name = "type", desc = "类型", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "config", desc = "配置", type = ApiParamType.JSONOBJECT)
     })
     @Output({
-            @Param(name = "id", type = ApiParamType.LONG, desc = "属性id")
+            @Param(name = "id", type = ApiParamType.LONG, desc = "类型id")
     })
     @Description(desc = "保存告警扩展属性")
     @Override

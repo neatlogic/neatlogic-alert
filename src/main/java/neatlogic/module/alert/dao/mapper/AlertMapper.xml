@@ -214,7 +214,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="getAlertByUniqueKey" parameterType="java.lang.String"
             resultType="neatlogic.framework.alert.dto.AlertVo">
-        select id
+        select id,
+               title
         from alert
         where unique_key = #{value}
         order by id

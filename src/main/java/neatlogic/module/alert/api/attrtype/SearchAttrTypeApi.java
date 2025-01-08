@@ -28,6 +28,7 @@ import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.framework.util.TableResultUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -59,7 +60,9 @@ public class SearchAttrTypeApi extends PrivateApiComponentBase {
     @Input({
             @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
             @Param(name = "currentPage", desc = "当前页", type = ApiParamType.INTEGER),
-            @Param(name = "pageSize", desc = "每页大小", type = ApiParamType.INTEGER)
+            @Param(name = "pageSize", desc = "每页大小", type = ApiParamType.INTEGER),
+            @Param(name = "isActive", desc = "是否激活", type = ApiParamType.INTEGER),
+            @Param(name = "defaultValue", desc = "选中值", type = ApiParamType.JSONARRAY)
     })
     @Output({
             @Param(explode = AlertAttrTypeVo[].class)
@@ -68,10 +71,9 @@ public class SearchAttrTypeApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) {
         AlertAttrTypeVo alertAttrTypeVo = JSON.toJavaObject(jsonObj, AlertAttrTypeVo.class);
-        List<AlertAttrTypeVo> alertAttrTypeList = null;
-        int rowNum = alertAttrTypeMapper.searchAttrTypeCount(alertAttrTypeVo);
-        if (rowNum > 0) {
-            alertAttrTypeList = alertAttrTypeMapper.searchAttrType(alertAttrTypeVo);
+        List<AlertAttrTypeVo> alertAttrTypeList = alertAttrTypeMapper.searchAttrType(alertAttrTypeVo);
+        if (CollectionUtils.isNotEmpty(alertAttrTypeList)) {
+            int rowNum = alertAttrTypeMapper.searchAttrTypeCount(alertAttrTypeVo);
             alertAttrTypeVo.setRowNum(rowNum);
         }
         return TableResultUtil.getResult(alertAttrTypeList, alertAttrTypeVo);

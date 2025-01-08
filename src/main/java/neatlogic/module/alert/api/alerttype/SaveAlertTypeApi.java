@@ -31,6 +31,7 @@ import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,8 +65,9 @@ public class SaveAlertTypeApi extends PrivateApiComponentBase {
             @Param(name = "id", desc = "id", type = ApiParamType.LONG),
             @Param(name = "name", desc = "唯一标识", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "label", desc = "名称", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "isActive", desc = "是否激活", type = ApiParamType.INTEGER),
-            @Param(name = "fileId", desc = "插件附件id", type = ApiParamType.LONG)
+            @Param(name = "isActive", desc = "是否激活", rule = "0,1", isRequired = true, type = ApiParamType.INTEGER),
+            @Param(name = "fileId", desc = "插件附件id", type = ApiParamType.LONG),
+            @Param(name = "attrTypeIdList", desc = "扩展属性id列表", type = ApiParamType.JSONARRAY),
     })
     @Output({
             @Param(name = "id", type = ApiParamType.LONG, desc = "id")
@@ -86,10 +88,16 @@ public class SaveAlertTypeApi extends PrivateApiComponentBase {
             if (oldAlertVo == null) {
                 throw new AlertTypeNotFoundException(id);
             }
+            alertTypeMapper.deleteAlertTypeAttrTypeByAlertTypeId(id);
             alertTypeVo.setLcu(UserContext.get().getUserUuid(true));
             alertTypeMapper.updateAlertType(alertTypeVo);
             //清除适配器缓存
             AlertAdaptorManager.removeAdapter(oldAlertVo.getName());
+        }
+        if (CollectionUtils.isNotEmpty(alertTypeVo.getAttrTypeIdList())) {
+            for (int i = 0; i < alertTypeVo.getAttrTypeIdList().size(); i++) {
+                alertTypeMapper.insertAlertTypeAttrType(alertTypeVo.getId(), alertTypeVo.getAttrTypeIdList().get(i), i + 1);
+            }
         }
         return alertTypeVo.getId();
     }

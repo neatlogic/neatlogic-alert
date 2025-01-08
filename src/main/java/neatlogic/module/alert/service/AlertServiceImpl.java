@@ -246,6 +246,7 @@ public class AlertServiceImpl implements IAlertService {
                 alertRelVo.setToAlertId(alertVo.getId());
                 alertMapper.saveAlertRel(alertRelVo);
                 alertVo.setFromAlertId(oldAlertVo.getId());
+                alertVo.setFromAlertVo(oldAlertVo);
 
                 alertMapper.updateAlertUpdateTime(oldAlertVo);
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

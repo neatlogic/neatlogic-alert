@@ -25,6 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <sql id="searchAttrTypeSql">
         <where>
+            <if test="defaultValue != null and defaultValue.size() > 0">
+                and id in
+                <foreach collection="defaultValue" item="item" open="(" close=")" separator=",">#{item}</foreach>
+            </if>
             <if test="keyword != null and keyword != ''">
                 and (name like concat('%',#{keyword},'%') or label like concat('%',#{keyword},'%'))
             </if>

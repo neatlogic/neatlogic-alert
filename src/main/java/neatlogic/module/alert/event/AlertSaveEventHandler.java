@@ -25,7 +25,6 @@ import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
-import neatlogic.framework.common.util.TransactionDebugUtils;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +44,6 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
-        TransactionDebugUtils.printTransactionInfo("SAVE ALERT");
         JSONObject config = alertEventHandlerVo.getConfig();
         //根据唯一规则计算uniquekey
         if (config != null && config.getJSONArray("uniqueAttrList") != null) {
@@ -77,11 +75,16 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(key));
             }
         }
-        /*if (StringUtils.isBlank(alertVo.getUniqueKey())) {
-            alertVo.generateUniqueKey();
-        }*/
         alertVo.setStatus(AlertStatus.NEW.getValue());
         alertService.saveAlert(alertVo);
+        if (alertVo.getFromAlertVo() != null) {
+            JSONObject resultObj = new JSONObject();
+            JSONObject fromObj = new JSONObject();
+            fromObj.put("id", alertVo.getFromAlertVo().getId());
+            fromObj.put("title", alertVo.getFromAlertVo().getTitle());
+            resultObj.put("fromAlert", fromObj);
+            alertEventHandlerAuditVo.setResult(resultObj);
+        }
         return alertVo;
     }
 
