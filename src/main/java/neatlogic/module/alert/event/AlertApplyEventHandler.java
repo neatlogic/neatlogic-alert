@@ -69,6 +69,11 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                 this.put("userList", userIdList);
                 this.put("teamList", teamIdList);
             }});
+
+            alertEventHandlerAuditVo.setResult(new JSONObject() {{
+                this.put("userIdList", userIdList);
+                this.put("teamIdList", teamIdList);
+            }});
         }
         return alertVo;
     }
