@@ -54,17 +54,19 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "eventName", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING)})
+    @Input({@Param(name = "eventName", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "parentPlugin", desc = "父插件唯一标识", type = ApiParamType.STRING)})
     @Output({@Param(explode = AlertEventPluginVo[].class)})
     @Description(desc = "列出所有告警事件插件")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         String eventName = jsonObj.getString("eventName");
-        List<IAlertEventHandler> handlerList = AlertEventHandlerFactory.getHandlerList(eventName);
+        String parentPlugin = jsonObj.getString("parentPlugin");
+        List<IAlertEventHandler> handlerList = AlertEventHandlerFactory.getHandlerList(eventName, parentPlugin);
         List<AlertEventPluginVo> pluginList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(handlerList)) {
             for (IAlertEventHandler handler : handlerList) {
-                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel(),handler.getIcon()));
+                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel(), handler.getIcon()));
             }
         }
         return pluginList;

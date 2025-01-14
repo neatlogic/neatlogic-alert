@@ -6,6 +6,8 @@ import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import java.util.List;
 
 public interface AlertAuditMapper {
+    AlertEventHandlerAuditVo getAlertEventAuditById(Long id);
+
     int selectAlertAuditCount(AlertAuditVo alertAudit);
 
     List<AlertAuditVo> selectAlertAudit(AlertAuditVo alertAuditVo);

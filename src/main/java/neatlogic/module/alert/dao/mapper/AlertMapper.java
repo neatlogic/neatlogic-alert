@@ -1,10 +1,14 @@
 package neatlogic.module.alert.dao.mapper;
 
 import neatlogic.framework.alert.dto.*;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 public interface AlertMapper {
+
+    AlertIntervalJobVo getAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
+
     List<OriginalAlertVo> searchAlertOrigin(OriginalAlertVo alertOriginVo);
 
     int searchAlertOriginCount(OriginalAlertVo alertOriginVo);
@@ -27,7 +31,11 @@ public interface AlertMapper {
 
     AlertVo getAlertByUniqueKey(String uniqueKey);
 
+    List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
+
     void updateAlertUpdateTime(AlertVo alertVo);
+
+    void updateAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
     void updateAlertStatus(AlertVo alertVo);
 
@@ -43,6 +51,8 @@ public interface AlertMapper {
 
     void insertAlertTeam(AlertTeamVo alertTeamVo);
 
+    void insertAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
+
     void deleteAlertById(Long alertId);
 
     void deleteAlertAttr(Long alertId);
@@ -50,4 +60,6 @@ public interface AlertMapper {
     void deleteAlertUserByAlertId(Long alertId);
 
     void deleteAlertTeamByAlertId(Long alertId);
+
+    void deleteAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
 }

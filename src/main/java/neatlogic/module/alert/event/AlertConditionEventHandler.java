@@ -132,7 +132,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                     IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
                     AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
                     if (subHandler != null) {
-                        alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo);
+                        alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
                     }
                 } else {
                     resultObj.put("result", false);
@@ -169,6 +169,13 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_SAVE.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
+        }};
+    }
+
+    @Override
+    public Set<String> supportParentHandler() {
+        return new HashSet<String>() {{
+            this.add("interval");
         }};
     }
 

@@ -110,4 +110,12 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         }};
     }
 
+    @Override
+    public Set<String> supportParentHandler() {
+        return new HashSet<String>() {{
+            this.add("condition");
+            this.add("interval");
+        }};
+    }
+
 }

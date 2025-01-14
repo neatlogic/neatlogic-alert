@@ -17,14 +17,18 @@
 
 package neatlogic.module.alert.event;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
+import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -39,6 +43,9 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     @Resource
     private AlertMapper alertMapper;
 
+    @Resource
+    private AlertAuditMapper alertAuditMapper;
+
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) throws AlertEventHandlerTriggerException {
@@ -46,23 +53,53 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
         if (MapUtils.isNotEmpty(config)) {
             JSONArray userIdList = config.getJSONArray("userIdList");
             JSONArray teamIdList = config.getJSONArray("teamIdList");
+
             IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
             if (CollectionUtils.isNotEmpty(userIdList)) {
+                Set<String> checkUserIdSet = new HashSet<>();
                 for (int i = 0; i < userIdList.size(); i++) {
                     String userId = userIdList.getString(i);
+                    checkUserIdSet.add(userId);
                     AlertUserVo alertUserVo = new AlertUserVo();
                     alertUserVo.setAlertId(alertVo.getId());
                     alertUserVo.setUserId(userId);
                     alertMapper.insertAlertUser(alertUserVo);
                 }
+
+                if (CollectionUtils.isEmpty(alertVo.getUserIdList()) || !checkUserIdSet.equals(new HashSet<>(alertVo.getUserIdList()))) {
+                    AlertAuditVo alertAuditVo = new AlertAuditVo();
+                    alertAuditVo.setAlertId(alertVo.getId());
+                    alertAuditVo.setAttrName("const_userList");
+                    alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
+                    alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
+                    if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
+                        alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getUserIdList())));
+                    }
+                    alertAuditVo.setNewValueList(userIdList);
+                    alertAuditMapper.insertAlertAudit(alertAuditVo);
+                }
             }
             if (CollectionUtils.isNotEmpty(teamIdList)) {
+                Set<String> checkTeamIdSet = new HashSet<>();
                 for (int i = 0; i < teamIdList.size(); i++) {
                     String teamId = teamIdList.getString(i);
+                    checkTeamIdSet.add(teamId);
                     AlertTeamVo alertTeamVo = new AlertTeamVo();
                     alertTeamVo.setAlertId(alertVo.getId());
                     alertTeamVo.setTeamUuid(teamId);
                     alertMapper.insertAlertTeam(alertTeamVo);
+                }
+                if (CollectionUtils.isEmpty(alertVo.getTeamIdList()) || !checkTeamIdSet.equals(new HashSet<>(alertVo.getTeamIdList()))) {
+                    AlertAuditVo alertAuditVo = new AlertAuditVo();
+                    alertAuditVo.setAlertId(alertVo.getId());
+                    alertAuditVo.setAttrName("const_teamList");
+                    alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
+                    alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
+                    if (CollectionUtils.isNotEmpty(alertVo.getTeamIdList())) {
+                        alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getTeamIdList())));
+                    }
+                    alertAuditVo.setNewValueList(teamIdList);
+                    alertAuditMapper.insertAlertAudit(alertAuditVo);
                 }
             }
             indexHandler.updateDocument(alertVo.getId(), new JSONObject() {{
@@ -97,6 +134,14 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_SAVE.getName());
+        }};
+    }
+
+    @Override
+    public Set<String> supportParentHandler() {
+        return new HashSet<String>() {{
+            this.add("condition");
+            this.add("interval");
         }};
     }
 }

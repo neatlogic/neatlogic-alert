@@ -16,6 +16,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+    <select id="getAlertIntervalJob" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
+        select alert_id               as alertId,
+               alert_event_handler_id as alertEventHandlerId,
+               parent_audit_id        as parentAuditId,
+               start_time             as startTime,
+               interval_minute        as intervalMinute,
+               repeat_count           as repeatCount,
+               config                 as configStr
+        from alert_interval_job
+        where alert_id = #{alertId}
+          and alert_event_handler_id = #{alertEventHandlerId}
+    </select>
+
     <sql id="searchAlertOriginSql">
         <where>
             <if test="status != null and status != ''">
@@ -222,6 +235,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit 1
     </select>
 
+    <select id="searchAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
+        select alert_id               as alertId,
+               alert_event_handler_id as alertEventHandlerId,
+               parent_audit_id        as parentAuditId,
+               start_time             as startTime,
+               interval_minute        as intervalMinute,
+               repeat_count           as repeatCount
+        from alert_interval_job
+        order by alert_id
+        limit #{startNum}, #{pageSize}
+    </select>
+
     <update id="updateAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert
         set status = #{status}
@@ -233,6 +258,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         set update_time = #{updateTime}
         where id = #{id}
     </update>
+
+    <update id="updateAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
+        update alert_interval_job
+        set start_time   = #{startTime},
+            repeat_count = #{repeatCount}
+        where alert_id = #{alertId}
+          and alert_event_handler_id = #{alertEventHandlerId}
+    </update>
+
+    <insert id="insertAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
+        insert into alert_interval_job
+        (alert_id,
+         alert_event_handler_id,
+         parent_audit_id,
+         start_time,
+         interval_minute,
+         repeat_count,
+         config)
+        values (#{alertId},
+                #{alertEventHandlerId},
+                #{parentAuditId},
+                #{startTime},
+                #{intervalMinute},
+                #{repeatCount},
+                #{configStr, typeHandler=CompressHandler})
+    </insert>
 
     <insert id="insertAlertUser" parameterType="neatlogic.framework.alert.dto.AlertUserVo">
         insert ignore into alert_user (alert_id, user_id)
@@ -335,6 +386,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                  left join alert_audit g on a.id = g.alert_id
                  left join alert_comment h on a.id = h.alert_id
         where a.id = #{value}
+    </delete>
+
+    <delete id="deleteAlertIntervalJob">
+        delete
+        from alert_interval_job
+        where alert_id = #{alertId}
+          and alert_event_handler_id = #{alertEventHandlerId}
     </delete>
 
 </mapper>

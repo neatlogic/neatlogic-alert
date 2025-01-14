@@ -16,6 +16,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertAuditMapper">
+    <select id="getAlertEventAuditById" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
+        select id,
+               parent_id        AS parentId,
+               alert_id         AS alertId,
+               event,
+               handler,
+               handler_name     AS handlerName,
+               event_handler_id AS eventHandlerId,
+               start_time       AS startTime,
+               end_time         AS endTime,
+               status,
+               error,
+               result           AS resultStr
+        from alert_event_handler_audit
+        where id = #{value}
+        order by id desc
+    </select>
 
     <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
@@ -64,6 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by id desc
         limit #{startNum}, #{pageSize}
     </select>
+
 
     <insert id="insertAlertAudit" parameterType="neatlogic.framework.alert.dto.AlertAuditVo">
         insert into alert_audit
