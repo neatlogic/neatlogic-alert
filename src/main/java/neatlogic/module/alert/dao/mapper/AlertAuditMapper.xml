@@ -32,7 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                result           AS resultStr
         from alert_event_handler_audit
         where id = #{value}
-        order by id desc
     </select>
 
     <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
@@ -51,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                result           AS resultStr
         from alert_event_handler_audit
         where alert_id = #{alertId}
-        order by id
+        order by id desc
     </select>
 
     <sql id="searchAlertAudit">
