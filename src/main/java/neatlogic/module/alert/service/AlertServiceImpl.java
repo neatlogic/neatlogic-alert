@@ -160,7 +160,9 @@ public class AlertServiceImpl implements IAlertService {
             if (alertVo.getApplyUserType().equals("replace")) {
                 alertMapper.deleteAlertUserByAlertId(alertVo.getId());
             } else {
-                mergedUserIdList = alertVo.getUserIdList();
+                if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
+                    mergedUserIdList = alertVo.getUserIdList();
+                }
             }
             for (String userId : alertVo.getApplyUserList()) {
                 AlertUserVo alertUserVo = new AlertUserVo();
@@ -189,7 +191,9 @@ public class AlertServiceImpl implements IAlertService {
             if (alertVo.getApplyTeamType().equals("replace")) {
                 alertMapper.deleteAlertTeamByAlertId(alertVo.getId());
             } else {
-                mergedTeamIdList = alertVo.getTeamIdList();
+                if (CollectionUtils.isNotEmpty(alertVo.getTeamIdList())) {
+                    mergedTeamIdList = alertVo.getTeamIdList();
+                }
             }
             for (String teamUuid : alertVo.getApplyTeamList()) {
                 AlertTeamVo alertTeamVo = new AlertTeamVo();
