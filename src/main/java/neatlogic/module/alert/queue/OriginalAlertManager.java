@@ -109,7 +109,7 @@ public class OriginalAlertManager {
                     throw new AlertTypeNotFoundException(originalAlertVo.getType());
                 }
 
-                AlertVo alertVo = null;
+                AlertVo alertVo;
                 if (alertTypeVo.getFileId() != null) {
                     FileVo fileVo = fileMapper.getFileById(alertTypeVo.getFileId());
                     if (fileVo == null) {

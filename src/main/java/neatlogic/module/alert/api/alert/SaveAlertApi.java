@@ -23,6 +23,7 @@ import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
+import neatlogic.framework.common.constvalue.InputFrom;
 import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
@@ -72,7 +73,7 @@ public class SaveAlertApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         OriginalAlertVo alertVo = JSON.toJavaObject(jsonObj, OriginalAlertVo.class);
-        alertVo.setSource("api");
+        alertVo.setSource(InputFrom.RESTFUL.getValue());
         if (alertVo.getTime() == null) {
             alertVo.setTime(new Date());
         }

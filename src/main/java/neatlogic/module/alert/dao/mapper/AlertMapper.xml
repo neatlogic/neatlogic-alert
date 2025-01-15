@@ -348,13 +348,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          type,
          time,
          error,
-         status)
+         status,
+         source)
         values (#{id},
                 #{content, typeHandler=CompressHandler},
                 #{type},
                 #{time},
                 #{error, typeHandler=CompressHandler},
-                #{status})
+                #{status},
+                #{source})
     </insert>
 
     <delete id="deleteAlertUserByAlertId" parameterType="java.lang.Long">

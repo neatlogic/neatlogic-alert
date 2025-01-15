@@ -18,6 +18,7 @@
 package neatlogic.module.alert.mq;
 
 import neatlogic.framework.alert.dto.OriginalAlertVo;
+import neatlogic.framework.common.constvalue.InputFrom;
 import neatlogic.framework.mq.core.SubscribeHandlerBase;
 import neatlogic.framework.mq.dto.SubscribeVo;
 import neatlogic.module.alert.queue.OriginalAlertManager;
@@ -29,7 +30,7 @@ public class AlertSubscribe extends SubscribeHandlerBase {
     protected void myOnMessage(SubscribeVo subscribeVo, Object message) {
         if (message != null) {
             OriginalAlertVo alertVo = new OriginalAlertVo();
-            alertVo.setSource("mq");
+            alertVo.setSource(InputFrom.MQ.getValue());
             alertVo.setContent(message.toString());
             alertVo.setType("test");
             OriginalAlertManager.addAlert(alertVo);
