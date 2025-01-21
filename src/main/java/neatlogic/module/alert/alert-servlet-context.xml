@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 		http://neatlogic.com/schema/neatlogic
 		http://neatlogic.com/schema/neatlogic.xsd">
 
-    <neatlogic:module id="alert" name="集中告警" groupName="集中告警" group="alert" groupSort="10"
+    <neatlogic:module id="alert" name="告警平台" groupName="告警平台" group="alert" groupSort="10"
                       groupDescription="集中告警平台"/>
 
     <context:component-scan base-package="neatlogic.framework" use-default-filters="false">
