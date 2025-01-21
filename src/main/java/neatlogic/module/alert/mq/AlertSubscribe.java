@@ -39,6 +39,11 @@ public class AlertSubscribe extends SubscribeHandlerBase {
 
     @Override
     public String getName() {
+        return "ALERT_SUBSCRIBE";
+    }
+
+    @Override
+    public String getLabel() {
         return "告警处理组件";
     }
 }
