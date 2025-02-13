@@ -17,23 +17,36 @@
 
 package neatlogic.module.alert.mq;
 
+import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.common.constvalue.InputFrom;
+import neatlogic.framework.exception.mq.SubscribeConfigNotFoundException;
 import neatlogic.framework.mq.core.SubscribeHandlerBase;
 import neatlogic.framework.mq.dto.SubscribeVo;
 import neatlogic.module.alert.queue.OriginalAlertManager;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 @Component
 public class AlertSubscribe extends SubscribeHandlerBase {
+
     @Override
     protected void myOnMessage(SubscribeVo subscribeVo, Object message) {
         if (message != null) {
-            OriginalAlertVo alertVo = new OriginalAlertVo();
-            alertVo.setSource(InputFrom.MQ.getValue());
-            alertVo.setContent(message.toString());
-            alertVo.setType("test");
-            OriginalAlertManager.addAlert(alertVo);
+            JSONObject config = subscribeVo.getConfig();
+            if (MapUtils.isNotEmpty(config) && config.containsKey("alertType")) {
+                String alertType = config.getString("alertType");
+                OriginalAlertVo alertVo = new OriginalAlertVo();
+                alertVo.setSource(InputFrom.MQ.getValue());
+                alertVo.setContent(message.toString());
+                alertVo.setTime(new Date());
+                alertVo.setType(alertType);
+                OriginalAlertManager.addAlert(alertVo);
+            } else {
+                throw new SubscribeConfigNotFoundException(subscribeVo.getName(), "alertType");
+            }
         }
     }
 

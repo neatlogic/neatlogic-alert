@@ -25,7 +25,7 @@ import neatlogic.framework.mq.dto.TopicVo;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AlertTopic extends TopicBase<AlertVo> {
+public class AlertKafkaTopic extends TopicBase<AlertVo> {
     @Override
     protected JSONObject generateTopicContent(TopicVo topicVo, AlertVo content) {
         if (content != null) {
