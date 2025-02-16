@@ -18,6 +18,7 @@
 package neatlogic.module.alert.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
@@ -110,6 +111,16 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             }
         }
         return value;
+    }
+
+    @Override
+    public void mySortQuery(SearchRequest.Builder builder){
+        builder.sort(s -> s
+                .field(f -> f
+                        .field("updateTime") // 按 updateTime 排序，因为子告警更新后父告警的updateTime也会更新
+                        .order(SortOrder.Desc) // 倒序排列
+                )
+        );
     }
 
 
