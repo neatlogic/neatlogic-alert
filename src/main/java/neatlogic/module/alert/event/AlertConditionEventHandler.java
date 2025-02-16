@@ -109,7 +109,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
                             for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
                                 defineObj.put("attr_" + attrTypeVo.getName(), attrTypeVo.getLabel());
-                                dataObj.put("attr_" + attrTypeVo.getName(), attrObj.getJSONArray(attrTypeVo.getName()));
+                                dataObj.put("attr_" + attrTypeVo.getName(), attrObj.get(attrTypeVo.getName()));
                             }
                         }
 

@@ -36,6 +36,7 @@ import neatlogic.framework.file.dto.FileVo;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
 import neatlogic.module.alert.service.IAlertService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +125,11 @@ public class OriginalAlertManager {
                 if (alertVo != null) {
                     //补充必要信息
                     alertVo.setType(alertTypeVo.getId());
-                    alertVo.setSource(originalAlertVo.getSource());
+                    //如果告警信息没有来源，则使用系统来源
+                    if (StringUtils.isBlank(alertVo.getSource())) {
+                        alertVo.setSource(originalAlertVo.getSource());
+                    }
+                    //如果不提供告警时间，则使用当前时间
                     if (alertVo.getAlertTime() == null) {
                         alertVo.setAlertTime(new Date());
                     }

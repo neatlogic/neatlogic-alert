@@ -183,7 +183,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                a.status,
                a.source,
                a.unique_key                                                                          as uniqueKey,
-               a.alert_count                                                                         as alertCount,
                a.entity_type                                                                         as entityType,
                a.entity_name                                                                         as entityName,
                a.ip,
