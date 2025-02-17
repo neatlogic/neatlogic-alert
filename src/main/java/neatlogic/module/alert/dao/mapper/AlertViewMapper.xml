@@ -142,5 +142,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where view_id = #{value}
     </delete>
 
+    <delete id="deleteAlertViewById" parameterType="java.lang.Long">
+        delete a,b
+        from alert_view a
+                 left join alert_view_auth b on a.id = b.view_id
+        where a.id = #{value}
+    </delete>
+
 
 </mapper>

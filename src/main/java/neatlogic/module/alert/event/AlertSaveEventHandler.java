@@ -45,7 +45,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
-        //根据唯一规则计算uniquekey
+        //根据唯一规则计算unique key
         if (config != null && config.getJSONArray("uniqueAttrList") != null) {
             List<String> attrList = new ArrayList<>();
             for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {

@@ -18,4 +18,6 @@ public interface AlertViewMapper {
     void saveAlertView(AlertViewVo alertViewVo);
 
     void deleteAlertViewAuthByViewId(Long viewId);
+
+    void deleteAlertViewById(Long viewId);
 }

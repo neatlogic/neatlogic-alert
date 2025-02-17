@@ -125,7 +125,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
 
     @Override
-    public Query buildQuery(AlertVo alertVo) {
+    public Query myBuildQuery(AlertVo alertVo) {
         JSONObject rule = new JSONObject();
 
         Query.Builder finalQueryBuilder = new Query.Builder();

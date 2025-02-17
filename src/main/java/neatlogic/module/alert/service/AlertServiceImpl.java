@@ -31,7 +31,6 @@ import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
-import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
@@ -138,11 +137,9 @@ public class AlertServiceImpl implements IAlertService {
             oldAlertVo.setStatus(alertVo.getStatus());
             alertMapper.updateAlertStatus(alertVo);
 
-            AlertAuditVo alertAuditVo = new AlertAuditVo();
+            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
             alertAuditVo.setAttrName("const_status");
-            alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
-            alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
             alertAuditVo.addOldValue(oldStatus);
             alertAuditVo.addNewValue(alertVo.getStatus());
             alertAuditMapper.insertAlertAudit(alertAuditVo);
@@ -175,11 +172,9 @@ public class AlertServiceImpl implements IAlertService {
             }
             boolean isEqual = new HashSet<>(alertVo.getUserIdList()).equals(new HashSet<>(mergedUserIdList));
             if (!isEqual) {
-                AlertAuditVo alertAuditVo = new AlertAuditVo();
+                AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_userList");
-                alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
-                alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
                 alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getUserIdList())));
                 alertAuditVo.setNewValueList(JSON.parseArray(JSON.toJSONString(mergedUserIdList)));
                 alertAuditMapper.insertAlertAudit(alertAuditVo);
@@ -206,11 +201,9 @@ public class AlertServiceImpl implements IAlertService {
             }
             boolean isEqual = new HashSet<>(alertVo.getTeamIdList()).equals(new HashSet<>(mergedTeamIdList));
             if (!isEqual) {
-                AlertAuditVo alertAuditVo = new AlertAuditVo();
+                AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_teamList");
-                alertAuditVo.setInputFrom(InputFromContext.get().getInputFrom());
-                alertAuditVo.setInputUser(UserContext.get().getUserUuid(true));
                 alertAuditVo.setOldValueList(JSON.parseArray(JSON.toJSONString(alertVo.getTeamIdList())));
                 alertAuditVo.setNewValueList(JSON.parseArray(JSON.toJSONString(mergedTeamIdList)));
                 alertAuditMapper.insertAlertAudit(alertAuditVo);
@@ -239,24 +232,36 @@ public class AlertServiceImpl implements IAlertService {
     public void saveAlert(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
-            AlertVo oldAlertVo = alertMapper.getAlertByUniqueKey(alertVo.getUniqueKey());
-            if (oldAlertVo != null) {
-                oldAlertVo.setUpdateTime(alertVo.getUpdateTime());
-                if (oldAlertVo.getId().equals(alertVo.getId())) {
+            AlertVo parentAlertVo = alertMapper.getAlertByUniqueKey(alertVo.getUniqueKey());
+            if (parentAlertVo != null) {
+                String oldStatus = parentAlertVo.getStatus();
+                parentAlertVo.setUpdateTime(alertVo.getUpdateTime());
+                parentAlertVo.setStatus(alertVo.getStatus());
+                if (parentAlertVo.getId().equals(alertVo.getId())) {
                     return;
                 }
                 AlertRelVo alertRelVo = new AlertRelVo();
-                alertRelVo.setFromAlertId(oldAlertVo.getId());
+                alertRelVo.setFromAlertId(parentAlertVo.getId());
                 alertRelVo.setToAlertId(alertVo.getId());
                 alertMapper.saveAlertRel(alertRelVo);
-                alertVo.setFromAlertId(oldAlertVo.getId());
-                alertVo.setFromAlertVo(oldAlertVo);
+                alertVo.setFromAlertId(parentAlertVo.getId());
+                alertVo.setFromAlertVo(parentAlertVo);
 
-                alertMapper.updateAlertUpdateTime(oldAlertVo);
+                alertMapper.updateAlertUpdateTime(parentAlertVo);
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                indexHandler.updateDocument(oldAlertVo.getId(), new JSONObject() {{
-                    this.put("updateTime", sdf.format(oldAlertVo.getUpdateTime()));
+                indexHandler.updateDocument(parentAlertVo.getId(), new JSONObject() {{
+                    this.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
+                    this.put("status", parentAlertVo.getStatus());
                 }});
+
+                if (!Objects.equals(oldStatus, alertVo.getStatus())) {
+                    AlertAuditVo alertAuditVo = new AlertAuditVo(true);
+                    alertAuditVo.setAlertId(parentAlertVo.getId());
+                    alertAuditVo.setAttrName("const_status");
+                    alertAuditVo.addOldValue(oldStatus);
+                    alertAuditVo.addNewValue(alertVo.getStatus());
+                    alertAuditMapper.insertAlertAudit(alertAuditVo);
+                }
             }
         }
 

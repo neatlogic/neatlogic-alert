@@ -227,7 +227,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     <select id="getAlertByUniqueKey" parameterType="java.lang.String"
             resultType="neatlogic.framework.alert.dto.AlertVo">
         select id,
-               title
+               title,
+               status
         from alert
         where unique_key = #{value}
         order by id
@@ -254,7 +255,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <update id="updateAlertUpdateTime" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert
-        set update_time = #{updateTime}
+        set update_time = #{updateTime},
+            status      = #{status}
         where id = #{id}
     </update>
 
