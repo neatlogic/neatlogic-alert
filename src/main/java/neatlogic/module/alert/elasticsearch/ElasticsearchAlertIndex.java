@@ -87,6 +87,13 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         }
     }
 
+    private String transformField(String field, boolean isKeyword) {
+        if (isKeyword) {
+            return transformField(field) + ".keyword";
+        }
+        return transformField(field);
+    }
+
     @Override
     public Boolean needPage(AlertVo alertVo) {
         return alertVo.getFromAlertId() == null;
@@ -114,7 +121,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
-    public void mySortQuery(SearchRequest.Builder builder){
+    public void mySortQuery(SearchRequest.Builder builder) {
         builder.sort(s -> s
                 .field(f -> f
                         .field("updateTime") // 按 updateTime 排序，因为子告警更新后父告警的updateTime也会更新

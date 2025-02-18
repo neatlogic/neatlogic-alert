@@ -22,9 +22,9 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.mq.core.TopicBase;
 import neatlogic.framework.mq.dto.TopicVo;
-import org.springframework.stereotype.Component;
 
-@Component
+@Deprecated
+//@Component
 public class AlertKafkaTopic extends TopicBase<AlertVo> {
     @Override
     protected JSONObject generateTopicContent(TopicVo topicVo, AlertVo content) {
