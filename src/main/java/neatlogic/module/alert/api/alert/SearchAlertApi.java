@@ -38,13 +38,16 @@ import neatlogic.framework.util.TableResultUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import neatlogic.module.alert.service.IAlertService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -91,6 +94,8 @@ public class SearchAlertApi extends PrivateApiComponentBase {
         JSONArray theadList = new JSONArray();
         List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
         List<AlertAttrTypeVo> alertAttrTypeList = alertAttrTypeMapper.listAttrType();
+        boolean hasExtend = false;
+        List<String> extendAttrKeyList = new ArrayList<>();
         if (StringUtils.isNotBlank(alertVo.getViewName())) {
             AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
             if (MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
@@ -104,10 +109,24 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                         }}));
                     } else if (attr.startsWith("attr_")) {
                         Optional<AlertAttrTypeVo> op = alertAttrTypeList.stream().filter(d -> d.getName().equals(attr.replace("attr_", ""))).findAny();
-                        op.ifPresent(AlertAttrTypeVo -> theadList.add(new JSONObject() {{
-                            this.put("key", "attr_" + AlertAttrTypeVo.getName());
-                            this.put("title", AlertAttrTypeVo.getLabel());
-                        }}));
+                        if (op.isPresent()) {
+                            if (Objects.equals(1, op.get().getIsNormal())) {
+                                theadList.add(new JSONObject() {{
+                                    this.put("key", "attr_" + op.get().getName());
+                                    this.put("title", op.get().getLabel());
+                                }});
+                            } else {
+                                extendAttrKeyList.add("attr_" + op.get().getName());
+                                if (!hasExtend) {
+                                    theadList.add(new JSONObject() {{
+                                        this.put("key", "const_attrObj");
+                                        this.put("title", "扩展属性");
+                                        this.put("attrList", extendAttrKeyList);
+                                    }});
+                                    hasExtend = true;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -121,9 +140,21 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                 }
             }
             for (AlertAttrTypeVo alertAttrType : alertAttrTypeList) {
+                if (Objects.equals(1, alertAttrType.getIsNormal())) {
+                    theadList.add(new JSONObject() {{
+                        this.put("key", "attr_" + alertAttrType.getName());
+                        this.put("title", alertAttrType.getLabel());
+                    }});
+                } else {
+                    extendAttrKeyList.add("attr_" + alertAttrType.getName());
+                }
+            }
+            //没有视图情况下扩展属性永远在最后显示
+            if (CollectionUtils.isNotEmpty(extendAttrKeyList)) {
                 theadList.add(new JSONObject() {{
-                    this.put("key", "attr_" + alertAttrType.getName());
-                    this.put("title", alertAttrType.getLabel());
+                    this.put("key", "const_attrObj");
+                    this.put("title", "扩展属性");
+                    this.put("attrList", extendAttrKeyList);
                 }});
             }
         }

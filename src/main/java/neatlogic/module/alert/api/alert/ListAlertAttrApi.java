@@ -31,6 +31,7 @@ import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -66,13 +67,15 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG)
+            @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG),
+            @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
     @Description(desc = "返回告警属性列表")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long viewId = jsonObj.getLong("viewId");
+        String viewName = jsonObj.getString("viewName");
         List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
         List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
         for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
@@ -86,6 +89,17 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         }
         if (viewId != null) {
             AlertViewVo alertViewVo = alertViewMapper.getAlertViewById(viewId);
+            List<AlertAttrDefineVo> finalAttrList = new ArrayList<>();
+            if (alertViewVo != null && MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
+                for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
+                    String attr = alertViewVo.getConfig().getJSONArray("attrList").getString(i);
+                    Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();
+                    op.ifPresent(finalAttrList::add);
+                }
+            }
+            return finalAttrList;
+        } else if (StringUtils.isNotBlank(viewName)) {
+            AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(viewName);
             List<AlertAttrDefineVo> finalAttrList = new ArrayList<>();
             if (alertViewVo != null && MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
                 for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
