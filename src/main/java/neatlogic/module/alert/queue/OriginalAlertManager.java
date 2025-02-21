@@ -26,6 +26,7 @@ import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.alert.enums.AlertOriginStatus;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alerttype.AlertTypeIsNotActiveException;
 import neatlogic.framework.alert.exception.alerttype.AlertTypeNotFoundException;
 import neatlogic.framework.asynchronization.queue.NeatLogicBlockingQueue;
 import neatlogic.framework.asynchronization.thread.NeatLogicThread;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
@@ -108,6 +110,9 @@ public class OriginalAlertManager {
                 AlertTypeVo alertTypeVo = alertTypeMapper.getAlertTypeByName(originalAlertVo.getType());
                 if (alertTypeVo == null) {
                     throw new AlertTypeNotFoundException(originalAlertVo.getType());
+                }
+                if (!Objects.equals(1, alertTypeVo.getIsActive())) {
+                    throw new AlertTypeIsNotActiveException(originalAlertVo.getType());
                 }
 
                 AlertVo alertVo;
