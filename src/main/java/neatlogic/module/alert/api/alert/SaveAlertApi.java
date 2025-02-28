@@ -24,18 +24,15 @@ import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.common.constvalue.InputFrom;
-import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
 import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
 import neatlogic.module.alert.queue.OriginalAlertManager;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.Date;
 
 @Service
@@ -43,11 +40,6 @@ import java.util.Date;
 @OperationType(type = OperationTypeEnum.CREATE)
 public class SaveAlertApi extends PrivateApiComponentBase {
 
-    @Resource
-    private AlertTypeMapper alertTypeMapper;
-
-    @Resource
-    private FileMapper fileMapper;
 
     @Override
     public String getToken() {
