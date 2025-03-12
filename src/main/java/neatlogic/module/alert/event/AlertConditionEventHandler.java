@@ -148,6 +148,11 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public String getName() {
         return "CONDITION";
     }
@@ -167,6 +172,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};

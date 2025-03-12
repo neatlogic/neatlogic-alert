@@ -18,63 +18,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertTypeMapper">
     <select id="searchAlertTypeCount" parameterType="neatlogic.framework.alert.dto.AlertTypeVo" resultType="int">
         select count(1)
-        from alert_type
+        from alert_type a
         <include refid="searchAlertTypeSql"></include>
     </select>
 
-    <select id="searchAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo"
-            resultType="neatlogic.framework.alert.dto.AlertTypeVo">
-        select id,
-        name,
-        label,
-        is_active as isActive,
-        file_id as fileId,
-        lcd,
-        lcu,
-        fcd,
-        fcu
-        from alert_type
-        <include refid="searchAlertTypeSql"></include>
-        order by id desc
-        <!--limit #{startNum}, #{pageSize}-->
-    </select>
-
-    <sql id="searchAlertTypeSql">
-        <where>
-            <if test="keyword != null and keyword != ''">
-                and (name like concat(#{keyword}, '%') or label like concat(#{keyword}, '%'))
-            </if>
-            <if test="isActive != null">
-                and is_active = #{isActive}
-            </if>
-        </where>
-    </sql>
-
-    <select id="getAlertTypeByName" parameterType="java.lang.String"
-            resultType="neatlogic.framework.alert.dto.AlertTypeVo">
-        select id,
-               name,
-               label,
-               file_id   AS fileId,
-               is_active as isActive,
-               lcd,
-               lcu,
-               fcd,
-               fcu
-        from alert_type
-        where name = #{value}
-    </select>
-
-    <resultMap id="alertTypeMap" type="neatlogic.framework.alert.dto.AlertTypeVo">
-        <id property="id" column="id"/>
-        <result property="name" column="name"/>
-        <result property="label" column="label"/>
-        <result property="fileId" column="fileId"/>
-        <result property="isActive" column="isActive"/>
-        <result property="lcd" column="lcd"/>
-        <result property="lcu" column="lcu"/>
-        <result property="fcd" column="fcd"/>
-        <result property="fcu" column="fcu"/>
+    <resultMap id="alertTypeResultMap" type="neatlogic.framework.alert.dto.AlertTypeVo">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="label" property="label"/>
+        <result column="isActive" property="isActive"/>
+        <result column="lcd" property="lcd"/>
+        <result column="lcu" property="lcu"/>
+        <result column="fcd" property="fcd"/>
+        <result column="fcu" property="fcu"/>
+        <collection property="adaptorList" ofType="neatlogic.framework.alert.dto.AlertTypeAdaptorVo">
+            <id column="adaptorId" property="id"/>
+            <result column="adaptorName" property="name"/>
+            <result column="adaptorLabel" property="label"/>
+            <result column="adaptorFileId" property="fileId"/>
+            <result column="adaptorAlertTypeId" property="alertTypeId"/>
+        </collection>
         <collection property="attrTypeList" ofType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
             <id property="id" column="attrTypeId"/>
             <result property="name" column="attrTypeName"/>
@@ -82,29 +45,85 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <result property="type" column="attrTypeType"/>
             <result property="configStr" column="attrTypeConfigStr"/>
         </collection>
-        <collection property="attrTypeIdList" ofType="java.lang.Long">
-            <id column="attrTypeId"/>
-        </collection>
     </resultMap>
 
-    <select id="getAlertTypeById" parameterType="java.lang.Long" resultMap="alertTypeMap">
+    <select id="searchAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo"
+            resultMap="alertTypeResultMap">
+        select
+        a.id,
+        a.name,
+        a.label,
+        a.is_active as isActive,
+        a.lcd,
+        a.lcu,
+        a.fcd,
+        a.fcu,
+        b.id as adaptorId,
+        b.name as adaptorName,
+        b.label as adaptorLabel,
+        b.file_id as adaptorFileId,
+        b.alerttype_id as adaptorAlertTypeId
+        from alert_type a left join alert_adaptor b on a.id = b.alerttype_id
+        <include refid="searchAlertTypeSql"></include>
+        order by a.id desc
+        <!--limit #{startNum}, #{pageSize}-->
+    </select>
+
+    <sql id="searchAlertTypeSql">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (a.name like concat(#{keyword}, '%') or a.label like concat(#{keyword}, '%'))
+            </if>
+            <if test="isActive != null">
+                and a.is_active = #{isActive}
+            </if>
+        </where>
+    </sql>
+
+    <select id="getAlertTypeByName" parameterType="java.lang.String"
+            resultMap="alertTypeResultMap">
         select a.id,
                a.name,
                a.label,
-               a.file_id   AS fileId,
-               a.is_active as isActive,
+               a.is_active    as isActive,
                a.lcd,
                a.lcu,
                a.fcd,
                a.fcu,
-               c.id        as attrTypeId,
-               c.name      as attrTypeName,
-               c.label     as attrTypeLabel,
-               c.type      as attrTypeType,
-               c.config    as attrTypeConfigStr
+               b.id           as adaptorId,
+               b.name         as adaptorName,
+               b.label        as adaptorLabel,
+               b.file_id      as adaptorFileId,
+               b.alerttype_id as adaptorAlertTypeId
+        from alert_type a
+                 left join alert_adaptor b on a.id = b.alerttype_id
+        where a.name = #{value}
+    </select>
+
+    <select id="getAlertTypeById" parameterType="java.lang.Long" resultMap="alertTypeResultMap">
+        select a.id,
+               a.name,
+               a.label,
+               a.file_id      AS fileId,
+               a.is_active    as isActive,
+               a.lcd,
+               a.lcu,
+               a.fcd,
+               a.fcu,
+               c.id           as attrTypeId,
+               c.name         as attrTypeName,
+               c.label        as attrTypeLabel,
+               c.type         as attrTypeType,
+               c.config       as attrTypeConfigStr,
+               d.id           as adaptorId,
+               d.name         as adaptorName,
+               d.label        as adaptorLabel,
+               d.file_id      as adaptorFileId,
+               d.alerttype_id as adaptorAlertTypeId
         from alert_type a
                  left join alert_type_attrtype b on a.id = b.alerttype_id
                  left join alert_attrtype c on b.attrtype_id = c.id and c.is_active = 1
+                 left join alert_adaptor d on a.id = d.alerttype_id
         where a.id = #{value}
     </select>
 
@@ -119,26 +138,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         update alert_type
         set name      = #{name},
             label     = #{label},
-            file_id   = #{fileId},
             is_active = #{isActive},
             lcd       = now(),
             lcu       = #{lcu}
         where id = #{id}
     </update>
 
+    <insert id="insertAlertTypeAdaptor" parameterType="neatlogic.framework.alert.dto.AlertTypeAdaptorVo">
+        insert into alert_adaptor
+        (id,
+         alerttype_id,
+         name,
+         label,
+         file_id)
+        values (#{id},
+                #{alertTypeId},
+                #{name},
+                #{label},
+                #{fileId})
+    </insert>
+
     <insert id="insertAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo">
         insert into alert_type
         (id,
          name,
          label,
-         file_id,
          is_active,
          fcd,
          fcu)
         values (#{id},
                 #{name},
                 #{label},
-                #{fileId},
                 #{isActive},
                 now(),
                 #{fcu})
@@ -148,6 +178,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         insert ignore into alert_type_attrtype (alerttype_id, attrtype_id, sort)
         values (#{alertTypeId}, #{attrTypeId}, #{sort})
     </insert>
+
+    <delete id="deleteAlertTypeAdaptorByAlertTypeId" parameterType="java.lang.Long">
+        delete
+        from alert_adaptor
+        where alerttype_id = #{value}
+    </delete>
 
     <delete id="deleteAlertTypeAttrTypeByAlertTypeId" parameterType="java.lang.Long">
         delete

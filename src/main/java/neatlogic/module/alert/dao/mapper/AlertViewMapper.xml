@@ -32,6 +32,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </collection>
     </resultMap>
 
+    <select id="checkAlertViewIsExists" parameterType="neatlogic.framework.alert.dto.AlertViewVo" resultType="int">
+        select count(1)
+        from alert_view
+        where name = #{name}
+          and id != #{id}
+    </select>
+
     <select id="getAlertViewById" parameterType="java.lang.Long" resultMap="alertViewResultMap">
         select a.id,
                a.name,
@@ -65,19 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.name = #{value}
     </select>
 
-    <select id="listAlertView" parameterType="neatlogic.framework.alert.dto.AlertViewVo"
-            resultType="neatlogic.framework.alert.dto.AlertViewVo">
-        select
-        a.id,
-        a.name,
-        a.label,
-        a.fcu,
-        a.fcd,
-        a.lcu,
-        a.lcd,
-        a.is_active as isActive
-        from alert_view a
-        left join alert_view_auth b on a.id = b.view_id
+    <sql id="searchAlertViewSql">
         <where>
             <if test="isActive != null">
                 and is_active = #{isActive}
@@ -99,7 +94,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 )
             </if>
         </where>
-        order by id desc
+    </sql>
+
+    <select id="searchAlertViewCount" parameterType="neatlogic.framework.alert.dto.AlertViewVo" resultType="int">
+        select
+        count(distinct a.id)
+        from alert_view a
+        left join alert_view_auth b on a.id = b.view_id
+        <include refid="searchAlertViewSql"></include>
+    </select>
+
+    <select id="searchAlertView" parameterType="neatlogic.framework.alert.dto.AlertViewVo"
+            resultType="neatlogic.framework.alert.dto.AlertViewVo">
+        select
+        a.name,
+        a.label,
+        a.fcu,
+        a.fcd,
+        a.lcu,
+        a.lcd,
+        a.is_active as isActive
+        from alert_view a join (
+        select
+        distinct
+        a.id
+        from alert_view a
+        left join alert_view_auth b on a.id = b.view_id
+        <include refid="searchAlertViewSql"></include>
+        order by a.id desc
+        limit #{startNum}, #{pageSize}) tmp on a.id = tmp.id
+        order by a.id desc
     </select>
 
 

@@ -15,40 +15,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.api.alert;
+package neatlogic.module.alert.api.alertview;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.OriginalAlertVo;
+import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
+import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.auth.core.AuthAction;
+import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.common.constvalue.InputFrom;
-import neatlogic.framework.restful.annotation.Description;
-import neatlogic.framework.restful.annotation.Input;
-import neatlogic.framework.restful.annotation.OperationType;
-import neatlogic.framework.restful.annotation.Param;
+import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.queue.OriginalAlertManager;
+import neatlogic.framework.util.TableResultUtil;
+import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import javax.annotation.Resource;
+import java.io.IOException;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
-@OperationType(type = OperationTypeEnum.CREATE)
-public class SaveAlertApi extends PrivateApiComponentBase {
+@OperationType(type = OperationTypeEnum.SEARCH)
+public class SearchAlertViewApi extends PrivateApiComponentBase {
 
+    @Resource
+    private AlertViewMapper alertViewMapper;
 
     @Override
     public String getToken() {
-        return "alert/save";
+        return "/alert/view/search";
     }
 
     @Override
     public String getName() {
-        return "保存告警";
+        return "返回告警视图列表";
     }
 
     @Override
@@ -57,22 +59,23 @@ public class SaveAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "type", desc = "告警类型", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "adaptor", desc = "转换器", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "content", desc = "告警内容", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "time", desc = "告警时间，不提供自动生成", type = ApiParamType.LONG),
+            @Param(name = "currentPage", type = ApiParamType.INTEGER, desc = "common.currentpage")
     })
-    @Description(desc = "保存告警")
+    @Output({@Param(explode = AlertViewVo[].class)})
+    @Description(desc = "返回告警视图列表")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws Exception {
-        OriginalAlertVo alertVo = JSON.toJavaObject(jsonObj, OriginalAlertVo.class);
-        alertVo.setSource(InputFrom.RESTFUL.getValue());
-        if (alertVo.getTime() == null) {
-            alertVo.setTime(new Date());
+    public Object myDoService(JSONObject jsonObj) throws IOException {
+        AlertViewVo alertViewVo = JSON.toJavaObject(jsonObj, AlertViewVo.class);
+        if (AuthActionChecker.check(ALERT_VIEW_MODIFY.class)) {
+            alertViewVo.setAdmin(true);
+        } else {
+            alertViewVo.setIsActive(1);
         }
-        OriginalAlertManager.addAlert(alertVo);
-        return null;
+        int rowNum = alertViewMapper.searchAlertViewCount(alertViewVo);
+        if (rowNum > 0) {
+            alertViewVo.setRowNum(rowNum);
+        }
+        return TableResultUtil.getResult(alertViewMapper.searchAlertView(alertViewVo), alertViewVo);
     }
-
 
 }

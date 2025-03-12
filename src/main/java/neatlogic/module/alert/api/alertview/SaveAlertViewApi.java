@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
 import neatlogic.framework.alert.dto.AlertViewAuthVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
+import neatlogic.framework.alert.exception.alertview.AlertViewIsExistsException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
@@ -72,6 +73,9 @@ public class SaveAlertViewApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         AlertViewVo alertViewVo = JSON.toJavaObject(jsonObj, AlertViewVo.class);
+        if (alertViewMapper.checkAlertViewIsExists(alertViewVo) > 0) {
+            throw new AlertViewIsExistsException(alertViewVo.getName());
+        }
         Long id = jsonObj.getLong("id");
         if (id != null) {
             alertViewVo.setLcu(UserContext.get().getUserUuid(true));

@@ -134,6 +134,11 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public String getName() {
         return "INTERVAL";
     }

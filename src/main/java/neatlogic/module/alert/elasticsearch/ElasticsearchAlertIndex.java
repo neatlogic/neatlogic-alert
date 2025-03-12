@@ -422,6 +422,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
                         .properties("updateTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm")))// varchar -> text
                         .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm"))) // datetime -> date
+                        .properties("isClose", p -> p.integer(i -> i))
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
                         .properties("source", p -> p.keyword(k -> k))                 // varchar -> keyword
@@ -478,6 +479,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("updateTime", alertVo.getUpdateTime() != null ? sdf.format(alertVo.getUpdateTime()) : null);
         document.put("alertTime", alertVo.getAlertTime() != null ? sdf.format(alertVo.getAlertTime()) : null);
         document.put("type", alertVo.getType());
+        document.put("isClose", alertVo.getIsClose());
         document.put("status", alertVo.getStatus());
         document.put("source", alertVo.getSource());
         document.put("uniqueKey", alertVo.getUniqueKey());

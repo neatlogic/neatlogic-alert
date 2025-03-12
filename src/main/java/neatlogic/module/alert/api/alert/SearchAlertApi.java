@@ -26,6 +26,7 @@ import neatlogic.framework.alert.dto.AlertAttrTypeVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertAttr;
+import neatlogic.framework.alert.exception.alertview.AlertViewNotFoundException;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.Description;
@@ -90,6 +91,12 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
+        if (StringUtils.isNotBlank(alertVo.getViewName())) {
+            AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
+            if (alertViewVo == null) {
+                throw new AlertViewNotFoundException(alertVo.getViewName());
+            }
+        }
         List<AlertVo> alertList = alertService.searchAlert(alertVo);
         JSONArray theadList = new JSONArray();
         List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();

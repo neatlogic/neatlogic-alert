@@ -40,6 +40,8 @@ import java.util.Set;
 
 @Component
 public class AlertApplyEventHandler extends AlertEventHandlerBase {
+
+
     @Resource
     private AlertMapper alertMapper;
 
@@ -116,6 +118,11 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public String getName() {
         return "APPLY";
     }
@@ -134,6 +141,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE.getName());
         }};
     }
 

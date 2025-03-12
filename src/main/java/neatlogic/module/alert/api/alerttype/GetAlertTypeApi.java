@@ -22,10 +22,12 @@ import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
+import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -54,7 +56,8 @@ public class GetAlertTypeApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG)
+            @Param(name = "id", desc = "id", type = ApiParamType.LONG),
+            @Param(name = "name", desc = "唯一标识", type = ApiParamType.STRING)
     })
     @Output({
             @Param(explode = AlertTypeVo.class)
@@ -63,7 +66,14 @@ public class GetAlertTypeApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) {
         Long id = jsonObj.getLong("id");
-        return alertTypeMapper.getAlertTypeById(id);
+        String name = jsonObj.getString("name");
+        if (id != null) {
+            return alertTypeMapper.getAlertTypeById(id);
+        } else if (StringUtils.isNotBlank(name)) {
+            return alertTypeMapper.getAlertTypeByName(name);
+        } else {
+            throw new ParamNotExistsException("id", "name");
+        }
     }
 
 }

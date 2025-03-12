@@ -15,6 +15,8 @@ public interface AlertMapper {
 
     List<Long> listToAlertIdByFromAlertId(Long fromAlertId);
 
+    List<Long> listAllFromAlertIdByToAlertId(Long toAlertId);
+
     List<Long> listAllToAlertIdByFromAlertId(Long fromAlertId);
 
     int checkAlertIsExists(Long id);
@@ -29,11 +31,13 @@ public interface AlertMapper {
 
     AlertVo getAlertById(Long id);
 
-    AlertVo getAlertByUniqueKey(String uniqueKey);
+    Long getFirstAlertIdByUniqueKey(String uniqueKey);
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
     void updateAlertUpdateTime(AlertVo alertVo);
+
+    void updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);
 
     void updateAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 

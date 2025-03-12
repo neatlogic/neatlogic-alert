@@ -6,12 +6,15 @@ import neatlogic.framework.alert.dto.AlertViewVo;
 import java.util.List;
 
 public interface AlertViewMapper {
+    int checkAlertViewIsExists(AlertViewVo alertViewVo);
 
     AlertViewVo getAlertViewById(Long id);
 
     AlertViewVo getAlertViewByName(String name);
 
-    List<AlertViewVo> listAlertView(AlertViewVo alertViewVo);
+    List<AlertViewVo> searchAlertView(AlertViewVo alertViewVo);
+
+    int searchAlertViewCount(AlertViewVo alertViewVo);
 
     void insertAlertViewAuth(AlertViewAuthVo alertViewAuthVo);
 

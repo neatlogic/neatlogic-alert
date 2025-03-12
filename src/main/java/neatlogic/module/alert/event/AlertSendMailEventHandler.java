@@ -24,11 +24,15 @@ import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.common.constvalue.AuthType;
+import neatlogic.framework.dao.mapper.UserMapper;
+import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -44,6 +48,10 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     private final Logger logger = LoggerFactory.getLogger(AlertSendMailEventHandler.class);
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+
+    @Resource
+    private UserMapper userMapper;
+
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
@@ -65,17 +73,28 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                     paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
                 }
             }
+            title = FreemarkerUtil.transform(paramObj, title);
             content = FreemarkerUtil.transform(paramObj, content);
             List<String> to = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(toUserList)) {
                 for (int i = 0; i < toUserList.size(); i++) {
-                    to.add(toUserList.getString(i));
+                    String userUuid = toUserList.getString(i);
+                    userUuid = AuthType.removePrefix(userUuid);
+                    UserVo userVo = userMapper.getUserByUuid(userUuid);
+                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
+                        to.add(userVo.getEmail());
+                    }
                 }
             }
             List<String> cc = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(ccUserList)) {
                 for (int i = 0; i < ccUserList.size(); i++) {
-                    cc.add(ccUserList.getString(i));
+                    String userUuid = ccUserList.getString(i);
+                    userUuid = AuthType.removePrefix(userUuid);
+                    UserVo userVo = userMapper.getUserByUuid(userUuid);
+                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
+                        cc.add(userVo.getEmail());
+                    }
                 }
             }
 
@@ -94,6 +113,11 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             alertEventHandlerAuditVo.setResult(config);
         }
         return alertVo;
+    }
+
+    @Override
+    public boolean isAsync() {
+        return true;
     }
 
     @Override
@@ -116,6 +140,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};

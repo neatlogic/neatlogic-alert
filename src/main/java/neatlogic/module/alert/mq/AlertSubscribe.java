@@ -36,16 +36,18 @@ public class AlertSubscribe extends SubscribeHandlerBase {
     protected void myOnMessage(SubscribeVo subscribeVo, Object message) {
         if (message != null) {
             JSONObject config = subscribeVo.getConfig();
-            if (MapUtils.isNotEmpty(config) && config.containsKey("alertType")) {
+            if (MapUtils.isNotEmpty(config) && config.containsKey("alertType") && config.containsKey("adaptor")) {
                 String alertType = config.getString("alertType");
+                String adaptor = config.getString("adaptor");
                 OriginalAlertVo alertVo = new OriginalAlertVo();
                 alertVo.setSource(InputFrom.MQ.getValue());
                 alertVo.setContent(message.toString());
                 alertVo.setTime(new Date());
                 alertVo.setType(alertType);
+                alertVo.setAdaptor(adaptor);
                 OriginalAlertManager.addAlert(alertVo);
             } else {
-                throw new SubscribeConfigNotFoundException(subscribeVo.getName(), "alertType");
+                throw new SubscribeConfigNotFoundException(subscribeVo.getName(), "alertType或adaptor");
             }
         }
     }

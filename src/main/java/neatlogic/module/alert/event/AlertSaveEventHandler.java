@@ -89,6 +89,11 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public boolean isAsync() {
+        return false;
+    }
+
+    @Override
     public String getName() {
         return "SAVE";
     }

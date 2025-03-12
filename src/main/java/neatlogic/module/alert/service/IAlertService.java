@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IAlertService {
+    void closeAlert(Long alertId, boolean isDeleteChildAlert) throws IOException;
+
     @Transactional
     void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException;
 
@@ -33,6 +35,8 @@ public interface IAlertService {
 
     @Transactional
     void saveAlert(AlertVo alertVo);
+
+    long searchAlertCount(AlertVo alertVo);
 
     List<AlertVo> searchAlert(AlertVo alertVo);
 

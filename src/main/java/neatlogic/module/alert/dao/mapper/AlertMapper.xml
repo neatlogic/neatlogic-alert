@@ -77,6 +77,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         WHERE from_alert_id = #{value}
     </select>
 
+    <select id="listAllFromAlertIdByToAlertId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        WITH RECURSIVE AlertCTE AS (SELECT from_alert_id
+                                    FROM alert_rel
+                                    WHERE to_alert_id = #{value}
+                                    UNION ALL
+                                    SELECT ar.from_alert_id
+                                    FROM alert_rel ar
+                                             INNER JOIN
+                                         AlertCTE a
+                                         ON
+                                             ar.to_alert_id = a.from_alert_id)
+        SELECT DISTINCT from_alert_id
+        FROM AlertCTE
+    </select>
+
     <select id="listAllToAlertIdByFromAlertId" parameterType="java.lang.Long" resultType="java.lang.Long">
         WITH RECURSIVE AlertCTE AS (SELECT to_alert_id
                                     FROM alert_rel
@@ -112,7 +127,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="status" property="status"/>
         <result column="source" property="source"/>
         <result column="uniqueKey" property="uniqueKey"/>
-        <result column="alertCount" property="alertCount"/>
+        <result column="isClose" property="isClose"/>
         <result column="entityType" property="entityType"/>
         <result column="entityName" property="entityName"/>
         <result column="ip" property="port"/>
@@ -177,6 +192,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                a.update_time                                                                         as updateTime,
                a.alert_time                                                                          as alertTime,
                a.type,
+               a.is_close                                                                            as isClose,
                d.id                                                                                  as alertTypeId,
                d.name                                                                                as alertTypeName,
                d.label                                                                               as alertTypeLabel,
@@ -224,18 +240,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </select>
 
 
-    <select id="getAlertByUniqueKey" parameterType="java.lang.String"
-            resultType="neatlogic.framework.alert.dto.AlertVo">
-        select id,
-               title,
-               status
+    <select id="getFirstAlertIdByUniqueKey" parameterType="java.lang.String"
+            resultType="java.lang.Long">
+        select id
         from alert
         where unique_key = #{value}
         order by id
         limit 1
     </select>
 
-    <select id="searchAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
+    <select id="searchAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo"
+            resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         select alert_id               as alertId,
                alert_event_handler_id as alertEventHandlerId,
                parent_audit_id        as parentAuditId,
@@ -266,6 +281,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             repeat_count = #{repeatCount}
         where alert_id = #{alertId}
           and alert_event_handler_id = #{alertEventHandlerId}
+    </update>
+
+    <update id="updateAlertIsClose">
+        update alert
+        set is_close = #{isClose}
+        where id = #{alertId}
     </update>
 
     <insert id="insertAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
@@ -320,7 +341,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          type,
          status,
          source,
-         is_delete,
+         is_close,
          unique_key,
          entity_type,
          entity_name,

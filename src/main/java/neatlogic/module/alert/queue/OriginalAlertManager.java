@@ -20,6 +20,7 @@ package neatlogic.module.alert.queue;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.adaptor.core.AlertAdaptorManager;
+import neatlogic.framework.alert.dto.AlertTypeAdaptorVo;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
@@ -36,7 +37,7 @@ import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.file.dto.FileVo;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
-import neatlogic.module.alert.service.IAlertService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -55,18 +57,16 @@ public class OriginalAlertManager {
     private static AlertMapper alertMapper;
     private static AlertTypeMapper alertTypeMapper;
     private static FileMapper fileMapper;
-    private static IAlertService alertService;
     private static final Logger logger = LoggerFactory.getLogger(OriginalAlertManager.class);
     private static final Semaphore semaphore = new Semaphore(5);//最多5个线程处理告警
 
     private static final NeatLogicBlockingQueue<OriginalAlertVo> alertQueue = new NeatLogicBlockingQueue<>(new LinkedBlockingQueue<>());
 
     @Autowired
-    public OriginalAlertManager(AlertTypeMapper _alertTypeMapper, AlertMapper _alertMapper, IAlertService _alertService, FileMapper _fileMapper) {
+    public OriginalAlertManager(AlertTypeMapper _alertTypeMapper, AlertMapper _alertMapper, FileMapper _fileMapper) {
         alertTypeMapper = _alertTypeMapper;
         fileMapper = _fileMapper;
         alertMapper = _alertMapper;
-        alertService = _alertService;
     }
 
     @PostConstruct
@@ -116,13 +116,22 @@ public class OriginalAlertManager {
                 }
 
                 AlertVo alertVo;
-                if (alertTypeVo.getFileId() != null) {
-                    FileVo fileVo = fileMapper.getFileById(alertTypeVo.getFileId());
-                    if (fileVo == null) {
-                        throw new ApiRuntimeException("找不到转换插件，请重新上传");
+
+                if (CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
+                    List<AlertTypeAdaptorVo> adaptorList = alertTypeVo.getAdaptorList();
+                    AlertTypeAdaptorVo adaptor = adaptorList.stream().filter(d -> d.getName().equals(originalAlertVo.getAdaptor())).findFirst().orElse(null);
+                    if (adaptor == null) {
+                        throw new ApiRuntimeException("告警类型{0}找不到转换插件{1}", alertTypeVo.getName(), originalAlertVo.getAdaptor());
                     }
-                    alertTypeVo.setFilePath(fileVo.getPath());
-                    JSONObject alertObj = AlertAdaptorManager.convert(alertTypeVo, originalAlertVo.getContent());
+                    if (adaptor.getFileId() == null) {
+                        throw new ApiRuntimeException("告警类型{0}的转换插件{1}没有上传组件", alertTypeVo.getName(), originalAlertVo.getAdaptor());
+                    }
+                    FileVo fileVo = fileMapper.getFileById(adaptor.getFileId());
+                    if (fileVo == null) {
+                        throw new ApiRuntimeException("告警类型{0}的转换插件{1}的组件不存在", alertTypeVo.getName(), originalAlertVo.getAdaptor());
+                    }
+                    adaptor.setFilePath(fileVo.getPath());
+                    JSONObject alertObj = AlertAdaptorManager.convert(alertTypeVo, adaptor, originalAlertVo.getContent());
                     alertVo = JSON.toJavaObject(alertObj, AlertVo.class);
                 } else {
                     alertVo = JSON.parseObject(originalAlertVo.getContent(), AlertVo.class);

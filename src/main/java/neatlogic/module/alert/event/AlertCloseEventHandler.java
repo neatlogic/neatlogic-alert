@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class AlertDeleteEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertDeleteEventHandler.class);
+public class AlertCloseEventHandler extends AlertEventHandlerBase {
+    private final Logger logger = LoggerFactory.getLogger(AlertCloseEventHandler.class);
     @Resource
     private IAlertService alertService;
 
@@ -57,17 +57,17 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getName() {
-        return "DELETE";
+        return "CLOSE";
     }
 
     @Override
     public String getLabel() {
-        return "删除告警";
+        return "关闭告警";
     }
 
     @Override
     public String getIcon() {
-        return "tsfont-trash-o";
+        return "tsfont-close-o";
     }
 
     @Override

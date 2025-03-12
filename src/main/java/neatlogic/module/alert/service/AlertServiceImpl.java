@@ -35,6 +35,7 @@ import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
+import neatlogic.framework.exception.elasticsearch.ElasticSearchUpdateFieldException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
@@ -69,6 +70,44 @@ public class AlertServiceImpl implements IAlertService {
     private AlertAuditMapper alertAuditMapper;
     @Resource
     private AlertEventMapper alertEventMapper;
+
+    @Override
+    public void closeAlert(Long alertId, boolean isCloseChildAlert) throws IOException {
+        AlertVo alertVo = alertMapper.getAlertById(alertId);
+        if (alertVo != null) {
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            if (isCloseChildAlert) {
+                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
+                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                    ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+                    BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+                    for (Long toAlertId : toAlertIdList) {
+                        bulkRequestBuilder.operations(op -> op.update(u -> u
+                                .index(index.getIndexName())
+                                .id(toAlertId.toString())
+                                .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.isClose = 1"))))))
+                        ));
+                        alertMapper.updateAlertIsClose(toAlertId, 1);
+                    }
+                    // 执行批量请求
+                    BulkRequest bulkRequest = bulkRequestBuilder.build();
+                    BulkResponse result = client.bulk(bulkRequest);
+                    if (result.errors()) {
+                        for (BulkResponseItem item : result.items()) {
+                            if (item.error() != null) {
+                                throw new ElasticSearchUpdateFieldException(item.id(), "fromAlertId", item.error().reason());
+                            }
+                        }
+                    }
+                }
+            }
+            index.updateDocument(alertVo.getId(), new JSONObject() {{
+                this.put("isClose", 1);
+            }});
+            alertMapper.updateAlertIsClose(alertVo.getId(), 1);
+            AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
+        }
+    }
 
     @Override
     public void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException {
@@ -108,8 +147,15 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
             index.deleteDocument(alertVo);
+            List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertVo.getId());
             alertMapper.deleteAlertById(alertVo.getId());
             AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, alertVo);
+            if (CollectionUtils.isNotEmpty(fromAlertIdList)) {
+                for (Long fromAlertId : fromAlertIdList) {
+                    AlertVo fromAlertVo = alertMapper.getAlertById(fromAlertId);
+                    AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE_OUT, fromAlertVo);
+                }
+            }
         }
     }
 
@@ -231,9 +277,14 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void saveAlert(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+        AlertVo parentAlertVo = null;
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
-            AlertVo parentAlertVo = alertMapper.getAlertByUniqueKey(alertVo.getUniqueKey());
+            Long parentAlertId = alertMapper.getFirstAlertIdByUniqueKey(alertVo.getUniqueKey());
+            if (parentAlertId != null) {
+                parentAlertVo = alertMapper.getAlertById(parentAlertId);
+            }
             if (parentAlertVo != null) {
+                alertVo.setParentAlertVo(parentAlertVo);
                 String oldStatus = parentAlertVo.getStatus();
                 parentAlertVo.setUpdateTime(alertVo.getUpdateTime());
                 parentAlertVo.setStatus(alertVo.getStatus());
@@ -249,10 +300,10 @@ public class AlertServiceImpl implements IAlertService {
 
                 alertMapper.updateAlertUpdateTime(parentAlertVo);
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                indexHandler.updateDocument(parentAlertVo.getId(), new JSONObject() {{
-                    this.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
-                    this.put("status", parentAlertVo.getStatus());
-                }});
+                JSONObject obj = new JSONObject();
+                obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
+                obj.put("status", parentAlertVo.getStatus());
+                indexHandler.updateDocument(parentAlertVo.getId(), obj);
 
                 if (!Objects.equals(oldStatus, alertVo.getStatus())) {
                     AlertAuditVo alertAuditVo = new AlertAuditVo(true);
@@ -266,7 +317,6 @@ public class AlertServiceImpl implements IAlertService {
         }
 
         alertMapper.insertAlert(alertVo);
-        AlertEventManager.doEvent(AlertEventType.ALERT_SAVE, alertVo);
 
         if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
             alertMapper.saveAlertAttr(alertVo);
@@ -275,6 +325,19 @@ public class AlertServiceImpl implements IAlertService {
             throw new ElasticSearchIndexNotFoundException("ALERT");
         }
         indexHandler.createDocument(alertVo);
+
+        if (alertVo.getParentAlertVo() == null) {
+            AlertEventManager.doEvent(AlertEventType.ALERT_SAVE, alertVo);
+        } else {
+            AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE, alertVo);
+            AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE_IN, alertVo.getParentAlertVo());
+        }
+    }
+
+    @Override
+    public long searchAlertCount(AlertVo alertVo) {
+        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        return index.searchDocumentCount(alertVo);
     }
 
     @Override

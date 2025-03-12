@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.adaptor.core.AlertAdaptorManager;
 import neatlogic.framework.alert.auth.ALERT_TYPE_MODIFY;
+import neatlogic.framework.alert.dto.AlertTypeAdaptorVo;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import neatlogic.framework.alert.exception.alerttype.AlertTypeIsExistsException;
 import neatlogic.framework.alert.exception.alerttype.AlertTypeNotFoundException;
@@ -68,6 +69,7 @@ public class SaveAlertTypeApi extends PrivateApiComponentBase {
             @Param(name = "isActive", desc = "是否激活", rule = "0,1", isRequired = true, type = ApiParamType.INTEGER),
             @Param(name = "fileId", desc = "插件附件id", type = ApiParamType.LONG),
             @Param(name = "attrTypeIdList", desc = "扩展属性id列表", type = ApiParamType.JSONARRAY),
+            @Param(name = "adaptorList", desc = "插件列表", type = ApiParamType.JSONARRAY),
     })
     @Output({
             @Param(name = "id", type = ApiParamType.LONG, desc = "id")
@@ -89,6 +91,7 @@ public class SaveAlertTypeApi extends PrivateApiComponentBase {
                 throw new AlertTypeNotFoundException(id);
             }
             alertTypeMapper.deleteAlertTypeAttrTypeByAlertTypeId(id);
+            alertTypeMapper.deleteAlertTypeAdaptorByAlertTypeId(id);
             alertTypeVo.setLcu(UserContext.get().getUserUuid(true));
             alertTypeMapper.updateAlertType(alertTypeVo);
             //清除适配器缓存
@@ -97,6 +100,12 @@ public class SaveAlertTypeApi extends PrivateApiComponentBase {
         if (CollectionUtils.isNotEmpty(alertTypeVo.getAttrTypeIdList())) {
             for (int i = 0; i < alertTypeVo.getAttrTypeIdList().size(); i++) {
                 alertTypeMapper.insertAlertTypeAttrType(alertTypeVo.getId(), alertTypeVo.getAttrTypeIdList().get(i), i + 1);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
+            for (AlertTypeAdaptorVo adaptor : alertTypeVo.getAdaptorList()) {
+                adaptor.setAlertTypeId(alertTypeVo.getId());
+                alertTypeMapper.insertAlertTypeAdaptor(adaptor);
             }
         }
         return alertTypeVo.getId();
