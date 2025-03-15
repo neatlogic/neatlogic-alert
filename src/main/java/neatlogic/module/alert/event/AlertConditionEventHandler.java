@@ -54,7 +54,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
     private AlertEventMapper alertEventMapper;
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
             JSONArray eventConditionList = alertEventHandlerVo.getConfig().getJSONArray("conditionList");
             JSONArray resultConditionList = new JSONArray();

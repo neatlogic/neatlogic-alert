@@ -19,10 +19,7 @@ package neatlogic.module.alert.event;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertIntervalJobVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.AlertEventType;
@@ -75,7 +72,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) throws AlertEventHandlerTriggerException {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject rootConfig = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(rootConfig)) {
             JSONArray intervalList = rootConfig.getJSONArray("intervalList");

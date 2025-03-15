@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.common.constvalue.AuthType;
@@ -38,10 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class AlertSendMailEventHandler extends AlertEventHandlerBase {
@@ -54,10 +52,30 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
+            int interval = config.getIntValue("interval");
+            if (interval > 0) {
+                AlertEventHandlerAuditVo paramAuditVo = new AlertEventHandlerAuditVo();
+                paramAuditVo.setAlertId(alertVo.getId());
+                paramAuditVo.setEventHandlerId(alertEventHandlerVo.getId());
+                paramAuditVo.setStatus(AlertEventStatus.SUCCEED.getValue());
+                AlertEventHandlerAuditVo auditVo = alertEventMapper.getLastAlertEventHandlerAudit(paramAuditVo);
+                if (auditVo != null) {
+                    Date now = new Date();
+                    long diff = now.getTime() - auditVo.getStartTime().getTime();
+                    if (diff < (long) interval * 60 * 1000) {
+                        //如果时间不够间隔，直接返回告警
+                        alertEventStatusVo.setSkipped(true);
+                        config.put("result", AlertEventStatus.SKIPPED.getValue());
+                        config.put("error", "离上次成功发送过去了" + (diff / 1000) + "秒，未到间隔时间，发送跳过");
+                        alertEventHandlerAuditVo.setResult(config);
+                        return alertVo;
+                    }
+                }
+            }
             JSONArray toUserList = config.getJSONArray("toUserList");
             JSONArray ccUserList = config.getJSONArray("ccUserList");
             String title = config.getString("title");
@@ -102,9 +120,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
                     EmailUtil.sendHtmlEmail(title, content, to, cc);
-                    config.put("result", true);
+                    config.put("result", AlertEventStatus.SUCCEED.getValue());
                 } catch (Exception ex) {
-                    config.put("result", false);
+                    config.put("result", AlertEventStatus.FAILED.getValue());
                     config.put("error", ex.getMessage());
                     logger.error(ex.getMessage(), ex);
                 }

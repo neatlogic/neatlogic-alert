@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
+import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
@@ -43,7 +44,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         //根据唯一规则计算unique key
         if (config != null && config.getJSONArray("uniqueAttrList") != null) {
