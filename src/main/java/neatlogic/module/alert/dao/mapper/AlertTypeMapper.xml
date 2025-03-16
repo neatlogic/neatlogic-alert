@@ -45,6 +45,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <result property="type" column="attrTypeType"/>
             <result property="configStr" column="attrTypeConfigStr"/>
         </collection>
+        <collection property="alertEventHandlerList" ofType="neatlogic.framework.alert.dto.AlertEventHandlerVo">
+            <id property="id" column="alertEventHandlerId"/>
+            <result property="event" column="alertEventName"/>
+            <result property="handler" column="alertEventHandler"/>
+            <result property="name" column="alertEventHandlerName"/>
+        </collection>
     </resultMap>
 
     <select id="searchAlertType" parameterType="neatlogic.framework.alert.dto.AlertTypeVo"
@@ -82,48 +88,66 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="getAlertTypeByName" parameterType="java.lang.String"
             resultMap="alertTypeResultMap">
-        select a.id,
-               a.name,
-               a.label,
-               a.is_active    as isActive,
-               a.lcd,
-               a.lcu,
-               a.fcd,
-               a.fcu,
-               b.id           as adaptorId,
-               b.name         as adaptorName,
-               b.label        as adaptorLabel,
-               b.file_id      as adaptorFileId,
-               b.alerttype_id as adaptorAlertTypeId
+        select
+        a.id,
+        a.name,
+        a.label,
+        a.file_id AS fileId,
+        a.is_active as isActive,
+        a.lcd,
+        a.lcu,
+        a.fcd,
+        a.fcu,
+        <!--c.id as attrTypeId,
+        c.name as attrTypeName,
+        c.label as attrTypeLabel,
+        c.type as attrTypeType,
+        c.config as attrTypeConfigStr,-->
+        d.id as adaptorId,
+        d.name as adaptorName,
+        d.label as adaptorLabel,
+        d.file_id as adaptorFileId,
+        d.alerttype_id as adaptorAlertTypeId,
+        e.id as alertEventHandlerId,
+        e.event as alertEventName,
+        e.handler as alertEventHandler,
+        e.name as alertEventHandlerName
         from alert_type a
-                 left join alert_adaptor b on a.id = b.alerttype_id
+        left join alert_adaptor d on a.id = d.alerttype_id
+        left join alert_event_handler e on a.id = e.alert_type
         where a.name = #{value}
     </select>
 
     <select id="getAlertTypeById" parameterType="java.lang.Long" resultMap="alertTypeResultMap">
-        select a.id,
-               a.name,
-               a.label,
-               a.file_id      AS fileId,
-               a.is_active    as isActive,
-               a.lcd,
-               a.lcu,
-               a.fcd,
-               a.fcu,
-               c.id           as attrTypeId,
-               c.name         as attrTypeName,
-               c.label        as attrTypeLabel,
-               c.type         as attrTypeType,
-               c.config       as attrTypeConfigStr,
-               d.id           as adaptorId,
-               d.name         as adaptorName,
-               d.label        as adaptorLabel,
-               d.file_id      as adaptorFileId,
-               d.alerttype_id as adaptorAlertTypeId
+        select
+        a.id,
+        a.name,
+        a.label,
+        a.file_id AS fileId,
+        a.is_active as isActive,
+        a.lcd,
+        a.lcu,
+        a.fcd,
+        a.fcu,
+        <!--c.id as attrTypeId,
+        c.name as attrTypeName,
+        c.label as attrTypeLabel,
+        c.type as attrTypeType,
+        c.config as attrTypeConfigStr,-->
+        d.id as adaptorId,
+        d.name as adaptorName,
+        d.label as adaptorLabel,
+        d.file_id as adaptorFileId,
+        d.alerttype_id as adaptorAlertTypeId,
+        e.id as alertEventHandlerId,
+        e.event as alertEventName,
+        e.handler as alertEventHandler,
+        e.name as alertEventHandlerName
         from alert_type a
-                 left join alert_type_attrtype b on a.id = b.alerttype_id
-                 left join alert_attrtype c on b.attrtype_id = c.id and c.is_active = 1
-                 left join alert_adaptor d on a.id = d.alerttype_id
+        <!--left join alert_type_attrtype b on a.id = b.alerttype_id
+        left join alert_attrtype c on b.attrtype_id = c.id and c.is_active = 1-->
+        left join alert_adaptor d on a.id = d.alerttype_id
+        left join alert_event_handler e on a.id = e.alert_type
         where a.id = #{value}
     </select>
 
