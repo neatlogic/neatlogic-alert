@@ -73,7 +73,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     public String getLabel() {
-        return "告警平台告警信息";
+        return "告警中心告警信息";
     }
 
 
@@ -128,6 +128,11 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .order(SortOrder.Desc) // 倒序排列
                 )
         );
+    }
+
+    @Override
+    protected void myHighlight(SearchRequest.Builder builder) {
+
     }
 
 

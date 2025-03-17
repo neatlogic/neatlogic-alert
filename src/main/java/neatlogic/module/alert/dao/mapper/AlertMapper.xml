@@ -48,6 +48,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </where>
     </sql>
 
+    <select id="getAlertOriginByIdList" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo"
+            resultType="neatlogic.framework.alert.dto.OriginalAlertVo">
+        select
+        id,
+        content,
+        type,
+        adaptor,
+        time,
+        error,
+        status,
+        source
+        from alert_origin
+        where id in
+        <foreach collection="idList" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
+        order by id desc
+    </select>
+
     <select id="searchAlertOrigin" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo"
             resultType="neatlogic.framework.alert.dto.OriginalAlertVo">
         select

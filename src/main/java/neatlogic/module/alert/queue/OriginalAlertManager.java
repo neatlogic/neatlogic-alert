@@ -35,8 +35,8 @@ import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.file.dto.FileVo;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
+import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -54,19 +54,19 @@ import java.util.concurrent.Semaphore;
 
 @Service
 public class OriginalAlertManager {
-    private static AlertMapper alertMapper;
     private static AlertTypeMapper alertTypeMapper;
     private static FileMapper fileMapper;
+    private static IAlertService alertService;
     private static final Logger logger = LoggerFactory.getLogger(OriginalAlertManager.class);
     private static final Semaphore semaphore = new Semaphore(5);//最多5个线程处理告警
 
     private static final NeatLogicBlockingQueue<OriginalAlertVo> alertQueue = new NeatLogicBlockingQueue<>(new LinkedBlockingQueue<>());
 
     @Autowired
-    public OriginalAlertManager(AlertTypeMapper _alertTypeMapper, AlertMapper _alertMapper, FileMapper _fileMapper) {
+    public OriginalAlertManager(AlertTypeMapper _alertTypeMapper, IAlertService _alertService, FileMapper _fileMapper) {
         alertTypeMapper = _alertTypeMapper;
         fileMapper = _fileMapper;
-        alertMapper = _alertMapper;
+        alertService = _alertService;
     }
 
     @PostConstruct
@@ -162,7 +162,8 @@ public class OriginalAlertManager {
                 originalAlertVo.setStatus(AlertOriginStatus.FAILED.getValue());
             } finally {
                 semaphore.release();
-                alertMapper.insertAlertOrigin(originalAlertVo);
+                alertService.saveOriginAlert(originalAlertVo);
+
             }
         }
 

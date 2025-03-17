@@ -30,8 +30,7 @@ import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.framework.util.TableResultUtil;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
-import org.apache.commons.collections4.CollectionUtils;
+import neatlogic.module.alert.service.IAlertService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -43,8 +42,11 @@ import java.util.List;
 @OperationType(type = OperationTypeEnum.SEARCH)
 public class SearchOriginalAlertApi extends PrivateApiComponentBase {
 
+    //@Resource
+    //private AlertMapper alertMapper;
+
     @Resource
-    private AlertMapper alertMapper;
+    private IAlertService alertService;
 
     @Override
     public String getToken() {
@@ -70,11 +72,11 @@ public class SearchOriginalAlertApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         OriginalAlertVo originalAlertVo = JSON.toJavaObject(jsonObj, OriginalAlertVo.class);
-        List<OriginalAlertVo> alertList = alertMapper.searchAlertOrigin(originalAlertVo);
-        if (CollectionUtils.isNotEmpty(alertList)) {
-            int rowNum = alertMapper.searchAlertOriginCount(originalAlertVo);
-            originalAlertVo.setRowNum(rowNum);
-        }
+        List<OriginalAlertVo> alertList = alertService.searchOriginAlert(originalAlertVo);
+//        if (CollectionUtils.isNotEmpty(alertList)) {
+//            int rowNum = alertMapper.searchAlertOriginCount(originalAlertVo);
+//            originalAlertVo.setRowNum(rowNum);
+//        }
         return TableResultUtil.getResult(alertList, originalAlertVo);
     }
 }

@@ -32,6 +32,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
@@ -275,6 +276,16 @@ public class AlertServiceImpl implements IAlertService {
     }
 
     @Override
+    public void saveOriginAlert(OriginalAlertVo originalAlertVo) {
+        IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        if (indexHandler == null) {
+            throw new ElasticSearchIndexNotFoundException("ALERT_ORIGINAL");
+        }
+        indexHandler.createDocument(originalAlertVo);
+        alertMapper.insertAlertOrigin(originalAlertVo);
+    }
+
+    @Override
     public void saveAlert(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
@@ -350,6 +361,27 @@ public class AlertServiceImpl implements IAlertService {
             alertVo.setPageCount(indexResultVo.getPageCount());
             alertVo.setRowNum(indexResultVo.getRowNum());
             return alertMapper.getAlertByIdList(alertVo);
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<OriginalAlertVo> searchOriginAlert(OriginalAlertVo originalAlertVo) {
+        IElasticsearchIndex<OriginalAlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        IndexResultVo indexResultVo = index.searchDocument(originalAlertVo, originalAlertVo.getCurrentPage(), originalAlertVo.getPageSize());
+        if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
+            originalAlertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
+            originalAlertVo.setCurrentPage(indexResultVo.getCurrentPage());
+            originalAlertVo.setPageCount(indexResultVo.getPageCount());
+            originalAlertVo.setRowNum(indexResultVo.getRowNum());
+            List<OriginalAlertVo> alertList = alertMapper.getAlertOriginByIdList(originalAlertVo);
+            if (CollectionUtils.isNotEmpty(indexResultVo.getHighlightList())) {
+                for (OriginalAlertVo o : alertList) {
+                    Optional<IndexResultHighlightVo> op = indexResultVo.getHighlightList().stream().filter(d -> d.getId().equals(o.getId().toString())).findAny();
+                    op.ifPresent(indexResultHighlightVo -> o.setHighlightMap(indexResultHighlightVo.getHighlightMap()));
+                }
+            }
+            return alertList;
         }
         return new ArrayList<>();
     }

@@ -9,6 +9,8 @@ public interface AlertMapper {
 
     AlertIntervalJobVo getAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
 
+    List<OriginalAlertVo> getAlertOriginByIdList(OriginalAlertVo originalAlertVo);
+
     List<OriginalAlertVo> searchAlertOrigin(OriginalAlertVo alertOriginVo);
 
     int searchAlertOriginCount(OriginalAlertVo alertOriginVo);
