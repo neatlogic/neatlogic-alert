@@ -39,6 +39,10 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
+    @Override
+    public int getSort() {
+        return 6;
+    }
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {

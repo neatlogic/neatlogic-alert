@@ -70,6 +70,10 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
         }
     }
 
+    @Override
+    public int getSort() {
+        return 5;
+    }
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {

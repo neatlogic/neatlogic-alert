@@ -39,7 +39,10 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
-
+    @Override
+    public int getSort() {
+        return 7;
+    }
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();

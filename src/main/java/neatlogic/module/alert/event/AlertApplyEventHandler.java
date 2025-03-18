@@ -123,6 +123,11 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public int getSort() {
+        return 2;
+    }
+
+    @Override
     public String getName() {
         return "APPLY";
     }

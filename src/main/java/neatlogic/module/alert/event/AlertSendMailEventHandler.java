@@ -50,6 +50,10 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     @Resource
     private UserMapper userMapper;
 
+    @Override
+    public int getSort() {
+        return 3;
+    }
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
