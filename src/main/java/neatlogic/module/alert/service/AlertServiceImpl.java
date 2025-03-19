@@ -36,7 +36,6 @@ import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
-import neatlogic.framework.exception.elasticsearch.ElasticSearchUpdateFieldException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
@@ -73,6 +72,22 @@ public class AlertServiceImpl implements IAlertService {
     private AlertEventMapper alertEventMapper;
 
     @Override
+    public void closeAlert(List<AlertVo> alertList) throws IOException {
+        if (CollectionUtils.isNotEmpty(alertList)) {
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            for (AlertVo alertVo : alertList) {
+                alertMapper.updateAlertIsClose(alertVo.getId(), 1);
+                index.updateDocument(alertVo.getId(), new JSONObject() {{
+                    this.put("isClose", 1);
+                }});
+            }
+            for (AlertVo alertVo : alertList) {
+                AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
+            }
+        }
+    }
+
+    @Override
     public void closeAlert(Long alertId, boolean isCloseChildAlert) throws IOException {
         AlertVo alertVo = alertMapper.getAlertById(alertId);
         if (alertVo != null) {
@@ -80,26 +95,30 @@ public class AlertServiceImpl implements IAlertService {
             if (isCloseChildAlert) {
                 List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
                 if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-                    BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+                    //ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+                    //BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
                     for (Long toAlertId : toAlertIdList) {
-                        bulkRequestBuilder.operations(op -> op.update(u -> u
+                        /*bulkRequestBuilder.operations(op -> op.update(u -> u
                                 .index(index.getIndexName())
                                 .id(toAlertId.toString())
                                 .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.isClose = 1"))))))
-                        ));
+                        ));*/
                         alertMapper.updateAlertIsClose(toAlertId, 1);
+                        index.updateDocument(toAlertId, new JSONObject() {{
+                            this.put("isClose", 1);
+                        }});
                     }
                     // 执行批量请求
-                    BulkRequest bulkRequest = bulkRequestBuilder.build();
-                    BulkResponse result = client.bulk(bulkRequest);
-                    if (result.errors()) {
+                    //BulkRequest bulkRequest = bulkRequestBuilder.build();
+                    //BulkResponse result = client.bulk(bulkRequest);
+                    /*if (result.errors()) {
                         for (BulkResponseItem item : result.items()) {
                             if (item.error() != null) {
                                 throw new ElasticSearchUpdateFieldException(item.id(), "fromAlertId", item.error().reason());
                             }
                         }
-                    }
+                    }*/
+
                 }
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
@@ -290,7 +309,7 @@ public class AlertServiceImpl implements IAlertService {
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
-            Long parentAlertId = alertMapper.getFirstAlertIdByUniqueKey(alertVo.getUniqueKey());
+            Long parentAlertId = alertMapper.getFirstOpenAlertIdByUniqueKey(alertVo.getUniqueKey());
             if (parentAlertId != null) {
                 parentAlertVo = alertMapper.getAlertById(parentAlertId);
             }

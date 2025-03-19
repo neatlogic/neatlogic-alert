@@ -23,12 +23,14 @@ import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -46,8 +48,11 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
+        if (config == null) {
+            config = new JSONObject();
+        }
         //根据唯一规则计算unique key
-        if (config != null && config.getJSONArray("uniqueAttrList") != null) {
+        if (config.getJSONArray("uniqueAttrList") != null) {
             List<String> attrList = new ArrayList<>();
             for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
                 attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
@@ -77,15 +82,22 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             }
         }
         alertVo.setStatus(AlertStatus.NEW.getValue());
-        alertService.saveAlert(alertVo);
-        if (alertVo.getFromAlertVo() != null) {
-            JSONObject resultObj = new JSONObject();
-            JSONObject fromObj = new JSONObject();
-            fromObj.put("id", alertVo.getFromAlertVo().getId());
-            fromObj.put("title", alertVo.getFromAlertVo().getTitle());
-            resultObj.put("fromAlert", fromObj);
-            alertEventHandlerAuditVo.setResult(resultObj);
+        JSONObject resultObj = new JSONObject();
+        try {
+            alertService.saveAlert(alertVo);
+            resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
+            resultObj.put("alertId", alertVo.getId());
+            resultObj.put("alertTitle", alertVo.getTitle());
+            if (alertVo.getFromAlertVo() != null) {
+                resultObj.put("fromAlertId", alertVo.getFromAlertVo().getId());
+                resultObj.put("fromAlertTitle", alertVo.getFromAlertVo().getTitle());
+            }
+        } catch (Exception e) {
+            resultObj.put("status", AlertEventStatus.FAILED.getValue());
+            resultObj.put("error", StringUtils.isNotBlank(e.getMessage()) ? e.getMessage() : ExceptionUtils.getStackTrace(e));
         }
+        config.put("result", resultObj);
+        alertEventHandlerAuditVo.setResult(config);
         return alertVo;
     }
 
@@ -93,6 +105,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     public boolean isAsync() {
         return false;
     }
+
     @Override
     public int getSort() {
         return 1;

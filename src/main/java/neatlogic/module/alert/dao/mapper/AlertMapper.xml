@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+
+
     <select id="getAlertIntervalJob" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         select alert_id               as alertId,
                alert_event_handler_id as alertEventHandlerId,
@@ -58,7 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         time,
         error,
         status,
-        source
+        source,
+        alert_data as alertDataStr
         from alert_origin
         where id in
         <foreach collection="idList" separator="," open="(" close=")" item="item">
@@ -77,7 +80,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         time,
         error,
         status,
-        source
+        source,
+        alert_data as alertDataStr
         from alert_origin
         <include refid="searchAlertOriginSql"></include>
         order by time desc
@@ -175,6 +179,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </collection>
     </resultMap>
 
+    <select id="getOpenAlertByUniqueKey" parameterType="java.lang.String" resultMap="alertResultMap">
+        <include refid="searchAlertColumn"></include>
+        where
+        a.unique_key = #{value}
+        and a.is_close = 0
+    </select>
+
 
     <select id="getAlertOriginById" parameterType="java.lang.Long"
             resultType="neatlogic.framework.alert.dto.OriginalAlertVo">
@@ -185,7 +196,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                time,
                error,
                status,
-               source
+               source,
+               alert_data as alertDataStr
         from alert_origin
         where id = #{id}
     </select>
@@ -261,11 +273,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </select>
 
 
-    <select id="getFirstAlertIdByUniqueKey" parameterType="java.lang.String"
+    <select id="getFirstOpenAlertIdByUniqueKey" parameterType="java.lang.String"
             resultType="java.lang.Long">
         select id
         from alert
         where unique_key = #{value}
+          and is_close = 0
         order by id
         limit 1
     </select>
@@ -393,7 +406,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          time,
          error,
          status,
-         source)
+         source,
+         alert_data)
         values (#{id},
                 #{content, typeHandler=CompressHandler},
                 #{type},
@@ -401,7 +415,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{time},
                 #{error, typeHandler=CompressHandler},
                 #{status},
-                #{source})
+                #{source},
+                #{alertDataStr, typeHandler=CompressHandler})
     </insert>
 
     <delete id="deleteAlertUserByAlertId" parameterType="java.lang.Long">

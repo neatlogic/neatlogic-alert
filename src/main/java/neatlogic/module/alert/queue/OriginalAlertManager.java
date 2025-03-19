@@ -153,6 +153,7 @@ public class OriginalAlertManager {
                     }
 
                     alertVo.setId(originalAlertVo.getId());
+                    originalAlertVo.setAlertData(JSON.parseObject(JSON.toJSONString(alertVo)));
                     AlertEventManager.doEvent(AlertEventType.ALERT_INPUT, alertVo);
                 }
                 originalAlertVo.setStatus(AlertOriginStatus.SUCCEED.getValue());

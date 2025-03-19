@@ -43,6 +43,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     public int getSort() {
         return 7;
     }
+
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
@@ -77,6 +78,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
+            this.add(AlertEventType.ALERT_CLOSE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }

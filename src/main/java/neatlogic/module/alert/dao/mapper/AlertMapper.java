@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface AlertMapper {
+    List<AlertVo> getOpenAlertByUniqueKey(String uniqueKey);
 
     AlertIntervalJobVo getAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
 
@@ -33,7 +34,7 @@ public interface AlertMapper {
 
     AlertVo getAlertById(Long id);
 
-    Long getFirstAlertIdByUniqueKey(String uniqueKey);
+    Long getFirstOpenAlertIdByUniqueKey(String uniqueKey);
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 

@@ -17,21 +17,28 @@
 
 package neatlogic.module.alert.event;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.util.Md5Util;
+import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class AlertCloseEventHandler extends AlertEventHandlerBase {
@@ -39,19 +46,81 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
+    @Resource
+    private AlertMapper alertMapper;
+
     @Override
     public int getSort() {
         return 6;
     }
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
-        try {
-            alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+        if (config == null) {
+            config = new JSONObject();
         }
+
+
+        String closeType = config.getString("closeType");
+        if (StringUtils.isBlank(closeType)) {
+            closeType = "id";
+        }
+
+        JSONObject resultObj = new JSONObject();
+
+        if (Objects.equals(closeType, "id")) {
+            try {
+                alertService.closeAlert(alertVo.getId(), true);
+                resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
+                resultObj.put("closeCount", 1);
+            } catch (Exception e) {
+                resultObj.put("status", AlertEventStatus.FAILED.getValue());
+                resultObj.put("error", e.getMessage() == null ? ExceptionUtils.getStackTrace(e) : e.getMessage());
+                throw new AlertEventHandlerTriggerException(e);
+            }
+        } else if (Objects.equals(closeType, "uniquekey")) {
+            if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
+                List<String> attrList = new ArrayList<>();
+                for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
+                    attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
+                }
+                //按属性名排序，避免由于顺序不同导致结果不同
+                attrList.sort(String::compareTo);
+                String key = "";
+                JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
+                for (String attr : attrList) {
+                    if (attr.startsWith("const_")) {
+                        if (StringUtils.isNotBlank(key)) {
+                            key += "#";
+                        }
+                        key += alertObj.getString(attr.substring("const_".length()));
+                    } else if (attr.startsWith("attr_")) {
+                        JSONObject attrObj = alertObj.getJSONObject("attrObj");
+                        if (attrObj != null && attrObj.get(attr.substring("attr_".length())) != null) {
+                            if (StringUtils.isNotBlank(key)) {
+                                key += "#";
+                            }
+                            key += attrObj.getString(attr.substring("attr_".length()));
+                        }
+                    }
+                }
+                if (StringUtils.isNotBlank(key)) {
+                    alertVo.setUniqueKey(Md5Util.encryptMD5(key));
+                }
+            }
+            try {
+                List<AlertVo> alertList = alertMapper.getOpenAlertByUniqueKey(alertVo.getUniqueKey());
+                alertService.closeAlert(alertList);
+                resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
+                resultObj.put("closeCount", alertList.size());
+            } catch (Exception e) {
+                resultObj.put("error", e.getMessage() == null ? ExceptionUtils.getStackTrace(e) : e.getMessage());
+                throw new AlertEventHandlerTriggerException(e);
+            }
+        }
+        config.put("result", resultObj);
+        alertEventHandlerAuditVo.setResult(config);
         return alertVo;
     }
 
@@ -78,6 +147,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
+            this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }
