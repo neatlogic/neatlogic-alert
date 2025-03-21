@@ -51,6 +51,8 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         if (config == null) {
             config = new JSONObject();
         }
+        //删掉从外部设置的uniqueKey
+        alertVo.setUniqueKey(null);
         //根据唯一规则计算unique key
         if (config.getJSONArray("uniqueAttrList") != null) {
             List<String> attrList = new ArrayList<>();
