@@ -51,8 +51,6 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         if (config == null) {
             config = new JSONObject();
         }
-        //删掉从外部设置的uniqueKey
-        alertVo.setUniqueKey(null);
         //根据唯一规则计算unique key
         if (config.getJSONArray("uniqueAttrList") != null) {
             List<String> attrList = new ArrayList<>();
@@ -81,6 +79,12 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             }
             if (StringUtils.isNotBlank(key)) {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(key));
+            }
+        }
+        //如果uniqueKey
+        if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            if (!Md5Util.isMd5(alertVo.getUniqueKey())) {
+                alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
             }
         }
         alertVo.setStatus(AlertStatus.NEW.getValue());
