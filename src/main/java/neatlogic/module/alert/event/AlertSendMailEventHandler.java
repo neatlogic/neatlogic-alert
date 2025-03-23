@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.alert.enums.AlertEventStatus;
+import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.common.constvalue.AuthType;
@@ -31,6 +32,7 @@ import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +51,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private AlertMapper alertMapper;
 
     @Override
     public int getSort() {
@@ -97,22 +102,45 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
             title = FreemarkerUtil.transform(paramObj, title);
             content = FreemarkerUtil.transform(paramObj, content);
-            List<String> to = new ArrayList<>();
+
+            List<AlertUserVo> userList = alertMapper.getAlertUserByAlertId(alertVo.getId());
+
+            Set<String> to = new HashSet<>();
             if (CollectionUtils.isNotEmpty(toUserList)) {
                 for (int i = 0; i < toUserList.size(); i++) {
                     String userUuid = toUserList.getString(i);
-                    userUuid = AuthType.removePrefix(userUuid);
+                    if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
+                        if (CollectionUtils.isNotEmpty(userList)) {
+                            for (AlertUserVo user : userList) {
+                                if (StringUtils.isNotBlank(user.getUserEmail())) {
+                                    to.add(user.getUserEmail());
+                                }
+                            }
+                        }
+                    } else {
+                        userUuid = AuthType.removePrefix(userUuid);
+                    }
                     UserVo userVo = userMapper.getUserByUuid(userUuid);
                     if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
                         to.add(userVo.getEmail());
                     }
                 }
             }
-            List<String> cc = new ArrayList<>();
+            Set<String> cc = new HashSet<>();
             if (CollectionUtils.isNotEmpty(ccUserList)) {
                 for (int i = 0; i < ccUserList.size(); i++) {
                     String userUuid = ccUserList.getString(i);
-                    userUuid = AuthType.removePrefix(userUuid);
+                    if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
+                        if (CollectionUtils.isNotEmpty(userList)) {
+                            for (AlertUserVo user : userList) {
+                                if (StringUtils.isNotBlank(user.getUserEmail())) {
+                                    to.add(user.getUserEmail());
+                                }
+                            }
+                        }
+                    } else {
+                        userUuid = AuthType.removePrefix(userUuid);
+                    }
                     UserVo userVo = userMapper.getUserByUuid(userUuid);
                     if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
                         cc.add(userVo.getEmail());
@@ -123,7 +151,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
-                    EmailUtil.sendHtmlEmail(title, content, to, cc);
+                    EmailUtil.sendHtmlEmail(title, content, new ArrayList<>(to), new ArrayList<>(cc));
                     config.put("result", AlertEventStatus.SUCCEED.getValue());
                 } catch (Exception ex) {
                     config.put("result", AlertEventStatus.FAILED.getValue());

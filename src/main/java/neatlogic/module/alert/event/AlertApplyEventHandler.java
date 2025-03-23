@@ -114,6 +114,8 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                 this.put("teamIdList", teamIdList);
             }});
         }
+
+
         return alertVo;
     }
 

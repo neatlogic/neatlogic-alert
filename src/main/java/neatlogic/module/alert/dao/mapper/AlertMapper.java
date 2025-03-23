@@ -6,6 +6,10 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface AlertMapper {
+    List<AlertTeamVo> getAlertTeamByAlertId(Long alertId);
+
+    List<AlertUserVo> getAlertUserByAlertId(Long alertId);
+
     List<AlertVo> getOpenAlertByUniqueKey(String uniqueKey);
 
     AlertIntervalJobVo getAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);

@@ -23,6 +23,7 @@ import neatlogic.framework.alert.dto.AlertAttrDefineVo;
 import neatlogic.framework.alert.dto.AlertAttrTypeVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.enums.AlertAttr;
+import neatlogic.framework.alert.exception.alertview.AlertViewNotFoundException;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
@@ -68,7 +69,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG),
-            @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING)
+            @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING),
+            @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
     @Description(desc = "返回告警属性列表")
@@ -76,7 +78,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long viewId = jsonObj.getLong("viewId");
         String viewName = jsonObj.getString("viewName");
-        List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
+        int isExpand = jsonObj.getIntValue("isExpand");
+        List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(isExpand);
         List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
         for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
             attrList.add(new AlertAttrDefineVo(attrTypeVo.getId(),
@@ -87,21 +90,21 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                     attrTypeVo.getExpressionList(),
                     attrTypeVo.getConfig()));
         }
+        AlertViewVo alertViewVo = null;
         if (viewId != null) {
-            AlertViewVo alertViewVo = alertViewMapper.getAlertViewById(viewId);
-            List<AlertAttrDefineVo> finalAttrList = new ArrayList<>();
-            if (alertViewVo != null && MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
-                for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
-                    String attr = alertViewVo.getConfig().getJSONArray("attrList").getString(i);
-                    Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();
-                    op.ifPresent(finalAttrList::add);
-                }
+            alertViewVo = alertViewMapper.getAlertViewById(viewId);
+            if (alertViewVo == null) {
+                throw new AlertViewNotFoundException(viewId);
             }
-            return finalAttrList;
         } else if (StringUtils.isNotBlank(viewName)) {
-            AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(viewName);
+            alertViewVo = alertViewMapper.getAlertViewByName(viewName);
+            if (alertViewVo == null) {
+                throw new AlertViewNotFoundException(viewName);
+            }
+        }
+        if (alertViewVo != null) {
             List<AlertAttrDefineVo> finalAttrList = new ArrayList<>();
-            if (alertViewVo != null && MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
+            if (MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
                 for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
                     String attr = alertViewVo.getConfig().getJSONArray("attrList").getString(i);
                     Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();

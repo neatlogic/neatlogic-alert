@@ -31,6 +31,7 @@ import neatlogic.framework.alert.exception.alerttype.AlertTypeIsNotActiveExcepti
 import neatlogic.framework.alert.exception.alerttype.AlertTypeNotFoundException;
 import neatlogic.framework.asynchronization.queue.NeatLogicBlockingQueue;
 import neatlogic.framework.asynchronization.thread.NeatLogicThread;
+import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.file.dao.mapper.FileMapper;
@@ -78,6 +79,7 @@ public class OriginalAlertManager {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
                         originalAlertVo = alertQueue.take();
+                        System.out.println("user:" + UserContext.get().getUserUuid());
                         if (originalAlertVo != null) {
                             semaphore.acquire();
                             CachedThreadPool.execute(new Handler(originalAlertVo));

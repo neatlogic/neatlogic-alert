@@ -88,6 +88,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
+    <select id="getAlertTeamByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertTeamVo">
+        select a.alert_id  as alertId,
+               a.team_uuid as teamUuid,
+               b.name      as teamName
+        from alert_team a
+                 join team b on a.team_uuid = b.uuid
+        where a.alert_id = #{value}
+    </select>
+
+    <select id="getAlertUserByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertUserVo">
+        select a.alert_id  AS alertId,
+               a.user_id   AS userId,
+               b.user_id   AS userAccount,
+               b.user_name AS userName,
+               b.phone     AS userPhone,
+               b.email     AS userEmail
+        from alert_user a
+                 join user b on a.user_id = b.uuid
+        where a.alert_id = #{value}
+    </select>
+
     <select id="searchAlertOriginCount" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo"
             resultType="int">
         select count(1)
