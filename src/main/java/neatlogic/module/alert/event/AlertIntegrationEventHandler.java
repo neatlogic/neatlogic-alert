@@ -46,9 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
@@ -99,8 +97,19 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                 throw new IntegrationHandlerNotFoundException(integrationVo.getHandler());
             }
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
-
-            JSONObject integraionParam = new JSONObject();
+            JSONObject integrationParam = new JSONObject();
+            //获取集成的所有入参
+            Map<String, String> paramTypeMap = new HashMap<>();
+            if (integrationVo.getConfig().getJSONObject("param") != null) {
+                if (integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList") != null) {
+                    for (int i = 0; i < integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").size(); i++) {
+                        JSONObject paramObj = integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").getJSONObject(i);
+                        if (paramObj.getString("mode").equals("input")) {
+                            paramTypeMap.put(paramObj.getString("name"), paramObj.getString("type"));
+                        }
+                    }
+                }
+            }
             if (CollectionUtils.isNotEmpty(paramMapping)) {
                 JSONObject paramObj = new JSONObject();
                 JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
@@ -115,10 +124,21 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                 }
                 for (int i = 0; i < paramMapping.size(); i++) {
                     JSONObject mapping = paramMapping.getJSONObject(i);
-                    integraionParam.put(mapping.getString("name"), FreemarkerUtil.transform(paramObj, mapping.getString("expression")));
+                    //尝试把转换好的数据转换成对象或数组，不行才当字符串处理
+                    String transferred = FreemarkerUtil.transform(paramObj, mapping.getString("expression"));
+                    if (paramTypeMap.containsKey(mapping.getString("name")) && paramTypeMap.get(mapping.getString("name")).equalsIgnoreCase("array")) {
+                        try {
+                            JSONArray list = JSON.parseArray(transferred);
+                            integrationParam.put(mapping.getString("name"), list);
+                        } catch (Exception e2) {
+                            integrationParam.put(mapping.getString("name"), transferred);
+                        }
+                    } else {
+                        integrationParam.put(mapping.getString("name"), transferred);
+                    }
                 }
             }
-            integrationVo.setParamObj(integraionParam);
+            integrationVo.setParamObj(integrationParam);
             IntegrationResultVo resultVo = handler.sendRequest(integrationVo, FrameworkRequestFrom.API);
             String resultJson = resultVo.getTransformedResult();
             if (StringUtils.isBlank(resultJson)) {

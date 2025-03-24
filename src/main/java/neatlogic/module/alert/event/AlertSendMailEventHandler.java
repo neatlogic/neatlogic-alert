@@ -104,7 +104,6 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             content = FreemarkerUtil.transform(paramObj, content);
 
             List<AlertUserVo> userList = alertMapper.getAlertUserByAlertId(alertVo.getId());
-
             Set<String> to = new HashSet<>();
             if (CollectionUtils.isNotEmpty(toUserList)) {
                 for (int i = 0; i < toUserList.size(); i++) {
