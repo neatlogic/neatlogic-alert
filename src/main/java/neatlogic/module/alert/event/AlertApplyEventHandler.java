@@ -145,6 +145,11 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "将告警分配给处理人或分组，处理人和处理分组中的用户可以进行修改告警状态、关闭告警或删除告警等操作。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_SAVE.getName());

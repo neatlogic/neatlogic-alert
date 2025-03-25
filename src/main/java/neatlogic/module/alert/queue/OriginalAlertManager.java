@@ -161,12 +161,11 @@ public class OriginalAlertManager {
                 originalAlertVo.setStatus(AlertOriginStatus.SUCCEED.getValue());
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
-                originalAlertVo.setError(ExceptionUtils.getStackTrace(ex));
+                originalAlertVo.setError(ex.getMessage() == null ? ExceptionUtils.getStackTrace(ex) : ex.getMessage());
                 originalAlertVo.setStatus(AlertOriginStatus.FAILED.getValue());
             } finally {
                 semaphore.release();
                 alertService.saveOriginAlert(originalAlertVo);
-
             }
         }
 

@@ -169,6 +169,11 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "用于调用第三方系统的restful接口。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());

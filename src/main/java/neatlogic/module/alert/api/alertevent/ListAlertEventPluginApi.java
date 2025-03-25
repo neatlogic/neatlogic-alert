@@ -67,7 +67,7 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         handlerList.sort((o1, o2) -> o1.getSort() - o2.getSort());
         if (CollectionUtils.isNotEmpty(handlerList)) {
             for (IAlertEventHandler handler : handlerList) {
-                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel(), handler.getIcon()));
+                pluginList.add(new AlertEventPluginVo(handler.getName(), handler.getLabel(), handler.getIcon(), handler.getDescription()));
             }
         }
         return pluginList;

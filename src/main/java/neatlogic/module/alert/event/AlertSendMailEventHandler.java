@@ -185,6 +185,11 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "用smtp方式发送邮件，需要到系统管理中配置邮件服务器信息，收件用户邮箱地址不能为空。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());

@@ -173,6 +173,11 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "通过配置条件组合，让系统有条件的触发其他事件插件，例如发通知、分配处理人等。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());

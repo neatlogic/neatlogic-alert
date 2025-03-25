@@ -155,6 +155,11 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "配置时间策略，延缓或周期性地调用其他事件插件，例如发通知、分配处理人等。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());

@@ -76,6 +76,11 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "物理删除告警信息，告警删除后不能恢复，请慎重操作。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_CLOSE.getName());

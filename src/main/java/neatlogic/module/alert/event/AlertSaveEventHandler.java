@@ -133,6 +133,11 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
+    public String getDescription() {
+        return "保存告警到数据库，如果有唯一键相同的未关闭告警，将自动挂靠作为其子告警。";
+    }
+
+    @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());
