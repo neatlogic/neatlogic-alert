@@ -139,7 +139,8 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             }
         } else {
             for (AlertAttrDefineVo attr : attrList) {
-                if (!attr.getName().equals("const_id")) {
+                //所有告警默认去掉id和uniqueKey这两个属性
+                if (!attr.getName().equals("const_id") && !attr.getName().equals("const_uniqueKey")) {
                     theadList.add(new JSONObject() {{
                         this.put("key", attr.getName());
                         this.put("title", attr.getLabel());
