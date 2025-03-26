@@ -170,6 +170,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="alertTime" property="alertTime"/>
         <result column="type" property="type"/>
         <result column="status" property="status"/>
+        <result column="alertStatusName" property="statusName"/>
+        <result column="alertStatusColor" property="statusColor"/>
         <result column="source" property="source"/>
         <result column="uniqueKey" property="uniqueKey"/>
         <result column="isClose" property="isClose"/>
@@ -251,6 +253,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                d.name                                                                                as alertTypeName,
                d.label                                                                               as alertTypeLabel,
                a.status,
+               als.label                                                                             as alertStatusName,
+               als.color                                                                             as alertStatusColor,
                a.source,
                a.unique_key                                                                          as uniqueKey,
                a.entity_type                                                                         as entityType,
@@ -273,6 +277,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                  left join alert_type d on a.type = d.id
                  left join alert_user au on a.id = au.alert_id
                  left join alert_team at on a.id = at.alert_id
+                 left join alert_status als on a.status = als.name
     </sql>
 
 

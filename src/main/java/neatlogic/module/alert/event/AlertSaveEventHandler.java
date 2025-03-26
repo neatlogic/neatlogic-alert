@@ -24,7 +24,6 @@ import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertEventStatus;
-import neatlogic.framework.alert.enums.AlertStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.util.Md5Util;
@@ -87,7 +86,9 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
             }
         }
-        alertVo.setStatus(AlertStatus.NEW.getValue());
+        if (StringUtils.isNotBlank(config.getString("defaultStatus"))) {
+            alertVo.setStatus(config.getString("defaultStatus"));
+        }
         JSONObject resultObj = new JSONObject();
         try {
             alertService.saveAlert(alertVo);

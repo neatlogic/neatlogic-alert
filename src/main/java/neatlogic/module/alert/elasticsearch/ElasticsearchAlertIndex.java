@@ -149,6 +149,15 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))
                         .build());
             }
+            /*boolQueryBuilder.must(new Query.Builder()
+                    .bool(b -> b.must(
+                            Query.of(q -> q.range(r -> r
+                                    .field("updateTime")
+                                    .gte(JsonData.of("2025-03-24")) // 开始时间
+                                    .lte(JsonData.of("2025-03-27")) // 结束时间
+                                    .format("yyyy-MM-dd")
+                            ))
+                    )).build());*/
             if (StringUtils.isNotBlank(alertVo.getViewName())) {
                 AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
                 rule = alertViewVo.getConfig().getJSONObject("rule");
@@ -425,8 +434,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("fromAlertId", p -> p.long_(l -> l))
                         .properties("level", p -> p.integer(i -> i))                  // int -> integer
                         .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
-                        .properties("updateTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm")))// varchar -> text
-                        .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm"))) // datetime -> date
+                        .properties("updateTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm||epoch_millis")))// varchar -> text
+                        .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm||epoch_millis"))) // datetime -> date
                         .properties("isClose", p -> p.integer(i -> i))
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
