@@ -142,22 +142,33 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
         Query.Builder finalQueryBuilder = new Query.Builder();
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-        //简单模式需要加上关键字，规则使用视图规则
-        if (Objects.equals("simple", alertVo.getMode())) {
-            if (StringUtils.isNotBlank(alertVo.getKeyword())) {
-                boolQueryBuilder.must(new Query.Builder()
-                        .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))
-                        .build());
-            }
-            /*boolQueryBuilder.must(new Query.Builder()
+
+        if (StringUtils.isNotBlank(alertVo.getKeyword())) {
+            boolQueryBuilder.must(new Query.Builder()
+                    .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))
+                    .build());
+        }
+        if (alertVo.getUpdateTimeHour() > 0) {
+            long now = System.currentTimeMillis();
+            boolQueryBuilder.must(new Query.Builder()
                     .bool(b -> b.must(
                             Query.of(q -> q.range(r -> r
                                     .field("updateTime")
-                                    .gte(JsonData.of("2025-03-24")) // 开始时间
-                                    .lte(JsonData.of("2025-03-27")) // 结束时间
-                                    .format("yyyy-MM-dd")
+                                    .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
                             ))
-                    )).build());*/
+                    )).build());
+        }
+        if (StringUtils.isNotBlank(alertVo.getStatus())) {
+            boolQueryBuilder.must(new Query.Builder()
+                    .bool(b -> b.must(
+                            Query.of(q -> q.term(r -> r
+                                    .field("status")
+                                    .value(alertVo.getStatus()) // 开始时间
+                            ))
+                    )).build());
+        }
+        if (Objects.equals("simple", alertVo.getMode())) {
+            //简单模式需要加上关键字，规则使用视图规则
             if (StringUtils.isNotBlank(alertVo.getViewName())) {
                 AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
                 rule = alertViewVo.getConfig().getJSONObject("rule");
