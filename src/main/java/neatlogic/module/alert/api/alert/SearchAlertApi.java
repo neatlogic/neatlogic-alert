@@ -83,6 +83,8 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     @Input({
             @Param(name = "fromAlertId", desc = "来源告警id", type = ApiParamType.LONG),
             @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
+            @Param(name = "updateTimeHour", desc = "告警时间(小时)", type = ApiParamType.INTEGER),
+            @Param(name = "status", desc = "状态", type = ApiParamType.STRING),
             @Param(name = "mode", desc = "搜索模式", type = ApiParamType.STRING, rule = "simple,advanced"),
             @Param(name = "viewName", desc = "视图", type = ApiParamType.STRING),
             @Param(name = "rule", desc = "高级模式搜索条件", type = ApiParamType.JSONOBJECT),
