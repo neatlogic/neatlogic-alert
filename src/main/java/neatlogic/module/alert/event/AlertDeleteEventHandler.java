@@ -24,12 +24,14 @@ import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.module.alert.service.IAlertService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,8 +51,8 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
         JSONObject config = alertEventHandlerVo.getConfig();
         try {
             alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+        } catch (IOException e) {
+            throw new AlertEventHandlerTriggerException(e);
         }
         return alertVo;
     }

@@ -26,6 +26,7 @@ import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.common.constvalue.AuthType;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.UserVo;
@@ -78,8 +79,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                     if (diff < (long) interval * 60 * 1000) {
                         //如果时间不够间隔，直接返回告警
                         alertEventStatusVo.setSkipped(true);
-                        config.put("result", AlertEventStatus.SKIPPED.getValue());
-                        config.put("error", "离上次成功发送过去了" + (diff / 1000) + "秒，未到间隔时间，发送跳过");
+                        //config.put("error", "离上次成功发送过去了" + (diff / 1000) + "秒，未到间隔时间，发送跳过");
                         alertEventHandlerAuditVo.setResult(config);
                         return alertVo;
                     }
@@ -151,15 +151,10 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
                     EmailUtil.sendHtmlEmail(title, content, new ArrayList<>(to), new ArrayList<>(cc));
-                    config.put("result", AlertEventStatus.SUCCEED.getValue());
                 } catch (Exception ex) {
-                    config.put("result", AlertEventStatus.FAILED.getValue());
-                    config.put("error", ex.getMessage());
-                    logger.error(ex.getMessage(), ex);
+                    throw new AlertEventHandlerTriggerException(ex);
                 }
             }
-
-            alertEventHandlerAuditVo.setResult(config);
         }
         return alertVo;
     }

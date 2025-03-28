@@ -23,13 +23,12 @@ import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
-import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -92,19 +91,16 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         JSONObject resultObj = new JSONObject();
         try {
             alertService.saveAlert(alertVo);
-            resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
             resultObj.put("alertId", alertVo.getId());
             resultObj.put("alertTitle", alertVo.getTitle());
             if (alertVo.getFromAlertVo() != null) {
                 resultObj.put("fromAlertId", alertVo.getFromAlertVo().getId());
                 resultObj.put("fromAlertTitle", alertVo.getFromAlertVo().getTitle());
             }
+            alertEventHandlerAuditVo.setResult(resultObj);
         } catch (Exception e) {
-            resultObj.put("status", AlertEventStatus.FAILED.getValue());
-            resultObj.put("error", StringUtils.isNotBlank(e.getMessage()) ? e.getMessage() : ExceptionUtils.getStackTrace(e));
+            throw new AlertEventHandlerTriggerException(e);
         }
-        config.put("result", resultObj);
-        alertEventHandlerAuditVo.setResult(config);
         return alertVo;
     }
 
