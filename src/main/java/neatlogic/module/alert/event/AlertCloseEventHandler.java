@@ -23,7 +23,6 @@ import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertEventStatusVo;
 import neatlogic.framework.alert.dto.AlertVo;
-import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
@@ -32,9 +31,6 @@ import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -42,7 +38,6 @@ import java.util.*;
 
 @Component
 public class AlertCloseEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertCloseEventHandler.class);
     @Resource
     private IAlertService alertService;
 
@@ -68,15 +63,11 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
         }
 
         JSONObject resultObj = new JSONObject();
-
         if (Objects.equals(closeType, "id")) {
             try {
                 alertService.closeAlert(alertVo.getId(), true);
-                resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
                 resultObj.put("closeCount", 1);
             } catch (Exception e) {
-                resultObj.put("status", AlertEventStatus.FAILED.getValue());
-                resultObj.put("error", e.getMessage() == null ? ExceptionUtils.getStackTrace(e) : e.getMessage());
                 throw new AlertEventHandlerTriggerException(e);
             }
         } else if (Objects.equals(closeType, "uniquekey")) {
@@ -112,15 +103,12 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
             try {
                 List<AlertVo> alertList = alertMapper.getOpenAlertByUniqueKey(alertVo.getUniqueKey());
                 alertService.closeAlert(alertList);
-                resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
                 resultObj.put("closeCount", alertList.size());
             } catch (Exception e) {
-                resultObj.put("error", e.getMessage() == null ? ExceptionUtils.getStackTrace(e) : e.getMessage());
                 throw new AlertEventHandlerTriggerException(e);
             }
         }
-        config.put("result", resultObj);
-        alertEventHandlerAuditVo.setResult(config);
+        alertEventHandlerAuditVo.setResult(resultObj);
         return alertVo;
     }
 

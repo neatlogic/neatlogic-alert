@@ -22,7 +22,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
-import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
@@ -145,10 +144,8 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                 resultJson = resultVo.getRawResult();
             }
             resultObj.put("response", resultJson);
-            resultObj.put("status", AlertEventStatus.SUCCEED.getValue());
         }
-        config.put("result", resultObj);
-        alertEventHandlerAuditVo.setResult(config);
+        alertEventHandlerAuditVo.setResult(resultObj);
         return alertVo;
     }
 

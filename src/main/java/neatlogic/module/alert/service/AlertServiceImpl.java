@@ -90,41 +90,29 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void closeAlert(Long alertId, boolean isCloseChildAlert) throws IOException {
         AlertVo alertVo = alertMapper.getAlertById(alertId);
-        if (alertVo != null) {
+        if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             if (isCloseChildAlert) {
                 List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
                 if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    //ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-                    //BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
                     for (Long toAlertId : toAlertIdList) {
-                        /*bulkRequestBuilder.operations(op -> op.update(u -> u
-                                .index(index.getIndexName())
-                                .id(toAlertId.toString())
-                                .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.isClose = 1"))))))
-                        ));*/
                         alertMapper.updateAlertIsClose(toAlertId, 1);
                         index.updateDocument(toAlertId, new JSONObject() {{
                             this.put("isClose", 1);
                         }});
                     }
-                    // 执行批量请求
-                    //BulkRequest bulkRequest = bulkRequestBuilder.build();
-                    //BulkResponse result = client.bulk(bulkRequest);
-                    /*if (result.errors()) {
-                        for (BulkResponseItem item : result.items()) {
-                            if (item.error() != null) {
-                                throw new ElasticSearchUpdateFieldException(item.id(), "fromAlertId", item.error().reason());
-                            }
-                        }
-                    }*/
-
                 }
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 1);
             }});
             alertMapper.updateAlertIsClose(alertVo.getId(), 1);
+            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
+            alertAuditVo.setAlertId(alertVo.getId());
+            alertAuditVo.setAttrName("const_isClose");
+            alertAuditVo.addOldValue(0);
+            alertAuditVo.addNewValue(1);
+            alertAuditMapper.insertAlertAudit(alertAuditVo);
             AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
         }
     }
