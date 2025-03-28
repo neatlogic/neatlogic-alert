@@ -62,7 +62,7 @@ public class SaveAlertStatusApi extends PrivateApiComponentBase {
 
     @Input({@Param(name = "name", desc = "唯一标识", type = ApiParamType.STRING, isRequired = true),
             @Param(name = "label", desc = "名称", type = ApiParamType.STRING, isRequired = true),
-            @Param(name = "color", desc = "颜色", type = ApiParamType.STRING, isRequired = true)
+            @Param(name = "color", desc = "颜色", type = ApiParamType.STRING)
     })
     @Description(desc = "保存告警状态")
     @Override
