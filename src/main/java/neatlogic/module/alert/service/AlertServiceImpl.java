@@ -24,9 +24,11 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
+import neatlogic.framework.alert.enums.AlertAttrType;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
@@ -41,6 +43,7 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
 import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
+import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
@@ -70,6 +73,9 @@ public class AlertServiceImpl implements IAlertService {
     private AlertAuditMapper alertAuditMapper;
     @Resource
     private AlertEventMapper alertEventMapper;
+
+    @Resource
+    private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Override
     public void closeAlert(List<AlertVo> alertList) throws IOException {
@@ -338,6 +344,32 @@ public class AlertServiceImpl implements IAlertService {
 
         if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
             alertMapper.saveAlertAttr(alertVo);
+            //如果是enum型属性则把数据保存起来
+            for (Map.Entry<String, Object> entry : alertVo.getAttrObj().entrySet()) {
+                AlertAttrTypeVo alertAttrTypeVo = alertAttrTypeMapper.getAttrTypeByName(entry.getKey());
+                if (alertAttrTypeVo != null && alertAttrTypeVo.getType().equals(AlertAttrType.ENUM.getValue())) {
+                    if (entry.getValue() instanceof JSONArray) {
+                        JSONArray valueList = (JSONArray) entry.getValue();
+                        for (int i = 0; i < valueList.size(); i++) {
+                            if (valueList.get(i) != null) {
+                                AlertAttrTypeEnumVo enumVo = new AlertAttrTypeEnumVo();
+                                enumVo.setAttrType(alertAttrTypeVo.getId());
+                                enumVo.setValue(valueList.getString(i));
+                                enumVo.setText(valueList.getString(i));
+                                alertAttrTypeMapper.saveAlertAttrTypeEnum(enumVo);
+                            }
+                        }
+                    } else {
+                        if (entry.getValue() != null) {
+                            AlertAttrTypeEnumVo enumVo = new AlertAttrTypeEnumVo();
+                            enumVo.setAttrType(alertAttrTypeVo.getId());
+                            enumVo.setValue(entry.getValue().toString());
+                            enumVo.setText(entry.getValue().toString());
+                            alertAttrTypeMapper.saveAlertAttrTypeEnum(enumVo);
+                        }
+                    }
+                }
+            }
         }
         if (indexHandler == null) {
             throw new ElasticSearchIndexNotFoundException("ALERT");

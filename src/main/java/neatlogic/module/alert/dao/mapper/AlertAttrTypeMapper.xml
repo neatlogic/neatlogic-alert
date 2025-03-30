@@ -16,7 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper">
-    <select id="checkAttrTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo" resultType="int">
+    <cache type="neatlogic.framework.dao.cache.NeatLogicCache" flushInterval="300000" size="100"></cache>
+
+    <select id="checkAttrTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo"
+            resultType="int" useCache="false">
         select count(1)
         from alert_attrtype
         where name = #{name}
@@ -41,49 +44,86 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </where>
     </sql>
 
-    <select id="getAttrTypeById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+    <select id="getAttrTypeByName" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="true">
         select id,
                name,
                label,
                type,
                is_active as isActive,
-               is_normal as isNormal,
-               config
+               is_normal as isNormal
+        from alert_attrtype
+        where name = #{value}
+    </select>
+
+    <select id="getAttrTypeById" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="false">
+        select id,
+               name,
+               label,
+               type,
+               is_active as isActive,
+               is_normal as isNormal
         from alert_attrtype
         where id = #{value}
     </select>
 
-    <select id="searchAttrTypeCount" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo" resultType="int">
+    <select id="searchAttrTypeCount" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo" resultType="int"
+            useCache="false">
         select count(1) from alert_attrtype
         <include refid="searchAttrTypeSql"></include>
     </select>
 
-    <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+    <select id="searchAttrTypeEnum" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeEnumVo"
+            resultType="neatlogic.framework.alert.dto.AlertAttrTypeEnumVo">
+        select id,
+        attr_type as attrType,
+        `value`,
+        text
+        from alert_enum
+        where attr_type = #{attrType}
+        <if test="keyword != null and keyword != ''">
+            and (`value` like CONCAT(#{keyword}, '%') or `text` like CONCAT(#{keyword}, '%'))
+        </if>
+        order by `value`
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="false">
         select id,
                name,
                label,
                type,
                is_active as isActive,
-               is_normal as isNormal,
-               config
+               is_normal as isNormal
         from alert_attrtype
         order by id desc
     </select>
 
     <select id="searchAttrType" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo"
-            resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+            resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="false">
         select id,
         name,
         label,
         type,
         is_active as isActive,
-        is_normal as isNormal,
-        config
+        is_normal as isNormal
         from alert_attrtype
         <include refid="searchAttrTypeSql"></include>
         order by id desc
         limit #{startNum}, #{pageSize}
     </select>
+
+    <insert id="saveAlertAttrTypeEnum" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeEnumVo">
+        insert into alert_enum
+            (id, attr_type, value, text)
+        values (#{id},
+                #{attrType},
+                #{value},
+                #{text})
+        ON DUPLICATE KEY UPDATE value = #{value},
+                                text  = #{text}
+    </insert>
 
     <insert id="saveAlertAttrType" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
         insert into alert_attrtype

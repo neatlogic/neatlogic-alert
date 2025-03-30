@@ -61,7 +61,7 @@ public class SaveAttrTypeApi extends PrivateApiComponentBase {
             @Param(name = "id", type = ApiParamType.LONG, desc = "id,不提供代表添加"),
             @Param(name = "name", isRequired = true, desc = "唯一标识", type = ApiParamType.STRING),
             @Param(name = "label", isRequired = true, desc = "名称", type = ApiParamType.STRING),
-            @Param(name = "isNormal", isRequired = true, rule = "0,1", desc = "作为普通属性展示", type = ApiParamType.INTEGER),
+            @Param(name = "isNormal", rule = "0,1", desc = "作为普通属性展示", type = ApiParamType.INTEGER),
             @Param(name = "isActive", isRequired = true, rule = "0,1", desc = "是否激活", type = ApiParamType.INTEGER),
             @Param(name = "type", desc = "类型", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "config", desc = "配置", type = ApiParamType.JSONOBJECT)
@@ -73,6 +73,9 @@ public class SaveAttrTypeApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) {
         AlertAttrTypeVo alertAttrTypeVo = JSON.toJavaObject(jsonObj, AlertAttrTypeVo.class);
+        if (alertAttrTypeVo.getIsNormal() == null) {
+            alertAttrTypeVo.setIsNormal(0);
+        }
         if (alertAttrTypeMapper.checkAttrTypeNameIsExists(alertAttrTypeVo) > 0) {
             throw new AlertAttrTypeNameIsExistsException(alertAttrTypeVo.getName());
         }
