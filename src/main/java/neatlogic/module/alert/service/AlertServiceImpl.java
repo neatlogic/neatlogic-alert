@@ -208,7 +208,7 @@ public class AlertServiceImpl implements IAlertService {
             }
         }
 
-        if (!oldAlertVo.getStatus().equalsIgnoreCase(alertVo.getStatus())) {
+        if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;
             String oldStatus = oldAlertVo.getStatus();
             oldAlertVo.setStatus(alertVo.getStatus());
