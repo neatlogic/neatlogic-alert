@@ -26,27 +26,30 @@ import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
+import neatlogic.framework.util.TableResultUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
-public class ListAttrTypeEnumApi extends PrivateApiComponentBase {
+public class SearchAttrTypeEnumApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Override
     public String getToken() {
-        return "alert/attrenum/list";
+        return "alert/attrenum/search";
     }
 
     @Override
     public String getName() {
-        return "返回告警扩展属性成员列表";
+        return "搜索告警扩展属性成员";
     }
 
     @Override
@@ -63,11 +66,15 @@ public class ListAttrTypeEnumApi extends PrivateApiComponentBase {
     @Output({
             @Param(explode = AlertAttrTypeEnumVo[].class)
     })
-    @Description(desc = "返回告警扩展属性成员列表")
+    @Description(desc = "搜索告警扩展属性成员")
     @Override
     public Object myDoService(JSONObject jsonObj) {
         AlertAttrTypeEnumVo alertAttrTypeEnumVo = JSON.toJavaObject(jsonObj, AlertAttrTypeEnumVo.class);
-        return alertAttrTypeMapper.searchAttrTypeEnum(alertAttrTypeEnumVo);
+        List<AlertAttrTypeEnumVo> enumList = alertAttrTypeMapper.searchAttrTypeEnum(alertAttrTypeEnumVo);
+        if (CollectionUtils.isNotEmpty(enumList)) {
+            alertAttrTypeEnumVo.setRowNum(alertAttrTypeMapper.searchAttrTypeEnumCount(alertAttrTypeEnumVo));
+        }
+        return TableResultUtil.getResult(enumList, alertAttrTypeEnumVo);
     }
 
 }

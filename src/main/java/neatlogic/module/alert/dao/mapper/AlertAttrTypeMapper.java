@@ -12,7 +12,13 @@ public interface AlertAttrTypeMapper {
 
     AlertAttrTypeVo getAttrTypeByName(String name);
 
+    AlertAttrTypeEnumVo getAttrTypeEnumByValue(AlertAttrTypeEnumVo alertAttrTypeEnumVo);
+
     int searchAttrTypeCount(AlertAttrTypeVo alertAttrTypeVo);
+
+    int checkAttrTypeEnumValueIsExists(AlertAttrTypeEnumVo alertAttrTypeEnumVo);
+
+    int searchAttrTypeEnumCount(AlertAttrTypeEnumVo alertAttrTypeEnumVo);
 
     List<AlertAttrTypeEnumVo> searchAttrTypeEnum(AlertAttrTypeEnumVo alertAttrTypeEnumVo);
 
@@ -25,4 +31,6 @@ public interface AlertAttrTypeMapper {
     void saveAlertAttrType(AlertAttrTypeVo alertAttrTypeVo);
 
     void deleteAttrTypeById(Long id);
+
+    void deleteAttrTypeEnumById(Long id);
 }
