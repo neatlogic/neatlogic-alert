@@ -15,38 +15,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.api.alert;
+package neatlogic.module.alert.api.attrtype;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.auth.ALERT_ATTR_MODIFY;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.restful.annotation.*;
+import neatlogic.framework.restful.annotation.Description;
+import neatlogic.framework.restful.annotation.Input;
+import neatlogic.framework.restful.annotation.OperationType;
+import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.service.IAlertService;
+import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
 @Service
-@AuthAction(action = ALERT_BASE.class)
-@OperationType(type = OperationTypeEnum.OPERATE)
-public class HandleAlertApi extends PrivateApiComponentBase {
+@AuthAction(action = ALERT_ATTR_MODIFY.class)
+@OperationType(type = OperationTypeEnum.DELETE)
+public class DeleteAttrTypeEnumApi extends PrivateApiComponentBase {
 
     @Resource
-    private IAlertService alertService;
+    private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Override
     public String getToken() {
-        return "alert/handle";
+        return "alert/attrenum/delete";
     }
 
     @Override
     public String getName() {
-        return "处理告警";
+        return "删除告警扩展属性成员";
     }
 
     @Override
@@ -55,20 +56,13 @@ public class HandleAlertApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG),
-            @Param(name = "status", desc = "状态", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "isClose", desc = "是否关闭", isRequired = true, type = ApiParamType.INTEGER),
-            @Param(name = "comment", desc = "评论", type = ApiParamType.STRING),
-            @Param(name = "isChangeChildAlertStatus", desc = "是否更新子告警状态", type = ApiParamType.INTEGER)
+            @Param(name = "id", desc = "id", type = ApiParamType.LONG, isRequired = true)
     })
-    @Output({@Param(name = "id", desc = "告警id", type = ApiParamType.LONG)})
-    @Description(desc = "处理告警")
+    @Description(desc = "删除告警扩展属性成员")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws Exception {
-        AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
-        alertService.handleAlert(alertVo);
-        return alertVo.getId();
+    public Object myDoService(JSONObject jsonObj) {
+        alertAttrTypeMapper.deleteAttrTypeEnumById(jsonObj.getLong("id"));
+        return null;
     }
-
 
 }
