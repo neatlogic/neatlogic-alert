@@ -42,6 +42,7 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
+import neatlogic.module.alert.aftertransaction.ChildAlertIsCloseUpdateJob;
 import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
@@ -191,6 +192,22 @@ public class AlertServiceImpl implements IAlertService {
             throw new AlertHasNotAuthException();
         }
         boolean hasChange = false;
+        if (oldAlertVo.getIsClose() != alertVo.getIsClose()) {
+            hasChange = true;
+            alertMapper.updateAlertIsClose(alertVo.getId(), alertVo.getIsClose());
+            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
+            alertAuditVo.setAlertId(alertVo.getId());
+            alertAuditVo.setAttrName("const_isClose");
+            alertAuditVo.addOldValue(oldAlertVo.getIsClose());
+            alertAuditVo.addNewValue(alertVo.getIsClose());
+            alertAuditMapper.insertAlertAudit(alertAuditVo);
+            AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
+            if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
+                AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-ISCLOSE-UPDATER");
+                afterTransactionJob.execute(new ChildAlertIsCloseUpdateJob(alertVo));
+            }
+        }
+
         if (!oldAlertVo.getStatus().equalsIgnoreCase(alertVo.getStatus())) {
             hasChange = true;
             String oldStatus = oldAlertVo.getStatus();

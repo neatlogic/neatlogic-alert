@@ -57,6 +57,7 @@ public class HandleAlertApi extends PrivateApiComponentBase {
     @Input({
             @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG),
             @Param(name = "status", desc = "状态", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "isClose", desc = "是否关闭", isRequired = true, type = ApiParamType.INTEGER),
             @Param(name = "comment", desc = "评论", type = ApiParamType.STRING),
             @Param(name = "isChangeChildAlertStatus", desc = "是否更新子告警状态", type = ApiParamType.INTEGER)
     })
