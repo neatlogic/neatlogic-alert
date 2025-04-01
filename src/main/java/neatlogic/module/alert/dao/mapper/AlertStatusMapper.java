@@ -30,5 +30,9 @@ public interface AlertStatusMapper {
 
     void deleteAlertStatus(String name);
 
-    void saveAlertStatus(AlertStatusVo alertStatusVo);
+    void insertAlertStatus(AlertStatusVo alertStatusVo);
+
+    void updateAlertStatusSort(AlertStatusVo alertStatusVo);
+
+    void updateAlertStatus(AlertStatusVo alertStatusVo);
 }
