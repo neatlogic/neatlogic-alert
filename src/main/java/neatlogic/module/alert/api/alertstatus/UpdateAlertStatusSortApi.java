@@ -17,7 +17,7 @@
 
 package neatlogic.module.alert.api.alertstatus;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_STATUS_MODIFY;
 import neatlogic.framework.alert.dto.AlertStatusVo;
@@ -40,19 +40,19 @@ import java.io.IOException;
 @AuthAction(action = ALERT_STATUS_MODIFY.class)
 @OperationType(type = OperationTypeEnum.UPDATE)
 @Transactional
-public class SaveAlertStatusApi extends PrivateApiComponentBase {
+public class UpdateAlertStatusSortApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertStatusMapper alertStatusMapper;
 
     @Override
     public String getToken() {
-        return "/alert/status/save";
+        return "/alert/status/sort/update";
     }
 
     @Override
     public String getName() {
-        return "保存告警状态";
+        return "更新告警状态排序";
     }
 
     @Override
@@ -60,26 +60,16 @@ public class SaveAlertStatusApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "name", desc = "唯一标识", type = ApiParamType.STRING, isRequired = true),
-            @Param(name = "label", desc = "名称", type = ApiParamType.STRING, isRequired = true),
-            @Param(name = "color", desc = "颜色", type = ApiParamType.STRING)
-    })
-    @Description(desc = "保存告警状态")
+    @Input({@Param(name = "statusList", desc = "状态列表", type = ApiParamType.JSONARRAY, isRequired = true)})
+    @Description(desc = "更新告警状态排序")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
-        AlertStatusVo alertStatusVo = JSON.toJavaObject(jsonObj, AlertStatusVo.class);
-        AlertStatusVo oldStatus = alertStatusMapper.getStatusByName(alertStatusVo.getName());
-        if (oldStatus == null) {
-            Integer count = alertStatusMapper.getAlertStatusCount();
-            if (count == null) {
-                count = 0;
-            } else {
-                count += 1;
-            }
-            alertStatusVo.setSort(count);
-            alertStatusMapper.insertAlertStatus(alertStatusVo);
-        } else {
-            alertStatusMapper.updateAlertStatus(alertStatusVo);
+        JSONArray statusList = jsonObj.getJSONArray("statusList");
+        for (int i = 0; i < statusList.size(); i++) {
+            AlertStatusVo alertStatusVo = new AlertStatusVo();
+            alertStatusVo.setSort(i + 1);
+            alertStatusVo.setName(statusList.getString(i));
+            alertStatusMapper.updateAlertStatusSort(alertStatusVo);
         }
         return null;
     }

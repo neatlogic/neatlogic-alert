@@ -35,6 +35,7 @@ import neatlogic.framework.integration.dto.IntegrationResultVo;
 import neatlogic.framework.integration.dto.IntegrationVo;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.dao.mapper.AlertLevelMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.framework.integration.handler.FrameworkRequestFrom;
 import org.apache.commons.collections4.CollectionUtils;
@@ -52,7 +53,8 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
     private final Logger logger = LoggerFactory.getLogger(AlertIntegrationEventHandler.class);
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
-
+    @Resource
+    private AlertLevelMapper alertLevelMapper;
     @Resource
     private AlertMapper alertMapper;
 
@@ -79,9 +81,12 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
         String integrationUuid = config.getString("integrationUuid");
         JSONArray paramMapping = config.getJSONArray("paramMapping");
         if (StringUtils.isNotBlank(integrationUuid)) {
-            //补充处理人和处理组信息
+            //补充处理人和处理组信息和级别信息
             alertVo.setUserList(alertMapper.getAlertUserByAlertId(alertVo.getId()));
             alertVo.setTeamList(alertMapper.getAlertTeamByAlertId(alertVo.getId()));
+            if (alertVo.getAlertLevel() == null && alertVo.getLevel() != null) {
+                alertVo.setAlertLevel(alertLevelMapper.getAlertLevelByLevel(alertVo.getLevel()));
+            }
 
 
             IntegrationVo integrationVo = integrationMapper.getIntegrationByUuid(integrationUuid);

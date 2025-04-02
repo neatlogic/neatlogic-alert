@@ -33,6 +33,7 @@ import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.dao.mapper.AlertLevelMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -51,6 +52,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Resource
+    private AlertLevelMapper alertLevelMapper;
+
+    @Resource
     private UserMapper userMapper;
 
     @Resource
@@ -65,7 +69,14 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
-            List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
+            //补充处理人和处理组信息和级别信息
+            alertVo.setUserList(alertMapper.getAlertUserByAlertId(alertVo.getId()));
+            alertVo.setTeamList(alertMapper.getAlertTeamByAlertId(alertVo.getId()));
+            if (alertVo.getAlertLevel() == null && alertVo.getLevel() != null) {
+                alertVo.setAlertLevel(alertLevelMapper.getAlertLevelByLevel(alertVo.getLevel()));
+            }
+
+            List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
             int interval = config.getIntValue("interval");
             if (interval > 0) {
                 AlertEventHandlerAuditVo paramAuditVo = new AlertEventHandlerAuditVo();

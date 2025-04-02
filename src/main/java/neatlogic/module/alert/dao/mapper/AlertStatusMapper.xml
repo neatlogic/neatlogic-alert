@@ -39,7 +39,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by sort
     </select>
 
-    <insert id="saveAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertStatusVo">
+    <update id="updateAlertStatusSort" parameterType="neatlogic.framework.alert.dto.AlertStatusVo">
+        update alert_status
+        set sort = #{sort}
+        where name = #{name}
+    </update>
+
+    <update id="updateAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertStatusVo">
+        update alert_status
+        set label = #{label},
+            color = #{color}
+        where name = #{name}
+    </update>
+
+    <insert id="insertAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertStatusVo">
         insert into alert_status
         (name,
          label,
@@ -49,9 +62,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{label},
                 #{color},
                 #{sort})
-        ON DUPLICATE KEY UPDATE label = #{label},
-                                color =#{color},
-                                sort  =#{sort}
     </insert>
 
     <delete id="deleteAlertStatus" parameterType="java.lang.String">
