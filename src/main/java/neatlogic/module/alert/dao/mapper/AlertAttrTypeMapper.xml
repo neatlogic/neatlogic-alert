@@ -18,6 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper">
     <cache type="neatlogic.framework.dao.cache.NeatLogicCache" flushInterval="300000" size="100"></cache>
 
+    <select id="getAttrTypeCount" resultType="java.lang.Integer" useCache="false">
+        select count(1)
+        from alert_attrtype
+    </select>
+
     <select id="checkAttrTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo"
             resultType="int" useCache="false">
         select count(1)
@@ -44,6 +49,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <if test="isNormal != null">
                 and a.is_normal = #{isNormal}
             </if>
+            <if test="isTop != null">
+                and a.is_top = #{isTop}
+            </if>
         </where>
     </sql>
 
@@ -54,7 +62,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                label,
                type,
                is_active as isActive,
-               is_normal as isNormal
+               is_normal as isNormal,
+               is_top    as isTop
         from alert_attrtype
         where name = #{value}
     </select>
@@ -66,7 +75,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                label,
                type,
                is_active as isActive,
-               is_normal as isNormal
+               is_normal as isNormal,
+               is_top    as isTop
         from alert_attrtype
         where id = #{value}
     </select>
@@ -126,9 +136,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                label,
                type,
                is_active as isActive,
-               is_normal as isNormal
+               is_normal as isNormal,
+               is_top    as isTop
         from alert_attrtype
-        order by id desc
+        order by is_top desc, sort
     </select>
 
     <select id="searchAttrType" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo"
@@ -140,12 +151,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         a.type,
         a.is_active as isActive,
         a.is_normal as isNormal,
+        a.sort as sort,
+        a.is_top as isTop,
         (select count(1) from alert_enum x where x.attr_type = a.id) as enumCount
         from alert_attrtype a
         <include refid="searchAttrTypeSql"></include>
-        order by a.id desc
+        order by a.is_top desc, a.sort
         limit #{startNum}, #{pageSize}
     </select>
+
+    <update id="updateAlertAttrTypeSort" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeVo">
+        update alert_attrtype
+        set sort = #{sort}
+        where id = #{id}
+    </update>
 
     <insert id="saveAlertAttrTypeEnum" parameterType="neatlogic.framework.alert.dto.AlertAttrTypeEnumVo">
         insert into alert_enum
@@ -166,19 +185,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          type,
          is_active,
          is_normal,
-         config)
+         config,
+         is_top,
+         sort)
         values (#{id},
                 #{name},
                 #{label},
                 #{type},
                 #{isActive},
                 #{isNormal},
-                #{configStr, typeHandler=CompressHandler})
+                #{configStr, typeHandler=CompressHandler},
+                #{isTop},
+                #{sort})
         ON DUPLICATE KEY UPDATE name      = #{name},
                                 label     = #{label},
                                 type      = #{type},
                                 is_active = #{isActive},
                                 is_normal = #{isNormal},
+                                is_top    = #{isTop},
                                 config    = #{configStr, typeHandler=CompressHandler}
     </insert>
 

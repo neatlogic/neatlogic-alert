@@ -26,6 +26,7 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import neatlogic.framework.alert.auth.ALERT_ADMIN;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttrType;
@@ -34,6 +35,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
@@ -180,8 +182,8 @@ public class AlertServiceImpl implements IAlertService {
         if (oldAlertVo == null) {
             throw new AlertNotFoundException(alertVo.getId());
         }
-        boolean hasRole = false;
-        if (CollectionUtils.isNotEmpty(oldAlertVo.getUserList())) {
+        boolean hasRole = AuthActionChecker.check(ALERT_ADMIN.class);
+        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getUserList())) {
             hasRole = oldAlertVo.getUserList().stream().anyMatch(d -> d.getUserId().equals(UserContext.get().getUserUuid(true)));
         }
         if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getTeamIdList())) {

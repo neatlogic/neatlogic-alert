@@ -18,6 +18,7 @@
 package neatlogic.module.alert.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -30,6 +31,7 @@ import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import neatlogic.framework.alert.dto.AlertAttrFilterVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.dto.ElasticsearchVo;
@@ -148,25 +150,46 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                     .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))
                     .build());
         }
+        //告警时间
         if (alertVo.getUpdateTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            boolQueryBuilder.must(new Query.Builder()
-                    .bool(b -> b.must(
-                            Query.of(q -> q.range(r -> r
-                                    .field("updateTime")
-                                    .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
-                            ))
-                    )).build());
+            Query query = Query.of(q -> q.range(r -> r
+                    .field("updateTime")
+                    .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
+            ));
+            boolQueryBuilder.must(query);
         }
+        //告警状态
         if (StringUtils.isNotBlank(alertVo.getStatus())) {
-            boolQueryBuilder.must(new Query.Builder()
-                    .bool(b -> b.must(
-                            Query.of(q -> q.term(r -> r
-                                    .field("status")
-                                    .value(alertVo.getStatus()) // 开始时间
-                            ))
-                    )).build());
+            Query query = Query.of(q -> q.term(r -> r
+                    .field("status")
+                    .value(alertVo.getStatus()) // 开始时间
+            ));
+            boolQueryBuilder.must(query);
         }
+        //置顶自定义属性搜索
+        if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
+            for (AlertAttrFilterVo attrFilterVo : alertVo.getAttrFilterList()) {
+                if (CollectionUtils.isNotEmpty(attrFilterVo.getValueList())) {
+                    /*Query query = new Query.Builder()
+                            .bool(b -> b.should(attrFilterVo.getValueList().stream()
+                                    .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField("attr_" + attrFilterVo.getName())).query(value.toString()))))
+                                    .collect(Collectors.toList())))
+                            .build();
+                    boolQueryBuilder.must(new Query.Builder().bool(b -> b.must(query)).build());*/
+
+                    List<FieldValue> values = attrFilterVo.getValueList().stream()
+                            .map(FieldValue::of)
+                            .collect(Collectors.toList());
+
+                    boolQueryBuilder.must(Query.of(q -> q.terms(t -> t
+                            .field(transformField(attrFilterVo.getName()) + ".keyword")//attrObj中的数据可能已经被分词，加上keyword关键字用于匹配原始值
+                            .terms(v -> v.value(values))
+                    )));
+                }
+            }
+        }
+
         if (Objects.equals("simple", alertVo.getMode())) {
             //简单模式需要加上关键字，规则使用视图规则
             if (StringUtils.isNotBlank(alertVo.getViewName())) {

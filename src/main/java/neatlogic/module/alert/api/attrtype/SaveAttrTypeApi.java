@@ -73,11 +73,19 @@ public class SaveAttrTypeApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) {
         AlertAttrTypeVo alertAttrTypeVo = JSON.toJavaObject(jsonObj, AlertAttrTypeVo.class);
+        Long id = jsonObj.getLong("id");
         if (alertAttrTypeVo.getIsNormal() == null) {
             alertAttrTypeVo.setIsNormal(0);
         }
         if (alertAttrTypeMapper.checkAttrTypeNameIsExists(alertAttrTypeVo) > 0) {
             throw new AlertAttrTypeNameIsExistsException(alertAttrTypeVo.getName());
+        }
+        if (id == null) {
+            Integer c = alertAttrTypeMapper.getAttrTypeCount();
+            if (c == null) {
+                c = 0;
+            }
+            alertAttrTypeVo.setSort(c + 1);
         }
         alertAttrTypeMapper.saveAlertAttrType(alertAttrTypeVo);
         return alertAttrTypeVo.getId();

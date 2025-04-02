@@ -8,6 +8,8 @@ import java.util.List;
 public interface AlertAttrTypeMapper {
     int checkAttrTypeNameIsExists(AlertAttrTypeVo alertAttrTypeVo);
 
+    Integer getAttrTypeCount();
+
     AlertAttrTypeVo getAttrTypeById(Long id);
 
     AlertAttrTypeVo getAttrTypeByName(String name);
@@ -25,6 +27,8 @@ public interface AlertAttrTypeMapper {
     List<AlertAttrTypeVo> searchAttrType(AlertAttrTypeVo alertAttrTypeVo);
 
     List<AlertAttrTypeVo> listAttrType();
+
+    void updateAlertAttrTypeSort(AlertAttrTypeVo alertAttrTypeVo);
 
     void saveAlertAttrTypeEnum(AlertAttrTypeEnumVo alertAttrTypeEnumVo);
 
