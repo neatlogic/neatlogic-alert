@@ -295,7 +295,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     <select id="getAlertById" parameterType="java.lang.Long" resultMap="alertResultMap">
         <include refid="searchAlertColumn"></include>
         where a.id = #{value}
-        order by a.update_time desc
     </select>
 
 

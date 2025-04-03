@@ -158,7 +158,6 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                 }
             }
 
-
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
                     EmailUtil.sendHtmlEmail(title, content, new ArrayList<>(to), new ArrayList<>(cc));
