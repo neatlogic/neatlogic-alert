@@ -33,13 +33,9 @@ import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
-import neatlogic.module.alert.dao.mapper.AlertLevelMapper;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -47,18 +43,12 @@ import java.util.*;
 
 @Component
 public class AlertSendMailEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertSendMailEventHandler.class);
+    //private final Logger logger = LoggerFactory.getLogger(AlertSendMailEventHandler.class);
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Resource
-    private AlertLevelMapper alertLevelMapper;
-
-    @Resource
     private UserMapper userMapper;
-
-    @Resource
-    private AlertMapper alertMapper;
 
     @Override
     public int getSort() {
@@ -69,12 +59,6 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
-            //补充处理人和处理组信息和级别信息
-            alertVo.setUserList(alertMapper.getAlertUserByAlertId(alertVo.getId()));
-            alertVo.setTeamList(alertMapper.getAlertTeamByAlertId(alertVo.getId()));
-            if (alertVo.getAlertLevel() == null && alertVo.getLevel() != null) {
-                alertVo.setAlertLevel(alertLevelMapper.getAlertLevelByLevel(alertVo.getLevel()));
-            }
 
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
             int interval = config.getIntValue("interval");
@@ -114,7 +98,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             title = FreemarkerUtil.transform(paramObj, title);
             content = FreemarkerUtil.transform(paramObj, content);
 
-            List<AlertUserVo> userList = alertMapper.getAlertUserByAlertId(alertVo.getId());
+            List<AlertUserVo> userList = alertVo.getUserList();
             Set<String> to = new HashSet<>();
             if (CollectionUtils.isNotEmpty(toUserList)) {
                 for (int i = 0; i < toUserList.size(); i++) {

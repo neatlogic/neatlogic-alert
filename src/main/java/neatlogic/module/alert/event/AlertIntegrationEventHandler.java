@@ -81,14 +81,6 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
         String integrationUuid = config.getString("integrationUuid");
         JSONArray paramMapping = config.getJSONArray("paramMapping");
         if (StringUtils.isNotBlank(integrationUuid)) {
-            //补充处理人和处理组信息和级别信息
-            alertVo.setUserList(alertMapper.getAlertUserByAlertId(alertVo.getId()));
-            alertVo.setTeamList(alertMapper.getAlertTeamByAlertId(alertVo.getId()));
-            if (alertVo.getAlertLevel() == null && alertVo.getLevel() != null) {
-                alertVo.setAlertLevel(alertLevelMapper.getAlertLevelByLevel(alertVo.getLevel()));
-            }
-
-
             IntegrationVo integrationVo = integrationMapper.getIntegrationByUuid(integrationUuid);
             if (integrationVo == null) {
                 throw new IntegrationNotFoundException(integrationUuid);

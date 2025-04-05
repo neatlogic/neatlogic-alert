@@ -19,15 +19,15 @@ package neatlogic.module.alert.event;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertEventStatusVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.util.Md5Util;
+import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
 import neatlogic.module.alert.service.IAlertService;
+import neatlogic.module.alert.utils.AlertRuleUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -36,11 +36,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class AlertSaveEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
+
+    @Resource
+    private AlertRuleMapper alertRuleMapper;
 
 
     @Override
@@ -50,7 +54,16 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             config = new JSONObject();
         }
         //根据唯一规则计算unique key
-        if (config.getJSONArray("uniqueAttrList") != null) {
+        if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
+            List<AlertRuleVo> ruleList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(config.getJSONArray("ruleList"))) {
+                List<Long> ruleIdList = new ArrayList<>();
+                for (int i = 0; i < config.getJSONArray("ruleList").size(); i++) {
+                    ruleIdList.add(config.getJSONArray("ruleList").getLong(i));
+                }
+                ruleList = alertRuleMapper.getAlertRuleByIdList(ruleIdList);
+            }
+
             List<String> attrList = new ArrayList<>();
             for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
                 attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
@@ -64,14 +77,24 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
                     if (StringUtils.isNotBlank(key)) {
                         key += "#";
                     }
-                    key += alertObj.getString(attr.substring("const_".length()));
+                    String value = alertObj.getString(attr.substring("const_".length()));
+                    List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                        value = AlertRuleUtils.doRule(value, tmpRuleList);
+                    }
+                    key += value;
                 } else if (attr.startsWith("attr_")) {
                     JSONObject attrObj = alertObj.getJSONObject("attrObj");
                     if (attrObj != null && attrObj.get(attr.substring("attr_".length())) != null) {
                         if (StringUtils.isNotBlank(key)) {
                             key += "#";
                         }
-                        key += attrObj.getString(attr.substring("attr_".length()));
+                        String value = attrObj.getString(attr.substring("attr_".length()));
+                        List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                            value = AlertRuleUtils.doRule(value, tmpRuleList);
+                        }
+                        key += value;
                     }
                 }
             }
@@ -147,6 +170,10 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             this.add("condition");
             this.add("interval");
         }};
+    }
+
+    public static void main(String[] ar) {
+
     }
 
 }

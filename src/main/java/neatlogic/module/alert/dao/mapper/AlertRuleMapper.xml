@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertRuleMapper">
+    <cache type="neatlogic.framework.dao.cache.NeatLogicCache" flushInterval="30000" size="100"></cache>
+
+    <select id="checkAlertRuleIsExists" parameterType="neatlogic.framework.alert.dto.AlertRuleVo" resultType="int"
+            useCache="false">
+        select count(1)
+        from alert_rule
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <select id="getAlertRuleById" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertRuleVo"
+            useCache="false">
+        select id,
+               name,
+               label,
+               is_active as isActive,
+               attr_name as attrName,
+               config    as configStr
+        from alert_rule
+        where id = #{value}
+    </select>
+
+    <select id="getAlertRuleByIdList" resultType="neatlogic.framework.alert.dto.AlertRuleVo" useCache="false">
+        select
+        id,
+        name,
+        label,
+        is_active as isActive,
+        attr_name as attrName,
+        config as configStr
+        from alert_rule
+        where
+        id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="listAllAlertRule" parameterType="neatlogic.framework.alert.dto.AlertRuleVo"
+            resultType="neatlogic.framework.alert.dto.AlertRuleVo" useCache="true">
+        select
+        id,
+        name,
+        label,
+        is_active as isActive,
+        attr_name as attrName,
+        config as configStr
+        from alert_rule
+        <where>
+            <if test="isActive != null">
+                is_active = #{isActive}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <update id="updateAlertRule" parameterType="neatlogic.framework.alert.dto.AlertRuleVo">
+        update alert_rule
+        set label     = #{label},
+            is_active = #{isActive},
+            attr_name = #{attrName},
+            config    = #{configStr, typeHandler=CompressHandler}
+        where id = #{id}
+    </update>
+
+    <insert id="insertAlertRule" parameterType="neatlogic.framework.alert.dto.AlertRuleVo">
+        insert into alert_rule
+        (id,
+         name,
+         label,
+         is_active,
+         attr_name,
+         config)
+        values (#{id},
+                #{name},
+                #{label},
+                #{isActive},
+                #{attrName},
+                #{configStr, typeHandler=CompressHandler})
+    </insert>
+
+    <delete id="deleteAlertRuleById" parameterType="java.lang.Long">
+        delete
+        from alert_rule
+        where id = #{value}
+    </delete>
+</mapper>
