@@ -21,19 +21,34 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertRuleVo;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
 public class AlertRuleUtils {
+    public static String doRule(String content, JSONArray ruleList) {
+        if (StringUtils.isNotBlank(content) && CollectionUtils.isNotEmpty(ruleList)) {
+            for (int i = 0; i < ruleList.size(); i++) {
+                JSONObject rule = ruleList.getJSONObject(i);
+                String pattern = rule.getString("pattern");
+                String replacement = rule.getString("replacement");
+                content = content.replaceAll(pattern, replacement);
+            }
+        }
+        return content;
+    }
+
     public static String doRule(String content, List<AlertRuleVo> alertRuleList) {
-        for (AlertRuleVo alertRuleVo : alertRuleList) {
-            JSONArray ruleList = alertRuleVo.getConfig().getJSONArray("ruleList");
-            if (CollectionUtils.isNotEmpty(ruleList)) {
-                for (int i = 0; i < ruleList.size(); i++) {
-                    JSONObject rule = ruleList.getJSONObject(i);
-                    String pattern = rule.getString("pattern");
-                    String replacement = rule.getString("replacement");
-                    content = content.replaceAll(pattern, replacement);
+        if (StringUtils.isNotBlank(content) && CollectionUtils.isNotEmpty(alertRuleList)) {
+            for (AlertRuleVo alertRuleVo : alertRuleList) {
+                JSONArray ruleList = alertRuleVo.getConfig().getJSONArray("ruleList");
+                if (CollectionUtils.isNotEmpty(ruleList)) {
+                    for (int i = 0; i < ruleList.size(); i++) {
+                        JSONObject rule = ruleList.getJSONObject(i);
+                        String pattern = rule.getString("pattern");
+                        String replacement = rule.getString("replacement");
+                        content = content.replaceAll(pattern, replacement);
+                    }
                 }
             }
         }
