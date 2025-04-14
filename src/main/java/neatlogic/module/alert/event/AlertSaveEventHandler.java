@@ -48,7 +48,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (config == null) {
             config = new JSONObject();

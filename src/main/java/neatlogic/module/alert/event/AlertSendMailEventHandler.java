@@ -30,6 +30,7 @@ import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerEx
 import neatlogic.framework.common.constvalue.AuthType;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.UserVo;
+import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
@@ -56,10 +57,20 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
+        if (alertEventPluginVo != null && MapUtils.isNotEmpty(alertEventPluginVo.getConfig())) {
+            //检查是否到达最大发送次数
+            JSONObject pluginConfig = alertEventPluginVo.getConfig();
+            int maxSendCount = pluginConfig.getIntValue("maxSendCount");
+            if (maxSendCount > 0 && alertEventHandlerAuditVo.getStartTime() != null) {
+                Integer c = alertEventMapper.getAlertEventExecuteCount(alertEventHandlerVo.getHandler(), alertEventHandlerAuditVo.getStartTime().getTime() - 60 * 1000);
+                if (c != null && c > maxSendCount) {
+                    throw new ApiRuntimeException("已经到达一分钟内最大发送次数：" + maxSendCount);
+                }
+            }
+        }
         if (MapUtils.isNotEmpty(config)) {
-
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
             int interval = config.getIntValue("interval");
             if (interval > 0) {

@@ -50,7 +50,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
 
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(config)) {
             JSONArray userIdList = config.getJSONArray("userIdList");

@@ -19,10 +19,7 @@ package neatlogic.module.alert.event;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertEventStatusVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
@@ -50,7 +47,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
         if (config == null) {
             config = new JSONObject();

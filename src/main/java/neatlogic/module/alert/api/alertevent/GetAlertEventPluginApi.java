@@ -23,35 +23,32 @@ import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.AlertEventPluginVo;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.IAlertEventHandler;
+import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerNotFoundException;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
-public class ListAlertEventPluginApi extends PrivateApiComponentBase {
+public class GetAlertEventPluginApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertEventMapper alertEventMapper;
 
     @Override
     public String getToken() {
-        return "alert/event/plugin/list";
+        return "alert/event/plugin/get";
     }
 
     @Override
     public String getName() {
-        return "列出所有告警事件插件";
+        return "获取告警事件插件";
     }
 
     @Override
@@ -59,32 +56,28 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "eventName", desc = "事件唯一标识", type = ApiParamType.STRING),
-            @Param(name = "parentPlugin", desc = "父插件唯一标识", type = ApiParamType.STRING)})
-    @Output({@Param(explode = AlertEventPluginVo[].class)})
-    @Description(desc = "列出所有告警事件插件")
+    @Input({@Param(name = "name", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING)})
+    @Output({@Param(explode = AlertEventPluginVo.class)})
+    @Description(desc = "获取告警事件插件")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
-        String eventName = jsonObj.getString("eventName");
-        String parentPlugin = jsonObj.getString("parentPlugin");
-        List<IAlertEventHandler> handlerList = AlertEventHandlerFactory.getHandlerList(eventName, parentPlugin);
-        List<AlertEventPluginVo> pluginList = new ArrayList<>();
-        handlerList.sort((o1, o2) -> o1.getSort() - o2.getSort());
-        List<AlertEventPluginVo> allPluginList = alertEventMapper.getAllAlertEventPluginConfig();
-        if (CollectionUtils.isNotEmpty(handlerList)) {
-            for (IAlertEventHandler handler : handlerList) {
-                AlertEventPluginVo plugin = new AlertEventPluginVo(handler.getName(), handler.getLabel(), handler.getIcon(), handler.getDescription());
-                Optional<AlertEventPluginVo> op = allPluginList.stream().filter(o -> o.getName().equals(plugin.getName())).findFirst();
-                if (op.isPresent()) {
-                    plugin.setIsActive(op.get().getIsActive());
-                    plugin.setConfigStr(op.get().getConfigStr());
-                } else {
-                    //没有任何配置默认激活插件
-                    plugin.setIsActive(1);
-                }
-                pluginList.add(plugin);
-            }
+        String name = jsonObj.getString("name");
+        IAlertEventHandler handler = AlertEventHandlerFactory.getHandler(name);
+        if (handler == null) {
+            throw new AlertEventHandlerNotFoundException(name);
         }
-        return pluginList;
+        AlertEventPluginVo alertEventPluginVo = new AlertEventPluginVo();
+        alertEventPluginVo.setName(handler.getName());
+        alertEventPluginVo.setDescription(handler.getDescription());
+        alertEventPluginVo.setLabel(handler.getLabel());
+        alertEventPluginVo.setIcon(handler.getIcon());
+        AlertEventPluginVo configVo = alertEventMapper.getAlertEventPluginConfigByName(name);
+        if (configVo != null) {
+            alertEventPluginVo.setIsActive(configVo.getIsActive());
+            alertEventPluginVo.setConfigStr(configVo.getConfigStr());
+        } else {
+            alertEventPluginVo.setIsActive(1);
+        }
+        return alertEventPluginVo;
     }
 }

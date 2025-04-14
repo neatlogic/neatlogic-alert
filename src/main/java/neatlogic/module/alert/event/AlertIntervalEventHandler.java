@@ -76,7 +76,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject rootConfig = alertEventHandlerVo.getConfig();
         if (MapUtils.isNotEmpty(rootConfig)) {
             JSONArray intervalList = rootConfig.getJSONArray("intervalList");

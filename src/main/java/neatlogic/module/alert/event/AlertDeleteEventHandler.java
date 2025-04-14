@@ -18,10 +18,7 @@
 package neatlogic.module.alert.event;
 
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
-import neatlogic.framework.alert.dto.AlertEventHandlerVo;
-import neatlogic.framework.alert.dto.AlertEventStatusVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
@@ -47,7 +44,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     }
 
     @Override
-    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
+    protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
         try {
             alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
