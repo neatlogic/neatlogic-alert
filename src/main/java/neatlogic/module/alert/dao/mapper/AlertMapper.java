@@ -44,7 +44,7 @@ public interface AlertMapper {
 
     void updateAlertUpdateTime(AlertVo alertVo);
 
-    void updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);
+    int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);
 
     void updateAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
