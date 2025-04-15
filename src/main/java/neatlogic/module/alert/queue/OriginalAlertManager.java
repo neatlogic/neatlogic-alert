@@ -35,6 +35,7 @@ import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.file.dto.FileVo;
+import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -150,6 +151,13 @@ public class OriginalAlertManager {
 
                     if (alertVo.getUpdateTime() == null) {
                         alertVo.setUpdateTime(alertVo.getAlertTime());
+                    }
+
+                    //如果提供了唯一键，则直接处理成md5
+                    if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+                        if (!Md5Util.isMd5(alertVo.getUniqueKey())) {
+                            alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
+                        }
                     }
 
                     alertVo.setId(originalAlertVo.getId());

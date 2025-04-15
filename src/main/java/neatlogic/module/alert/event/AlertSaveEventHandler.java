@@ -98,8 +98,13 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
                     }
                 }
             }
+            //一定要判断，因为可能直接选唯一键作为唯一键，这时候就需要二次转换
             if (StringUtils.isNotBlank(key)) {
-                alertVo.setUniqueKey(Md5Util.encryptMD5(key));
+                if (!Md5Util.isMd5(key)) {
+                    alertVo.setUniqueKey(Md5Util.encryptMD5(key));
+                } else {
+                    alertVo.setUniqueKey(key);
+                }
             }
         }
         //如果uniqueKey
