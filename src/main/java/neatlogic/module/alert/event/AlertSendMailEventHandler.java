@@ -51,6 +51,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     @Resource
     private UserMapper userMapper;
 
+
     @Override
     public int getSort() {
         return 3;
@@ -71,6 +72,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
         }
         if (MapUtils.isNotEmpty(config)) {
+            Long mailServerId = config.getLong("mailServerId");
             List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
             int interval = config.getIntValue("interval");
             if (interval > 0) {
@@ -155,7 +157,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
-                    EmailUtil.sendHtmlEmail(title, content, new ArrayList<>(to), new ArrayList<>(cc));
+                    EmailUtil.sendHtmlEmail(mailServerId, title, content, new ArrayList<>(to), new ArrayList<>(cc));
                 } catch (Exception ex) {
                     throw new AlertEventHandlerTriggerException(ex);
                 }
