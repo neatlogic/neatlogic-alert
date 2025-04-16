@@ -44,7 +44,6 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
-import neatlogic.module.alert.aftertransaction.ChildAlertIsCloseUpdateJob;
 import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
@@ -81,34 +80,42 @@ public class AlertServiceImpl implements IAlertService {
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Override
-    public void closeAlert(List<AlertVo> alertList) throws IOException {
-        if (CollectionUtils.isNotEmpty(alertList)) {
+    public boolean openAlert(AlertVo alertVo) {
+        if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 0)) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-            for (AlertVo alertVo : alertList) {
-                alertMapper.updateAlertIsClose(alertVo.getId(), 1);
-                index.updateDocument(alertVo.getId(), new JSONObject() {{
-                    this.put("isClose", 1);
-                }});
+            if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
+                List<AlertVo> childAlertList = alertMapper.getCloseAlertByParentId(alertVo.getId());
+                if (CollectionUtils.isNotEmpty(childAlertList)) {
+                    for (AlertVo childAlertVo : childAlertList) {
+                        this.openAlert(childAlertVo);
+                    }
+                }
             }
-            for (AlertVo alertVo : alertList) {
-                AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
-            }
+            index.updateDocument(alertVo.getId(), new JSONObject() {{
+                this.put("isClose", 0);
+            }});
+            alertMapper.updateAlertIsClose(alertVo.getId(), 0);
+            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
+            alertAuditVo.setAlertId(alertVo.getId());
+            alertAuditVo.setAttrName("const_isClose");
+            alertAuditVo.addOldValue(1);
+            alertAuditVo.addNewValue(0);
+            alertAuditMapper.insertAlertAudit(alertAuditVo);
+            AlertEventManager.doEvent(AlertEventType.ALERT_OPEN, alertVo);
+            return true;
         }
+        return false;
     }
 
     @Override
-    public void closeAlert(Long alertId, boolean isCloseChildAlert) throws IOException {
-        AlertVo alertVo = alertMapper.getAlertById(alertId);
+    public boolean closeAlert(AlertVo alertVo) {
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-            if (isCloseChildAlert) {
-                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
-                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    for (Long toAlertId : toAlertIdList) {
-                        alertMapper.updateAlertIsClose(toAlertId, 1);
-                        index.updateDocument(toAlertId, new JSONObject() {{
-                            this.put("isClose", 1);
-                        }});
+            if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
+                List<AlertVo> childAlertList = alertMapper.getOpenAlertByParentId(alertVo.getId());
+                if (CollectionUtils.isNotEmpty(childAlertList)) {
+                    for (AlertVo childAlertVo : childAlertList) {
+                        this.closeAlert(childAlertVo);
                     }
                 }
             }
@@ -123,7 +130,9 @@ public class AlertServiceImpl implements IAlertService {
             alertAuditVo.addNewValue(1);
             alertAuditMapper.insertAlertAudit(alertAuditVo);
             AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -194,7 +203,13 @@ public class AlertServiceImpl implements IAlertService {
             throw new AlertHasNotAuthException();
         }
         boolean hasChange = false;
-        if (oldAlertVo.getIsClose() != alertVo.getIsClose()) {
+        if (Objects.equals(1, alertVo.getIsClose())) {
+            hasChange = closeAlert(alertVo);
+        } else if (Objects.equals(0, alertVo.getIsClose())) {
+            hasChange = openAlert(alertVo);
+        }
+
+       /* if (oldAlertVo.getIsClose() != alertVo.getIsClose()) {
             hasChange = true;
             alertMapper.updateAlertIsClose(alertVo.getId(), alertVo.getIsClose());
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
@@ -208,7 +223,7 @@ public class AlertServiceImpl implements IAlertService {
                 AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-ISCLOSE-UPDATER");
                 afterTransactionJob.execute(new ChildAlertIsCloseUpdateJob(alertVo));
             }
-        }
+        }*/
 
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;

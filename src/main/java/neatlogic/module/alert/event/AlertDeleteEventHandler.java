@@ -23,8 +23,6 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.module.alert.service.IAlertService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -34,13 +32,12 @@ import java.util.Set;
 
 @Component
 public class AlertDeleteEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertDeleteEventHandler.class);
     @Resource
     private IAlertService alertService;
 
     @Override
     public int getSort() {
-        return 7;
+        return 10;
     }
 
     @Override

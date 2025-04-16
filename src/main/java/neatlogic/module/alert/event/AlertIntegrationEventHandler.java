@@ -35,14 +35,10 @@ import neatlogic.framework.integration.dto.IntegrationResultVo;
 import neatlogic.framework.integration.dto.IntegrationVo;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
-import neatlogic.module.alert.dao.mapper.AlertLevelMapper;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.framework.integration.handler.FrameworkRequestFrom;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -50,20 +46,15 @@ import java.util.*;
 
 @Component
 public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
-    private final Logger logger = LoggerFactory.getLogger(AlertIntegrationEventHandler.class);
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
-    @Resource
-    private AlertLevelMapper alertLevelMapper;
-    @Resource
-    private AlertMapper alertMapper;
 
     @Resource
     private IntegrationMapper integrationMapper;
 
     @Override
     public int getSort() {
-        return 6;
+        return 8;
     }
 
     @Override
@@ -177,6 +168,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_CLOSE.getName());
+            this.add(AlertEventType.ALERT_OPEN.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }

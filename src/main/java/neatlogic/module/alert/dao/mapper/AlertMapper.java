@@ -10,7 +10,13 @@ public interface AlertMapper {
 
     List<AlertUserVo> getAlertUserByAlertId(Long alertId);
 
+    List<AlertVo> getOpenAlertByParentId(Long parentId);
+
+    List<AlertVo> getCloseAlertByParentId(Long parentId);
+
     List<AlertVo> getOpenAlertByUniqueKey(String uniqueKey);
+
+    List<AlertVo> getCloseAlertByUniqueKey(String uniqueKey);
 
     AlertIntervalJobVo getAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
 

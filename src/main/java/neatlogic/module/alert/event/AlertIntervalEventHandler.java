@@ -165,6 +165,8 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
             this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_OPEN.getName());
+            this.add(AlertEventType.ALERT_CLOSE.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
         }};
     }

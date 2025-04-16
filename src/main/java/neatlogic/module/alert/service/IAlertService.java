@@ -26,9 +26,10 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IAlertService {
-    void closeAlert(List<AlertVo> alertList) throws IOException;
 
-    void closeAlert(Long alertId, boolean isCloseChildAlert) throws IOException;
+    boolean openAlert(AlertVo alertVo);
+
+    boolean closeAlert(AlertVo alertVo);
 
     @Transactional
     void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException;

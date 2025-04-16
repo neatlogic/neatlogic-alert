@@ -34,7 +34,7 @@ import javax.annotation.Resource;
 import java.util.*;
 
 @Component
-public class AlertCloseEventHandler extends AlertEventHandlerBase {
+public class AlertOpenEventHandler extends AlertEventHandlerBase {
     @Resource
     private IAlertService alertService;
 
@@ -43,7 +43,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
 
     @Override
     public int getSort() {
-        return 6;
+        return 7;
     }
 
     @Override
@@ -52,22 +52,22 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
         if (config == null) {
             config = new JSONObject();
         }
-        String closeType = config.getString("closeType");
+        String openType = config.getString("openType");
         int isCloseChildAlert = config.getIntValue("isCloseChildAlert");
-        if (StringUtils.isBlank(closeType)) {
-            closeType = "id";
+        if (StringUtils.isBlank(openType)) {
+            openType = "id";
         }
 
         JSONObject resultObj = new JSONObject();
-        if (Objects.equals(closeType, "id")) {
+        if (Objects.equals(openType, "id")) {
             try {
                 alertVo.setIsCloseChildAlert(isCloseChildAlert);
                 alertService.closeAlert(alertVo);
-                resultObj.put("closeCount", 1);
+                resultObj.put("openCount", 1);
             } catch (Exception e) {
                 throw new AlertEventHandlerTriggerException(e);
             }
-        } else if (Objects.equals(closeType, "uniquekey")) {
+        } else if (Objects.equals(openType, "uniquekey")) {
             if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
                 List<String> attrList = new ArrayList<>();
                 for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
@@ -103,14 +103,14 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
                 }
             }
             try {
-                List<AlertVo> alertList = alertMapper.getOpenAlertByUniqueKey(alertVo.getUniqueKey());
+                List<AlertVo> alertList = alertMapper.getCloseAlertByUniqueKey(alertVo.getUniqueKey());
                 if (CollectionUtils.isNotEmpty(alertList)) {
                     for (AlertVo alert : alertList) {
                         alert.setIsCloseChildAlert(isCloseChildAlert);
-                        alertService.closeAlert(alert);
+                        alertService.openAlert(alert);
                     }
                 }
-                resultObj.put("closeCount", alertList.size());
+                resultObj.put("openCount", alertList.size());
             } catch (Exception e) {
                 throw new AlertEventHandlerTriggerException(e);
             }
@@ -126,28 +126,27 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getName() {
-        return "CLOSE";
+        return "OPEN";
     }
 
     @Override
     public String getLabel() {
-        return "关闭告警";
+        return "打开告警";
     }
 
     @Override
     public String getIcon() {
-        return "tsfont-close-o";
+        return "tsfont-check-o";
     }
 
     @Override
     public String getDescription() {
-        return "关闭的告警不能再做修改，新告警也不会再挂载到已关闭告警下。";
+        return "重新打开已经关闭的告警，如果告警已经处于打开状态不会触发。";
     }
 
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
-            this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }

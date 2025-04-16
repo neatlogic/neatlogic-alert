@@ -114,7 +114,11 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
                             for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
                                 defineObj.put("attr_" + attrTypeVo.getName(), attrTypeVo.getLabel());
-                                dataObj.put("attr_" + attrTypeVo.getName(), attrObj.get(attrTypeVo.getName()));
+                                dataObj.put("attr_" + attrTypeVo.getName(),
+                                        new JSONArray() {{
+                                            this.add(attrObj.get(attrTypeVo.getName()));
+                                        }}
+                                );
                             }
                         }
 
@@ -184,6 +188,8 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_SAVE.getName());
             this.add(AlertEventType.ALERT_CONVERGE.getName());
             this.add(AlertEventType.ALERT_DELETE.getName());
+            this.add(AlertEventType.ALERT_OPEN.getName());
+            this.add(AlertEventType.ALERT_CLOSE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }

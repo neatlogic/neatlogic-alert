@@ -153,6 +153,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_OPEN.getName());
             this.add(AlertEventType.ALERT_CONVERGE.getName());
         }};
     }

@@ -48,7 +48,7 @@ import java.util.List;
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.UPDATE)
 @Transactional
-public class CloseAlertApi extends PrivateApiComponentBase {
+public class OpenAlertApi extends PrivateApiComponentBase {
 
     @Resource
     private IAlertService alertService;
@@ -58,12 +58,12 @@ public class CloseAlertApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "alert/close";
+        return "alert/open";
     }
 
     @Override
     public String getName() {
-        return "关闭告警";
+        return "打开告警";
     }
 
     @Override
@@ -76,7 +76,7 @@ public class CloseAlertApi extends PrivateApiComponentBase {
             @Param(name = "idList", desc = "id列表", type = ApiParamType.JSONARRAY),
             @Param(name = "isCloseChildAlert", isRequired = true, rule = "0,1", desc = "是否关闭子告警", type = ApiParamType.INTEGER)
     })
-    @Description(desc = "关闭告警")
+    @Description(desc = "打开告警")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         Long alertId = jsonObj.getLong("id");
@@ -90,13 +90,12 @@ public class CloseAlertApi extends PrivateApiComponentBase {
             if (alertVo == null) {
                 throw new AlertNotFoundException(alertId);
             }
-
             if (hasRole(alertVo)) {
                 alertVo.setIsCloseChildAlert(isCloseChildAlert);
+                alertService.openAlert(alertVo);
             } else {
                 throw new AlertHasNotAuthException();
             }
-            alertService.closeAlert(alertVo);
         } else if (CollectionUtils.isNotEmpty(idList)) {
             for (int i = 0; i < idList.size(); i++) {
                 Long id = idList.getLong(i);
@@ -106,7 +105,7 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                 }
                 if (hasRole(alertVo)) {
                     alertVo.setIsCloseChildAlert(isCloseChildAlert);
-                    alertService.closeAlert(alertVo);
+                    alertService.openAlert(alertVo);
                 }
             }
         }
