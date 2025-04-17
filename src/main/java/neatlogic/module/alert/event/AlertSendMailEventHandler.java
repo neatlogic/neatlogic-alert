@@ -28,7 +28,9 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.common.constvalue.AuthType;
+import neatlogic.framework.dao.mapper.TeamMapper;
 import neatlogic.framework.dao.mapper.UserMapper;
+import neatlogic.framework.dto.TeamVo;
 import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.util.EmailUtil;
@@ -50,6 +52,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private TeamMapper teamMapper;
 
 
     @Override
@@ -111,49 +116,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             title = FreemarkerUtil.transform(paramObj, title);
             content = FreemarkerUtil.transform(paramObj, content);
 
-            List<AlertUserVo> userList = alertVo.getUserList();
-            Set<String> to = new HashSet<>();
-            if (CollectionUtils.isNotEmpty(toUserList)) {
-                for (int i = 0; i < toUserList.size(); i++) {
-                    String userUuid = toUserList.getString(i);
-                    if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
-                        if (CollectionUtils.isNotEmpty(userList)) {
-                            for (AlertUserVo user : userList) {
-                                if (StringUtils.isNotBlank(user.getUserEmail())) {
-                                    to.add(user.getUserEmail());
-                                }
-                            }
-                        }
-                    } else {
-                        userUuid = AuthType.removePrefix(userUuid);
-                    }
-                    UserVo userVo = userMapper.getUserByUuid(userUuid);
-                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
-                        to.add(userVo.getEmail());
-                    }
-                }
-            }
-            Set<String> cc = new HashSet<>();
-            if (CollectionUtils.isNotEmpty(ccUserList)) {
-                for (int i = 0; i < ccUserList.size(); i++) {
-                    String userUuid = ccUserList.getString(i);
-                    if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
-                        if (CollectionUtils.isNotEmpty(userList)) {
-                            for (AlertUserVo user : userList) {
-                                if (StringUtils.isNotBlank(user.getUserEmail())) {
-                                    to.add(user.getUserEmail());
-                                }
-                            }
-                        }
-                    } else {
-                        userUuid = AuthType.removePrefix(userUuid);
-                    }
-                    UserVo userVo = userMapper.getUserByUuid(userUuid);
-                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
-                        cc.add(userVo.getEmail());
-                    }
-                }
-            }
+            Set<String> to = makeupMailList(alertVo, toUserList);
+
+            Set<String> cc = makeupMailList(alertVo, ccUserList);
 
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
@@ -164,6 +129,74 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
         }
         return alertVo;
+    }
+
+    private Set<String> makeupMailList(AlertVo alertVo, JSONArray userList) {
+        Set<String> mailSet = new HashSet<>();
+        if (CollectionUtils.isNotEmpty(userList)) {
+            for (int i = 0; i < userList.size(); i++) {
+                String userUuid = userList.getString(i);
+                if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
+                    //发送给处理人
+                    if (CollectionUtils.isEmpty(alertVo.getUserIdList())) {
+                        //告警处理人id为空时尝试查找处理人信息，但如果告警没保存就查不到
+                        List<AlertUserVo> alertUserList = alertEventMapper.getAlertUserByAlertId(alertVo.getId());
+                        if (CollectionUtils.isNotEmpty(alertUserList)) {
+                            for (AlertUserVo user : alertUserList) {
+                                if (StringUtils.isNotBlank(user.getUserEmail())) {
+                                    mailSet.add(user.getUserEmail());
+                                }
+                            }
+                        }
+                    } else {
+                        List<UserVo> foundUserList = userMapper.getUserByUserUuidList(alertVo.getUserIdList());
+                        if (CollectionUtils.isNotEmpty(foundUserList)) {
+                            for (UserVo user : foundUserList) {
+                                if (StringUtils.isNotBlank(user.getEmail())) {
+                                    mailSet.add(user.getEmail());
+                                }
+                            }
+                        }
+                    }
+                } else if (("alertUserType#" + AlertUserType.WORKER_TEAM.getValue()).equals(userUuid)) {
+                    //发送给处理组
+                    if (CollectionUtils.isEmpty(alertVo.getTeamIdList())) {
+                        //告警处理人id为空时尝试查找处理组信息，但如果告警没保存就查不到
+                        List<AlertTeamVo> alertTeamList = alertEventMapper.getAlertTeamByAlertId(alertVo.getId());
+                        if (CollectionUtils.isNotEmpty(alertTeamList)) {
+                            for (AlertTeamVo team : alertTeamList) {
+                                if (StringUtils.isNotBlank(team.getTeamEmail())) {
+                                    mailSet.add(team.getTeamEmail());
+                                }
+                            }
+                        }
+                    } else {
+                        List<TeamVo> foundTeamList = teamMapper.getTeamByUuidList(alertVo.getTeamIdList());
+                        if (CollectionUtils.isNotEmpty(foundTeamList)) {
+                            for (TeamVo team : foundTeamList) {
+                                if (StringUtils.isNotBlank(team.getEmail())) {
+                                    mailSet.add(team.getEmail());
+                                }
+                            }
+                        }
+                    }
+                } else if (userUuid.startsWith("user#")) {
+                    userUuid = AuthType.removePrefix(userUuid);
+                    UserVo userVo = userMapper.getUserByUuid(userUuid);
+                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
+                        mailSet.add(userVo.getEmail());
+                    }
+                } else if (userUuid.startsWith("team#")) {
+                    //如果分组有邮件地址，直接使用
+                    userUuid = AuthType.removePrefix(userUuid);
+                    TeamVo teamVo = teamMapper.getTeamByUuid(userUuid);
+                    if (teamVo != null && StringUtils.isNotBlank(teamVo.getEmail())) {
+                        mailSet.add(teamVo.getEmail());
+                    }
+                }
+            }
+        }
+        return mailSet;
     }
 
     @Override
