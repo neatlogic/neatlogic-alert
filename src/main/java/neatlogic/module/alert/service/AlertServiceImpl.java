@@ -405,6 +405,26 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
         }
+
+        //检查是否有处理人和处理组，有的话也一并写入
+        if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
+            for (String userId : alertVo.getUserIdList()) {
+                AlertUserVo alertUserVo = new AlertUserVo();
+                alertUserVo.setAlertId(alertVo.getId());
+                alertUserVo.setUserId(userId);
+                alertMapper.insertAlertUser(alertUserVo);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(alertVo.getTeamIdList())) {
+            for (String teamId : alertVo.getTeamIdList()) {
+                AlertTeamVo alertTeamVo = new AlertTeamVo();
+                alertTeamVo.setAlertId(alertVo.getId());
+                alertTeamVo.setTeamUuid(teamId);
+                alertMapper.insertAlertTeam(alertTeamVo);
+            }
+        }
+
         if (indexHandler == null) {
             throw new ElasticSearchIndexNotFoundException("ALERT");
         }

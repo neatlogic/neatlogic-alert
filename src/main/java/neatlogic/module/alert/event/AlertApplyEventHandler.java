@@ -56,7 +56,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
             JSONArray userIdList = config.getJSONArray("userIdList");
             JSONArray teamIdList = config.getJSONArray("teamIdList");
 
-            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+
             if (CollectionUtils.isNotEmpty(userIdList)) {
                 Set<String> checkUserIdSet = new HashSet<>();
                 for (int i = 0; i < userIdList.size(); i++) {
@@ -104,6 +104,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
                 }
             }
+            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
             indexHandler.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("userList", userIdList);
                 this.put("teamList", teamIdList);
