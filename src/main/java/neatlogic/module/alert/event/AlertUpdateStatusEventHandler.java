@@ -99,7 +99,7 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "修改告警状态，如果告警状态已经修改到位，则不会重复触发。";
+        return "修改告警状态，如果告警状态没有变化，不会执行此事件。";
     }
 
     @Override
