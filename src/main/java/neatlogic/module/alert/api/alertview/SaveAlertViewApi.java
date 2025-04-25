@@ -83,6 +83,8 @@ public class SaveAlertViewApi extends PrivateApiComponentBase {
         } else {
             alertViewVo.setFcu(UserContext.get().getUserUuid(true));
         }
+        //清除权限，重新从前端数据中获取
+        alertViewVo.setAlertViewAuthList(null);
         alertViewMapper.saveAlertView(alertViewVo);
         if (CollectionUtils.isNotEmpty(alertViewVo.getAlertViewAuthList())) {
             for (AlertViewAuthVo authVo : alertViewVo.getAlertViewAuthList()) {
