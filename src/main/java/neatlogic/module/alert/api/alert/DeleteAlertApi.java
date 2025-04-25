@@ -17,10 +17,12 @@
 
 package neatlogic.module.alert.api.alert;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_BASE;
+import neatlogic.framework.alert.auth.ALERT_ADMIN;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
+import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
 import neatlogic.framework.restful.annotation.OperationType;
@@ -28,6 +30,7 @@ import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.service.IAlertService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +38,7 @@ import javax.annotation.Resource;
 import java.util.Objects;
 
 @Service
-@AuthAction(action = ALERT_BASE.class)
+@AuthAction(action = ALERT_ADMIN.class)
 @OperationType(type = OperationTypeEnum.DELETE)
 @Transactional
 public class DeleteAlertApi extends PrivateApiComponentBase {
@@ -58,16 +61,25 @@ public class DeleteAlertApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({
-            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG),
-            @Param(name = "isDeleteChildAlert", isRequired = true, rule = "0,1", desc = "是否删除子告警", type = ApiParamType.INTEGER)
-    })
+    @Input({@Param(name = "id", desc = "id", type = ApiParamType.LONG),
+            @Param(name = "idList", desc = "id列表", type = ApiParamType.JSONARRAY),
+            @Param(name = "isDeleteChildAlert", isRequired = true, rule = "0,1", desc = "是否删除子告警", type = ApiParamType.INTEGER)})
     @Description(desc = "删除告警")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         Long alertId = jsonObj.getLong("id");
+        JSONArray idList = jsonObj.getJSONArray("idList");
+        if (alertId == null && CollectionUtils.isEmpty(idList)) {
+            throw new ParamNotExistsException("id", "idList");
+        }
         Integer isDeleteChildAlert = jsonObj.getInteger("isDeleteChildAlert");
-        alertService.deleteAlert(alertId, Objects.equals(1, isDeleteChildAlert));
+        if (alertId != null) {
+            alertService.deleteAlert(alertId, Objects.equals(1, isDeleteChildAlert));
+        } else if (CollectionUtils.isNotEmpty(idList)) {
+            for (int i = 0; i < idList.size(); i++) {
+                alertService.deleteAlert(idList.getLong(i), Objects.equals(1, isDeleteChildAlert));
+            }
+        }
         return null;
     }
 

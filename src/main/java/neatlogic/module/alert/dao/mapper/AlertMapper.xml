@@ -486,7 +486,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </delete>
 
     <delete id="deleteAlertById" parameterType="java.lang.Long">
-        delete a,b,d,e,f,g,h
+        delete a,b,d,e,f,g,h,at,au,aeha,aij
         from alert a
                  left join alert_rel b on a.id = b.from_alert_id or a.id = b.to_alert_id
                  left join alert_origin d on a.id = d.id
@@ -494,6 +494,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                  left join alert_attr f on a.id = f.alert_id
                  left join alert_audit g on a.id = g.alert_id
                  left join alert_comment h on a.id = h.alert_id
+                 left join alert_team at on a.id = at.alert_id
+                 left join alert_user au on a.id = au.alert_id
+                 left join alert_event_handler_audit aeha on a.id = aeha.alert_id
+                 left join alert_interval_job aij on a.id = aij.alert_id
         where a.id = #{value}
     </delete>
 
