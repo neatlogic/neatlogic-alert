@@ -24,6 +24,7 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.util.Md5Util;
+import neatlogic.framework.util.UuidUtil;
 import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
 import neatlogic.module.alert.service.IAlertService;
 import neatlogic.module.alert.utils.AlertRuleUtils;
@@ -112,6 +113,9 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             if (!Md5Util.isMd5(alertVo.getUniqueKey())) {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
             }
+        } else {
+            //如果没有uniquekey则随机生成一个
+            alertVo.setUniqueKey(UuidUtil.randomUuid());
         }
         if (StringUtils.isNotBlank(config.getString("defaultStatus"))) {
             alertVo.setStatus(config.getString("defaultStatus"));
