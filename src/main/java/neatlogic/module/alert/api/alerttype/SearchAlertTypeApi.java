@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import neatlogic.framework.auth.core.AuthAction;
+import neatlogic.framework.auth.label.MQ_MODIFY;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
@@ -35,6 +36,7 @@ import java.util.List;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
+@AuthAction(action = MQ_MODIFY.class)//消息队列管理页面添加订阅操作会调用该接口
 @OperationType(type = OperationTypeEnum.SEARCH)
 public class SearchAlertTypeApi extends PrivateApiComponentBase {
 
