@@ -348,7 +348,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
                     Query.Builder conditionFinalQueryBuilder = new Query.Builder();
                     BoolQuery.Builder conditionBoolQueryBuilder = new BoolQuery.Builder();
-                    if (CollectionUtils.isNotEmpty(conditionRelList)) {
+                    //增加conditionRelList和queryList的判断，确保queryList总是比conditionRelList多1
+                    if (CollectionUtils.isNotEmpty(conditionRelList) && conditionRelList.size() == queryList.size() - 1) {
                         for (int j = 0; j < conditionRelList.size(); j++) {
                             String rel = conditionRelList.getString(j);
                             Query currentQuery = queryList.get(j);
@@ -375,8 +376,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                     groupQueryList.add(conditionFinalQueryBuilder.build());
                 }
 
-
-                if (CollectionUtils.isNotEmpty(conditionGroupRelList)) {
+                //增加conditionGroupRelList和groupQueryList的判断，确保groupQueryList总是比conditionGroupRelList多1
+                if (CollectionUtils.isNotEmpty(conditionGroupRelList) && conditionGroupRelList.size() == groupQueryList.size() - 1) {
                     for (int j = 0; j < conditionGroupRelList.size(); j++) {
                         String rel = conditionGroupRelList.getString(j);
                         Query currentQuery = groupQueryList.get(j);
