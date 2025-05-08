@@ -138,7 +138,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                 String userUuid = userList.getString(i);
                 if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
                     //发送给处理人
-                    if (CollectionUtils.isEmpty(alertVo.getUserIdList())) {
+                    if (CollectionUtils.isEmpty(alertVo.getUserList())) {
                         //告警处理人id为空时尝试查找处理人信息，但如果告警没保存就查不到
                         List<AlertUserVo> alertUserList = alertEventMapper.getAlertUserByAlertId(alertVo.getId());
                         if (CollectionUtils.isNotEmpty(alertUserList)) {
@@ -149,18 +149,18 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                             }
                         }
                     } else {
-                        List<UserVo> foundUserList = userMapper.getUserByUserUuidList(alertVo.getUserIdList());
-                        if (CollectionUtils.isNotEmpty(foundUserList)) {
-                            for (UserVo user : foundUserList) {
-                                if (StringUtils.isNotBlank(user.getEmail())) {
-                                    mailSet.add(user.getEmail());
-                                }
+                        //List<UserVo> foundUserList = userMapper.getUserByUserUuidList(alertVo.getUserIdList());
+                        // if (CollectionUtils.isNotEmpty(foundUserList)) {
+                        for (AlertUserVo user : alertVo.getUserList()) {
+                            if (StringUtils.isNotBlank(user.getUserEmail())) {
+                                mailSet.add(user.getUserEmail());
                             }
                         }
+                        //}
                     }
                 } else if (("alertUserType#" + AlertUserType.WORKER_TEAM.getValue()).equals(userUuid)) {
                     //发送给处理组
-                    if (CollectionUtils.isEmpty(alertVo.getTeamIdList())) {
+                    if (CollectionUtils.isEmpty(alertVo.getTeamList())) {
                         //告警处理人id为空时尝试查找处理组信息，但如果告警没保存就查不到
                         List<AlertTeamVo> alertTeamList = alertEventMapper.getAlertTeamByAlertId(alertVo.getId());
                         if (CollectionUtils.isNotEmpty(alertTeamList)) {
@@ -171,14 +171,14 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                             }
                         }
                     } else {
-                        List<TeamVo> foundTeamList = teamMapper.getTeamByUuidList(alertVo.getTeamIdList());
-                        if (CollectionUtils.isNotEmpty(foundTeamList)) {
-                            for (TeamVo team : foundTeamList) {
-                                if (StringUtils.isNotBlank(team.getEmail())) {
-                                    mailSet.add(team.getEmail());
-                                }
+                        //List<TeamVo> foundTeamList = teamMapper.getTeamByUuidList(alertVo.getTeamIdList());
+                        //if (CollectionUtils.isNotEmpty(foundTeamList)) {
+                        for (AlertTeamVo team : alertVo.getTeamList()) {
+                            if (StringUtils.isNotBlank(team.getTeamEmail())) {
+                                mailSet.add(team.getTeamEmail());
                             }
                         }
+                        // }
                     }
                 } else if (userUuid.startsWith("user#")) {
                     userUuid = AuthType.removePrefix(userUuid);
