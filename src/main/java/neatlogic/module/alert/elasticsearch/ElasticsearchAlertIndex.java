@@ -98,7 +98,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     public Boolean needPage(AlertVo alertVo) {
-        return alertVo.getFromAlertId() == null;
+        //return alertVo.getFromAlertId() == null;
+        return true;
     }
 
     private JSONArray convertValue(String field, JSONArray value) {
