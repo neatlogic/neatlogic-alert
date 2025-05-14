@@ -135,47 +135,45 @@ public class AlertServiceImpl implements IAlertService {
         return false;
     }
 
-    @Override
-    public void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException {
-        AlertVo alertVo = alertMapper.getAlertById(alertId);
-        if (alertVo != null) {
+    private void deleteAlertByIdList(List<Long> alertIdList) throws IOException {
+        for (Long alertId : alertIdList) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-            if (isDeleteChildAlert) {
-                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
-                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    for (Long toAlertId : toAlertIdList) {
-                        deleteAlert(toAlertId, false);
-                    }
+            IElasticsearchIndex<OriginalAlertVo> index_origin = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+            //修改formAlertId等于当前id的文档
+            List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertId);
+            if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+
+                ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+                BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+                for (Long toAlertId : toAlertIdList) {
+                    bulkRequestBuilder.operations(op -> op.update(u -> u
+                            .index(index.getIndexName())
+                            .id(toAlertId.toString())
+                            .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
+                    ));
                 }
-            } else {
-                //删除es中fromAlertId，只需要查询直系子节点
-                List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertVo.getId());
-                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-                    BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
-                    for (Long toAlertId : toAlertIdList) {
-                        bulkRequestBuilder.operations(op -> op.update(u -> u
-                                .index(index.getIndexName())
-                                .id(toAlertId.toString())
-                                .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
-                        ));
-                    }
-                    // 执行批量请求
-                    BulkRequest bulkRequest = bulkRequestBuilder.build();
-                    BulkResponse result = client.bulk(bulkRequest);
-                    if (result.errors()) {
-                        for (BulkResponseItem item : result.items()) {
-                            if (item.error() != null) {
-                                throw new ElasticSearchDeleteFieldException(item.id(), "fromAlertId", item.error().reason());
-                            }
+                // 执行批量请求
+                BulkRequest bulkRequest = bulkRequestBuilder.build();
+                BulkResponse result = client.bulk(bulkRequest);
+                if (result.errors()) {
+                    for (BulkResponseItem item : result.items()) {
+                        if (item.error() != null) {
+                            throw new ElasticSearchDeleteFieldException(item.id(), "fromAlertId", item.error().reason());
                         }
                     }
                 }
             }
-            index.deleteDocument(alertVo);
-            List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertVo.getId());
-            alertMapper.deleteAlertById(alertVo.getId());
-            AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, alertVo);
+
+            index.deleteDocument(new AlertVo() {{
+                this.setId(alertId);
+            }});
+            index_origin.deleteDocument(new OriginalAlertVo() {{
+                this.setId(alertId);
+            }});
+            List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertId);
+            AlertVo oldAlertVo = alertMapper.getAlertById(alertId);
+            alertMapper.deleteAlertById(alertId);
+            AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, oldAlertVo);
             if (CollectionUtils.isNotEmpty(fromAlertIdList)) {
                 for (Long fromAlertId : fromAlertIdList) {
                     AlertVo fromAlertVo = alertMapper.getAlertById(fromAlertId);
@@ -183,6 +181,27 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
         }
+    }
+
+    @Override
+    public void deleteAlert(Long alertId, boolean isDeleteChildAlert) {
+        List<Long> deleteAlertIdList = new ArrayList<>();
+        deleteAlertIdList.add(alertId);
+        if (isDeleteChildAlert) {
+            List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertId);
+            if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                deleteAlertIdList.addAll(toAlertIdList);
+            }
+        }
+        alertMapper.updateAlertIsDeleteByIdList(deleteAlertIdList);
+        AfterTransactionJob<List<Long>> afterTransactionJob = new AfterTransactionJob<>("ALERT-DELETER");
+        afterTransactionJob.execute(deleteAlertIdList, idList -> {
+            try {
+                deleteAlertByIdList(idList);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
     }
 
     @Override

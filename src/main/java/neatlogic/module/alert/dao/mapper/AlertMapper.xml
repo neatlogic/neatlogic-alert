@@ -88,7 +88,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
-    <select id="getAlertTeamByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertTeamVo">
+    <select id="getAlertTeamByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertTeamVo">
         select a.alert_id  as alertId,
                a.team_uuid as teamUuid,
                b.name      as teamName
@@ -97,7 +98,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.alert_id = #{value}
     </select>
 
-    <select id="getAlertUserByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertUserVo">
+    <select id="getAlertUserByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertUserVo">
         select a.alert_id  AS alertId,
                a.user_id   AS userId,
                b.user_id   AS userAccount,
@@ -175,6 +177,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="source" property="source"/>
         <result column="uniqueKey" property="uniqueKey"/>
         <result column="isClose" property="isClose"/>
+        <result column="isDelete" property="isDelete"/>
         <result column="entityType" property="entityType"/>
         <result column="entityName" property="entityName"/>
         <result column="ip" property="port"/>
@@ -272,6 +275,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                a.alert_time                                                                          as alertTime,
                a.type,
                a.is_close                                                                            as isClose,
+               a.is_delete                                                                           as isDelete,
                d.id                                                                                  as alertTypeId,
                d.name                                                                                as alertTypeName,
                d.label                                                                               as alertTypeLabel,
@@ -343,6 +347,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         order by alert_id
         limit #{startNum}, #{pageSize}
     </select>
+
+    <update id="updateAlertIsDeleteByIdList">
+        update alert set is_delete = 1 where id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
 
     <update id="updateAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert

@@ -48,6 +48,8 @@ public interface AlertMapper {
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
+    void updateAlertIsDeleteByIdList(@Param("idList") List<Long> idList);
+
     void updateAlertUpdateTime(AlertVo alertVo);
 
     int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);
