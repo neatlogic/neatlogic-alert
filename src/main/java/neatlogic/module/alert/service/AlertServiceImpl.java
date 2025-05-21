@@ -368,9 +368,9 @@ public class AlertServiceImpl implements IAlertService {
             }
             if (parentAlertVo != null) {
                 alertVo.setParentAlertVo(parentAlertVo);
-                String oldStatus = parentAlertVo.getStatus();
+                //String oldStatus = parentAlertVo.getStatus();
                 parentAlertVo.setUpdateTime(alertVo.getUpdateTime());
-                parentAlertVo.setStatus(alertVo.getStatus());
+                //parentAlertVo.setStatus(alertVo.getStatus());
                 if (parentAlertVo.getId().equals(alertVo.getId())) {
                     return;
                 }
@@ -385,17 +385,17 @@ public class AlertServiceImpl implements IAlertService {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 JSONObject obj = new JSONObject();
                 obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
-                obj.put("status", parentAlertVo.getStatus());
+                //obj.put("status", parentAlertVo.getStatus());
                 indexHandler.updateDocument(parentAlertVo.getId(), obj);
 
-                if (!Objects.equals(oldStatus, alertVo.getStatus())) {
+                /*if (!Objects.equals(oldStatus, alertVo.getStatus())) {
                     AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                     alertAuditVo.setAlertId(parentAlertVo.getId());
                     alertAuditVo.setAttrName("const_status");
                     alertAuditVo.addOldValue(oldStatus);
                     alertAuditVo.addNewValue(alertVo.getStatus());
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
-                }
+                }*/
             }
         }
 

@@ -64,12 +64,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         a.lcu,
         a.fcd,
         a.fcu,
-        b.id as adaptorId,
-        b.name as adaptorName,
-        b.label as adaptorLabel,
-        b.file_id as adaptorFileId,
-        b.alerttype_id as adaptorAlertTypeId
-        from alert_type a left join alert_adaptor b on a.id = b.alerttype_id
+        d.id as adaptorId,
+        d.name as adaptorName,
+        d.label as adaptorLabel,
+        d.file_id as adaptorFileId,
+        d.alerttype_id as adaptorAlertTypeId,
+        e.id as alertEventHandlerId,
+        e.event as alertEventName,
+        e.handler as alertEventHandler,
+        e.name as alertEventHandlerName
+        from alert_type a
+        left join alert_adaptor d on a.id = d.alerttype_id
+        left join alert_event_handler e on a.id = e.alert_type
         <include refid="searchAlertTypeSql"></include>
         order by a.id desc
         <!--limit #{startNum}, #{pageSize}-->
