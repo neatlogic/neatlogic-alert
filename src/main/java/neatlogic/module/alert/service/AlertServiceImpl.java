@@ -285,6 +285,7 @@ public class AlertServiceImpl implements IAlertService {
             boolean isEqual = new HashSet<>(list1).equals(new HashSet<>(list2));
 
             if (!isEqual) {
+                hasChange = true;
                 AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_userList");
@@ -316,6 +317,7 @@ public class AlertServiceImpl implements IAlertService {
             List<String> list2 = mergedTeamIdList != null ? mergedTeamIdList : Collections.emptyList();
             boolean isEqual = new HashSet<>(list1).equals(new HashSet<>(list2));
             if (!isEqual) {
+                hasChange = true;
                 AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_teamList");
