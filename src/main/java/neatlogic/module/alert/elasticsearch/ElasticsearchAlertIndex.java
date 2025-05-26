@@ -511,10 +511,10 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
-    protected void myDeleteDocument(AlertVo alertVo) {
+    protected void myDeleteDocument(Long targetId) {
         DeleteRequest deleteRequest = new DeleteRequest.Builder()
                 .index(getIndexName())
-                .id(alertVo.getId().toString())
+                .id(targetId.toString())
                 .build();
         ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         try {

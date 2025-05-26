@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertTopoWidgetMapper">
+
+    <sql id="widgetColumn">
+        select id,
+               type,
+               name,
+               label,
+               shape,
+               is_active as isActive,
+               config    as configStr
+        from alert_topo_widget
+    </sql>
+
+
+    <select id="getWidgetByName" parameterType="java.lang.String" resultType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        <include refid="widgetColumn"/>
+        where name = #{value}
+    </select>
+
+    <select id="checkWidgetNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo"
+            resultType="int">
+        select count(1)
+        from alert_topo_widget
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <select id="getWidgetById" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        <include refid="widgetColumn"/>
+        where id = #{value}
+    </select>
+
+    <select id="searchWidgetCount" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo" resultType="int">
+        select count(1)
+        from alert_topo_widget
+        <include refid="searchWidgetSql"></include>
+    </select>
+
+    <select id="searchWidget" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo"
+            resultType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        select
+        id,
+        name,
+        type,
+        label,
+        shape,
+        is_active as isActive,
+        config as configStr
+        from alert_topo_widget
+        <include refid="searchWidgetSql"></include>
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="listWidget" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo"
+            resultType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        select
+        id,
+        name,
+        type,
+        label,
+        shape,
+        is_active as isActive,
+        config as configStr
+        from alert_topo_widget
+        <include refid="searchWidgetSql"></include>
+    </select>
+
+    <sql id="searchWidgetSql">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name like concat(#{keyword}, '%')
+                or label like concat(#{keyword}, '%')
+            </if>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="shape != null and shape != ''">
+                and shape = #{shape}
+            </if>
+        </where>
+    </sql>
+
+    <update id="updateWidgetActive" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        update alert_topo_widget
+        set is_active = #{isActive}
+        where id = #{id}
+    </update>
+
+    <update id="updateWidget" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        update alert_topo_widget
+        set type      = #{type},
+            label     = #{label},
+            shape     = #{shape},
+            is_active = #{isActive},
+            config    = #{configStr,typeHandler=CompressHandler}
+        where id = #{id}
+    </update>
+
+    <insert id="insertWidget" parameterType="neatlogic.framework.alert.dto.AlertTopoWidgetVo">
+        insert into alert_topo_widget (id,
+                                       name,
+                                       type,
+                                       label,
+                                       shape,
+                                       is_active,
+                                       config)
+        values (#{id},
+                #{name},
+                #{type},
+                #{label},
+                #{shape},
+                #{isActive},
+                #{configStr,typeHandler=CompressHandler})
+    </insert>
+
+    <delete id="deleteWidgetById" parameterType="java.lang.Long">
+        delete
+        from alert_topo_widget
+        where id = #{value}
+    </delete>
+
+</mapper>

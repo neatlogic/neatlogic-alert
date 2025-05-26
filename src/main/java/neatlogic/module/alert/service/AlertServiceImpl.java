@@ -164,12 +164,8 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
 
-            index.deleteDocument(new AlertVo() {{
-                this.setId(alertId);
-            }});
-            index_origin.deleteDocument(new OriginalAlertVo() {{
-                this.setId(alertId);
-            }});
+            index.deleteDocument(alertId);
+            index_origin.deleteDocument(alertId);
             List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertId);
             AlertVo oldAlertVo = alertMapper.getAlertById(alertId);
             alertMapper.deleteAlertById(alertId);

@@ -70,6 +70,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
     @Input({
             @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG),
             @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING),
+            @Param(name = "kind", desc = "属性大类", rule = "const,attr", type = ApiParamType.STRING),
             @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
@@ -78,19 +79,25 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long viewId = jsonObj.getLong("viewId");
         String viewName = jsonObj.getString("viewName");
+        String kind = jsonObj.getString("kind");
         int isExpand = jsonObj.getIntValue("isExpand");
-        List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(isExpand);
-        List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
-        for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
-            attrList.add(new AlertAttrDefineVo()
-                    .setId(attrTypeVo.getId())
-                    .setName("attr_" + attrTypeVo.getName())
-                    .setLabel(attrTypeVo.getLabel())
-                    .setKind("attr")
-                    .setType(attrTypeVo.getType())
-                    .setExpressionList(attrTypeVo.getExpressionList())
-                    .setConfig(attrTypeVo.getConfig())
-                    .setIsTop(attrTypeVo.getIsTop()));
+        List<AlertAttrDefineVo> attrList = new ArrayList<>();
+        if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
+            attrList.addAll(AlertAttr.getConstAttrList(isExpand));
+        }
+        if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr")) {
+            List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
+            for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
+                attrList.add(new AlertAttrDefineVo()
+                        .setId(attrTypeVo.getId())
+                        .setName("attr_" + attrTypeVo.getName())
+                        .setLabel(attrTypeVo.getLabel())
+                        .setKind("attr")
+                        .setType(attrTypeVo.getType())
+                        .setExpressionList(attrTypeVo.getExpressionList())
+                        .setConfig(attrTypeVo.getConfig())
+                        .setIsTop(attrTypeVo.getIsTop()));
+            }
         }
         AlertViewVo alertViewVo = null;
         if (viewId != null) {
