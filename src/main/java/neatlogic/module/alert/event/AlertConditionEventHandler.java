@@ -29,6 +29,8 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.event.IAlertEventHandler;
+import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
+import neatlogic.framework.common.constvalue.InputFrom;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.util.javascript.JavascriptUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
@@ -141,6 +143,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                     IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
                     AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
                     if (subHandler != null) {
+                        InputFromContext.init(InputFrom.EVENT);
                         alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
                     }
                 } else {
