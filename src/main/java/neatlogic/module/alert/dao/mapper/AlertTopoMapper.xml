@@ -44,6 +44,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where id = #{value}
     </select>
 
+    <select id="listAlertTopo" parameterType="neatlogic.framework.alert.dto.AlertTopoVo"
+            resultType="neatlogic.framework.alert.dto.AlertTopoVo">
+        select
+        id,
+        is_active as isActive,
+        name,
+        config as configStr,
+        fcd,
+        fcu,
+        lcd,
+        lcu
+        from alert_topo
+        <include refid="searchAlertTopoCondition"></include>
+    </select>
+
     <select id="searchAlertTopo" parameterType="neatlogic.framework.alert.dto.AlertTopoVo"
             resultType="neatlogic.framework.alert.dto.AlertTopoVo">
         select

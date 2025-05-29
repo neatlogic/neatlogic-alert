@@ -11,6 +11,8 @@ public interface AlertTopoMapper {
 
     List<AlertTopoVo> searchAlertTopo(AlertTopoVo alertTopoVo);
 
+    List<AlertTopoVo> listAlertTopo(AlertTopoVo alertTopoVo);
+
     int searchAlertTopoCount(AlertTopoVo alertTopoVo);
 
     void updateAlertTopo(AlertTopoVo alertTopoVo);
