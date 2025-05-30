@@ -27,6 +27,8 @@ import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerEx
 import neatlogic.framework.dao.mapper.TeamMapper;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.UserVo;
+import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.util.javascript.JavascriptUtil;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
@@ -119,6 +121,7 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
             }
 
             if (!compareJSONArray(oldAlertObj.getJSONArray("userAccountList"), newAlertObj.getJSONArray("userAccountList"))) {
+                hasChange = true;
                 JSONArray oldUserIdList = new JSONArray();
                 JSONArray newUserIdList = new JSONArray();
                 if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
@@ -140,6 +143,7 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
             }
 
             if (!compareJSONArray(oldAlertObj.getJSONArray("teamNameList"), newAlertObj.getJSONArray("teamNameList"))) {
+                hasChange = true;
                 JSONArray oldTeamIdList = new JSONArray();
                 JSONArray newTeamIdList = new JSONArray();
                 if (CollectionUtils.isNotEmpty(alertVo.getTeamIdList())) {
@@ -166,6 +170,11 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
                 for (AlertAuditVo alertAuditVo : auditList) {
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
                 }
+            }
+            if (hasChange) {
+                IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+                indexHandler.deleteDocument(alertVo.getId());
+                indexHandler.createDocument(alertVo.getId());
             }
             //重新查询一次新的告警信息
             newAlertVo = getAlertById(alertVo.getId());
@@ -246,7 +255,7 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
-            this.add(AlertEventType.ALERT_INPUT.getName());
+            //this.add(AlertEventType.ALERT_INPUT.getName());不能放Input,如果告警不存在则没法更新
             this.add(AlertEventType.ALERT_SAVE.getName());
             this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
             this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
