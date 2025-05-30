@@ -15,39 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.api.alertlevel;
+package neatlogic.module.alert.api.alertevent;
 
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertLevelVo;
+import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.dao.mapper.AlertLevelMapper;
+import neatlogic.framework.util.javascript.JavascriptUtil;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.io.IOException;
-
 @Service
-@AuthAction(action = ALERT_BASE.class)
-@OperationType(type = OperationTypeEnum.SEARCH)
-public class GetAlertLevelApi extends PrivateApiComponentBase {
-
-    @Resource
-    private AlertLevelMapper alertLevelMapper;
+@AuthAction(action = ALERT_EVENT_MODIFY.class)
+@OperationType(type = OperationTypeEnum.OPERATE)
+public class TestScriptAlertEventHandlerApi extends PrivateApiComponentBase {
 
     @Override
     public String getToken() {
-        return "/alert/level/get";
+        return "alert/event/handler/script/test";
     }
 
     @Override
     public String getName() {
-        return "获取告警级别";
+        return "测试脚本事件插件";
     }
 
     @Override
@@ -55,21 +47,22 @@ public class GetAlertLevelApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "id", type = ApiParamType.LONG, desc = "id"),
-            @Param(name = "level", type = ApiParamType.INTEGER, desc = "等级")})
-    @Output({@Param(explode = AlertLevelVo.class)})
-    @Description(desc = "获取告警级别")
+    @Input({
+            @Param(name = "script", desc = "脚本", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "alertData", desc = "告警参数", isRequired = true, type = ApiParamType.JSONOBJECT)
+    })
+    @Output({@Param(name = "result", desc = "转换结果", type = ApiParamType.STRING)})
+    @Description(desc = "测试脚本事件插件")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws IOException {
-        Long id = jsonObj.getLong("id");
-        Integer level = jsonObj.getInteger("level");
-        if (id != null) {
-            return alertLevelMapper.getAlertLevelById(id);
-        } else if (level != null) {
-            return alertLevelMapper.getAlertLevelByLevel(level);
-        } else {
-            throw new ParamNotExistsException("id", "level");
+    public Object myDoService(JSONObject jsonObj) throws Exception {
+        JSONObject alertData = jsonObj.getJSONObject("alertData");
+        String script = jsonObj.getString("script");
+        JSONObject returnObj = new JSONObject();
+        try {
+            returnObj.put("result", JavascriptUtil.transform(alertData, script));
+        } catch (Exception e) {
+            returnObj.put("error", e.getMessage());
         }
+        return returnObj;
     }
-
 }

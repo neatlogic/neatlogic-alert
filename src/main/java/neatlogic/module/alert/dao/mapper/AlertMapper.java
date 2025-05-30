@@ -50,6 +50,8 @@ public interface AlertMapper {
 
     void updateAlertIsDeleteByIdList(@Param("idList") List<Long> idList);
 
+    void updateAlert(AlertVo alertVo);
+
     void updateAlertUpdateTime(AlertVo alertVo);
 
     int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);

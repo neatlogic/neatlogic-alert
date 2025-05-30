@@ -368,6 +368,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where id = #{id}
     </update>
 
+    <update id="updateAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert
+        <set>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+            <if test="source != null and source != ''">
+                source = #{source},
+            </if>
+            update_time = now()
+        </set>
+        where id = #{id}
+    </update>
+
     <update id="updateAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         update alert_interval_job
         set start_time   = #{startTime},
