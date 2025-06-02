@@ -181,8 +181,5 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         }};
     }
 
-    public static void main(String[] ar) {
-
-    }
 
 }

@@ -17,12 +17,6 @@
 
 package neatlogic.module.alert.service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
-import co.elastic.clients.elasticsearch._types.Script;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
-import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -38,9 +32,7 @@ import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
-import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
-import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
@@ -57,16 +49,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class AlertServiceImpl implements IAlertService {
+
     private final Logger logger = LoggerFactory.getLogger(AlertServiceImpl.class);
     @Resource
     private AlertMapper alertMapper;
+
+    @Resource
+    private AlertDeleteHandler alertDeleteHandler;
 
     @Resource
     private AlertCommentMapper alertCommentMapper;
@@ -93,7 +87,7 @@ public class AlertServiceImpl implements IAlertService {
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 0);
-            }});
+            }}, false);
             alertMapper.updateAlertIsClose(alertVo.getId(), 0);
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -121,7 +115,7 @@ public class AlertServiceImpl implements IAlertService {
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 1);
-            }});
+            }}, false);
             alertMapper.updateAlertIsClose(alertVo.getId(), 1);
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -135,14 +129,13 @@ public class AlertServiceImpl implements IAlertService {
         return false;
     }
 
-    private void deleteAlertByIdList(List<Long> alertIdList) throws IOException {
+    /*private void deleteAlertByIdList(List<Long> alertIdList) throws IOException {
         for (Long alertId : alertIdList) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             IElasticsearchIndex<OriginalAlertVo> index_origin = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
             //修改formAlertId等于当前id的文档
             List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertId);
             if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-
                 ElasticsearchClient client = ElasticsearchClientFactory.getClient();
                 BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
                 for (Long toAlertId : toAlertIdList) {
@@ -177,10 +170,38 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
         }
+    }*/
+
+    @Override
+    public void deleteAlert(List<Long> alertIdList, boolean isDeleteChildAlert) {
+        Long deleteBatch = System.currentTimeMillis();
+        List<Long> deleteAlertIdList = new ArrayList<>(alertIdList);
+        if (isDeleteChildAlert) {
+            for (Long alertId : alertIdList) {
+                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertId);
+                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                    deleteAlertIdList.addAll(toAlertIdList);
+                }
+            }
+        }
+        AlertVo tmpAlertVo = new AlertVo();
+        tmpAlertVo.setDeleteBatch(deleteBatch);
+        tmpAlertVo.setIdList(deleteAlertIdList);
+        alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
+        AfterTransactionJob<List<Long>> afterTransactionJob = new AfterTransactionJob<>("ALERT-DELETER");
+        afterTransactionJob.execute(deleteAlertIdList, idList -> {
+            try {
+                //deleteAlertByIdList(idList);
+                alertDeleteHandler.submitDeleteTask(idList);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
     public void deleteAlert(Long alertId, boolean isDeleteChildAlert) {
+        Long deleteBatch = System.currentTimeMillis();
         List<Long> deleteAlertIdList = new ArrayList<>();
         deleteAlertIdList.add(alertId);
         if (isDeleteChildAlert) {
@@ -189,11 +210,15 @@ public class AlertServiceImpl implements IAlertService {
                 deleteAlertIdList.addAll(toAlertIdList);
             }
         }
-        alertMapper.updateAlertIsDeleteByIdList(deleteAlertIdList);
+        AlertVo tmpAlertVo = new AlertVo();
+        tmpAlertVo.setDeleteBatch(deleteBatch);
+        tmpAlertVo.setIdList(deleteAlertIdList);
+        alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
         AfterTransactionJob<List<Long>> afterTransactionJob = new AfterTransactionJob<>("ALERT-DELETER");
         afterTransactionJob.execute(deleteAlertIdList, idList -> {
             try {
-                deleteAlertByIdList(idList);
+                //deleteAlertByIdList(idList);
+                alertDeleteHandler.submitDeleteTask(idList);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
@@ -345,6 +370,14 @@ public class AlertServiceImpl implements IAlertService {
         }
     }
 
+    private AlertVo getAlertById(Long alertId) {
+        AlertVo newAlertVo = alertEventMapper.getAlertById(alertId);
+        //补充完整的处理人信息和处理组信息
+        newAlertVo.setUserList(alertEventMapper.getAlertUserByAlertId(alertId));
+        newAlertVo.setTeamList(alertEventMapper.getAlertTeamByAlertId(alertId));
+        return newAlertVo;
+    }
+
     @Override
     public void saveOriginAlert(OriginalAlertVo originalAlertVo) {
         IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
@@ -362,7 +395,7 @@ public class AlertServiceImpl implements IAlertService {
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             Long parentAlertId = alertMapper.getFirstOpenAlertIdByUniqueKey(alertVo.getUniqueKey());
             if (parentAlertId != null) {
-                parentAlertVo = alertMapper.getAlertById(parentAlertId);
+                parentAlertVo = getAlertById(parentAlertId);
             }
             if (parentAlertVo != null) {
                 alertVo.setParentAlertVo(parentAlertVo);
@@ -380,11 +413,13 @@ public class AlertServiceImpl implements IAlertService {
                 alertVo.setFromAlertVo(parentAlertVo);
 
                 alertMapper.updateAlertUpdateTime(parentAlertVo);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                JSONObject obj = new JSONObject();
-                obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
+                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                //JSONObject obj = new JSONObject();
+                //obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
+                //parentAlertVo.setUpdateTime();
                 //obj.put("status", parentAlertVo.getStatus());
-                indexHandler.updateDocument(parentAlertVo.getId(), obj);
+                Map<String,Object> document =  indexHandler.makeupDocument(parentAlertVo);
+                indexHandler.updateDocument(parentAlertVo.getId(), document, true);
 
                 /*if (!Objects.equals(oldStatus, alertVo.getStatus())) {
                     AlertAuditVo alertAuditVo = new AlertAuditVo(true);
@@ -480,6 +515,7 @@ public class AlertServiceImpl implements IAlertService {
         }
         return new ArrayList<>();
     }
+
 
     @Override
     public List<OriginalAlertVo> searchOriginAlert(OriginalAlertVo originalAlertVo) {

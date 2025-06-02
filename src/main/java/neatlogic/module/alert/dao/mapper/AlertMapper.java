@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface AlertMapper {
+    List<Long> getIsDeleteAlertIdList(@Param("id") Long id, @Param("deleteBatch") Long deleteBatch, @Param("limit") Integer limit);
+
     List<AlertTeamVo> getAlertTeamByAlertId(Long alertId);
 
     List<AlertUserVo> getAlertUserByAlertId(Long alertId);
@@ -48,7 +50,7 @@ public interface AlertMapper {
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
-    void updateAlertIsDeleteByIdList(@Param("idList") List<Long> idList);
+    void updateAlertIsDeleteByIdList(AlertVo alertVo);
 
     void updateAlert(AlertVo alertVo);
 
@@ -81,6 +83,8 @@ public interface AlertMapper {
     void deleteAlertUserByAlertId(Long alertId);
 
     void deleteAlertTeamByAlertId(Long alertId);
+
+    void deleteAlertRel(@Param("fromAlertId") Long fromAlertId, @Param("toAlertId") Long toAlertId);
 
     void deleteAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
 }

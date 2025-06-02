@@ -23,16 +23,22 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.dao.mapper.TeamMapper;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.util.Md5Util;
+import neatlogic.framework.util.UuidUtil;
 import neatlogic.framework.util.javascript.JavascriptUtil;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
+import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
+import neatlogic.module.alert.utils.AlertRuleUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -46,6 +52,8 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
     private AlertMapper alertMapper;
     @Resource
     private AlertAuditMapper alertAuditMapper;
+    @Resource
+    private AlertRuleMapper alertRuleMapper;
 
     @Resource
     private UserMapper userMapper;
@@ -56,6 +64,10 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
+        int isAlertExists = alertMapper.checkAlertIsExists(alertVo.getId());
+        if (isAlertExists == 0) {
+            throw new AlertNotFoundException(alertVo.getId());
+        }
         if (config == null) {
             config = new JSONObject();
         }
@@ -171,13 +183,19 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
                 }
             }
+            //重新查询一次新的告警信息
+            newAlertVo = getAlertById(alertVo.getId());
+            //检查是否需要重新计算唯一键
+           /* if (config.getIntValue("needRebuildUniqueKey") == 1) {
+                generateUniqueKey(config, newAlertVo);
+                hasChange = true;
+            }*/
+
             if (hasChange) {
                 IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
                 indexHandler.deleteDocument(alertVo.getId());
                 indexHandler.createDocument(alertVo.getId());
             }
-            //重新查询一次新的告警信息
-            newAlertVo = getAlertById(alertVo.getId());
             //新告警对象，用于前端展示完整的告警信息
             resultObj.put("newAlert", JSON.parseObject(JSON.toJSONString(newAlertVo)));
             return newAlertVo;
@@ -185,6 +203,72 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
             throw new AlertEventHandlerTriggerException(e);
         } finally {
             alertEventHandlerAuditVo.setResult(resultObj);
+        }
+    }
+
+    private void generateUniqueKey(JSONObject config, AlertVo alertVo) {
+        //根据唯一规则计算unique key
+        if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
+            List<AlertRuleVo> ruleList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(config.getJSONArray("ruleList"))) {
+                List<Long> ruleIdList = new ArrayList<>();
+                for (int i = 0; i < config.getJSONArray("ruleList").size(); i++) {
+                    ruleIdList.add(config.getJSONArray("ruleList").getLong(i));
+                }
+                ruleList = alertRuleMapper.getAlertRuleByIdList(ruleIdList);
+            }
+
+            List<String> attrList = new ArrayList<>();
+            for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
+                attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
+            }
+            //按属性名排序，避免由于顺序不同导致结果不同
+            attrList.sort(String::compareTo);
+            String key = "";
+            JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
+            for (String attr : attrList) {
+                if (attr.startsWith("const_")) {
+                    if (StringUtils.isNotBlank(key)) {
+                        key += "#";
+                    }
+                    String value = alertObj.getString(attr.substring("const_".length()));
+                    List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                        value = AlertRuleUtils.doRule(value, tmpRuleList);
+                    }
+                    key += value;
+                } else if (attr.startsWith("attr_")) {
+                    JSONObject attrObj = alertObj.getJSONObject("attrObj");
+                    if (attrObj != null && attrObj.get(attr.substring("attr_".length())) != null) {
+                        if (StringUtils.isNotBlank(key)) {
+                            key += "#";
+                        }
+                        String value = attrObj.getString(attr.substring("attr_".length()));
+                        List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                            value = AlertRuleUtils.doRule(value, tmpRuleList);
+                        }
+                        key += value;
+                    }
+                }
+            }
+            //一定要判断，因为可能直接选唯一键作为唯一键，这时候就需要二次转换
+            if (StringUtils.isNotBlank(key)) {
+                if (!Md5Util.isMd5(key)) {
+                    alertVo.setUniqueKey(Md5Util.encryptMD5(key));
+                } else {
+                    alertVo.setUniqueKey(key);
+                }
+            }
+        }
+        //如果uniqueKey
+        if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            if (!Md5Util.isMd5(alertVo.getUniqueKey())) {
+                alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
+            }
+        } else {
+            //如果没有uniquekey则随机生成一个
+            alertVo.setUniqueKey(UuidUtil.randomUuid());
         }
     }
 

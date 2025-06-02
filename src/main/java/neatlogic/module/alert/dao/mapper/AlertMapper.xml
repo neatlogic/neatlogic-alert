@@ -16,7 +16,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
-
+    <select id="getIsDeleteAlertIdList" resultType="java.lang.Long">
+        select id
+        from alert
+        where is_delete = 1
+          and delete_batch = #{deleteBatch}
+          and id &gt; #{id}
+        order by id
+        limit #{limit}
+    </select>
 
     <select id="getAlertIntervalJob" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         select alert_id               as alertId,
@@ -252,7 +260,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </select>
 
     <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+        <include refid="searchAlertColumnForSearch"></include>
         JOIN
         (select id from alert order by update_time limit #{startNum}, #{pageSize}) tmp
         ON a.id = tmp.id
@@ -264,6 +272,51 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         from alert
         where id = #{value}
     </select>
+
+    <sql id="searchAlertColumnForSearch">
+        select a.id,
+        <if test="searchMode == null or searchMode != 'flat'">
+            <!--扁平模式不需要查询子告警数量-->
+            (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
+        </if>
+        (select x.from_alert_id from alert_rel x where x.to_alert_id = a.id limit 1) as fromAlertId,
+        a.level,
+        a.title,
+        a.update_time as updateTime,
+        a.alert_time as alertTime,
+        a.type,
+        a.is_close as isClose,
+        a.is_delete as isDelete,
+        d.id as alertTypeId,
+        d.name as alertTypeName,
+        d.label as alertTypeLabel,
+        a.status,
+        als.label as alertStatusName,
+        als.color as alertStatusColor,
+        a.source,
+        a.unique_key as uniqueKey,
+        a.entity_type as entityType,
+        a.entity_name as entityName,
+        a.ip,
+        a.port,
+        b.content,
+        c.level as alertLevel,
+        c.name as alertLevelName,
+        c.label as alertLevelLabel,
+        c.color as alertLevelColor,
+        au.user_id as alertUserId,
+        au.alert_id as alertUserAlertId,
+        at.team_uuid as alertTeamUuid,
+        at.alert_id as alertTeamAlertId,
+        (select name from team x where x.uuid = at.team_uuid) as alertTeamName
+        from alert a
+        left join alert_attr b on a.id = b.alert_id
+        left join alert_level c on a.level = c.level
+        left join alert_type d on a.type = d.id
+        left join alert_user au on a.id = au.alert_id
+        left join alert_team at on a.id = at.alert_id
+        left join alert_status als on a.status = als.name
+    </sql>
 
     <sql id="searchAlertColumn">
         select a.id,
@@ -310,7 +363,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="getAlertByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo"
             resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+        <include refid="searchAlertColumnForSearch"></include>
         where
         a.id in
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
@@ -348,8 +401,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
-    <update id="updateAlertIsDeleteByIdList">
-        update alert set is_delete = 1 where id in
+    <update id="updateAlertIsDeleteByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert set is_delete = 1,
+        delete_batch = #{deleteBatch} where (is_delete != 1 or is_delete is null) and id in
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
@@ -494,6 +548,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{source},
                 #{alertDataStr, typeHandler=CompressHandler})
     </insert>
+
+    <delete id="deleteAlertRel">
+        delete
+        from alert_rel
+        where from_alert_id = #{fromAlertId}
+          and to_alert_id = #{toAlertId}
+    </delete>
 
     <delete id="deleteAlertUserByAlertId" parameterType="java.lang.Long">
         delete

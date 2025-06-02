@@ -30,6 +30,8 @@ public interface IAlertService {
 
     boolean closeAlert(AlertVo alertVo);
 
+    void deleteAlert(List<Long> alertIdList, boolean isDeleteChildAlert);
+
     @Transactional
     void deleteAlert(Long alertId, boolean isDeleteChildAlert);
 

@@ -235,9 +235,8 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     }
 
     @Override
-    protected void myCreateDocument(OriginalAlertVo alertVo) {
+    public Map<String, Object> makeupDocument(OriginalAlertVo alertVo) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         // 准备文档数据
         Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
@@ -248,6 +247,14 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
         document.put("adaptor", alertVo.getAdaptor());
         document.put("status", alertVo.getStatus());
         document.put("error", alertVo.getError());
+        return document;
+    }
+
+    @Override
+    protected void myCreateDocument(OriginalAlertVo alertVo) {
+
+        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+        Map<String, Object> document = this.makeupDocument(alertVo);
 
         // 创建或更新文档
         IndexRequest<Map<String, Object>> request = new IndexRequest.Builder<Map<String, Object>>()

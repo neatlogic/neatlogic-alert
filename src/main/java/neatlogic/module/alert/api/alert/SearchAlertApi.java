@@ -90,6 +90,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             @Param(name = "viewName", desc = "视图", type = ApiParamType.STRING),
             @Param(name = "attrFilterList", desc = "自定义属性过滤列表", type = ApiParamType.JSONARRAY),
             @Param(name = "rule", desc = "高级模式搜索条件", type = ApiParamType.JSONOBJECT),
+            @Param(name = "searchMode", desc = "搜索模式", rule = "tree,flat", defaultValue = "tree", type = ApiParamType.STRING),
     })
     @Description(desc = "搜索告警")
     @Override
