@@ -130,7 +130,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
-    <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="false">
+    <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="true">
         select id,
                name,
                label,
@@ -139,6 +139,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                is_normal as isNormal,
                is_top    as isTop
         from alert_attrtype
+        where is_active = 1
         order by is_top desc, sort
     </select>
 

@@ -33,6 +33,7 @@ import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.framework.util.UuidUtil;
 import neatlogic.framework.util.javascript.JavascriptUtil;
+import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
@@ -50,10 +51,15 @@ import java.util.stream.Collectors;
 public class AlertScriptEventHandler extends AlertEventHandlerBase {
     @Resource
     private AlertMapper alertMapper;
+
     @Resource
     private AlertAuditMapper alertAuditMapper;
+
     @Resource
     private AlertRuleMapper alertRuleMapper;
+
+    @Resource
+    private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Resource
     private UserMapper userMapper;
@@ -128,8 +134,40 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
                 }}));
                 hasChange = true;
             }
+
             if (hasChange) {
                 alertMapper.updateAlert(newAlertVo);
+            }
+
+            //比较扩展属性
+            JSONObject oldAttrObj = oldAlertObj.getJSONObject("attrObj");
+            JSONObject newAttrObj = newAlertObj.getJSONObject("attrObj");
+            if (oldAttrObj == null) {
+                oldAttrObj = new JSONObject();
+            }
+            if (newAttrObj == null) {
+                newAttrObj = new JSONObject();
+            }
+            List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
+            boolean hasAttrChange = false;
+
+            for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
+                if (!Objects.equals(oldAttrObj.get(attrTypeVo.getName()), newAttrObj.get(attrTypeVo.getName()))) {
+                    JSONObject finalOldAttrObj = oldAttrObj;
+                    JSONObject finalNewAttrObj = newAttrObj;
+                    auditList.add(generateAudit(alertVo.getId(), "attr_" + attrTypeVo.getName(), new JSONArray() {{
+                        this.add(finalOldAttrObj.getString(attrTypeVo.getName()));
+                    }}, new JSONArray() {{
+                        this.add(finalNewAttrObj.getString(attrTypeVo.getName()));
+                    }}));
+                    hasAttrChange = true;
+                }
+            }
+
+            if (hasAttrChange) {
+                hasChange = true;
+                newAlertVo.setAttrObj(newAttrObj);
+                alertMapper.saveAlertAttr(newAlertVo);
             }
 
             if (!compareJSONArray(oldAlertObj.getJSONArray("userAccountList"), newAlertObj.getJSONArray("userAccountList"))) {
