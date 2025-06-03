@@ -25,6 +25,8 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
+import neatlogic.framework.common.constvalue.InputFrom;
 import neatlogic.framework.dao.mapper.TeamMapper;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.UserVo;
@@ -70,6 +72,7 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
+        InputFromContext.init(InputFrom.EVENT);
         int isAlertExists = alertMapper.checkAlertIsExists(alertVo.getId());
         if (isAlertExists == 0) {
             throw new AlertNotFoundException(alertVo.getId());
