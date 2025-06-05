@@ -17,36 +17,43 @@
 
 package neatlogic.module.alert.api.alertview;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
-import neatlogic.framework.restful.annotation.*;
+import neatlogic.framework.restful.annotation.Description;
+import neatlogic.framework.restful.annotation.Input;
+import neatlogic.framework.restful.annotation.OperationType;
+import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 
 @Service
 @AuthAction(action = ALERT_VIEW_MODIFY.class)
-@OperationType(type = OperationTypeEnum.DELETE)
-public class DeleteAlertViewApi extends PrivateApiComponentBase {
+@OperationType(type = OperationTypeEnum.UPDATE)
+@Transactional
+public class UpdateAlertViewSortApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertViewMapper alertViewMapper;
 
+
     @Override
     public String getToken() {
-        return "/alert/view/delete";
+        return "alert/view/sort/update";
     }
 
     @Override
     public String getName() {
-        return "删除告警视图";
+        return "更新告警视图排序";
     }
 
     @Override
@@ -55,14 +62,23 @@ public class DeleteAlertViewApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", isRequired = true, type = ApiParamType.LONG)
+            @Param(name = "idList", desc = "id", type = ApiParamType.JSONARRAY, isRequired = true)
     })
-    @Output({@Param(explode = AlertViewVo.class)})
-    @Description(desc = "删除告警视图")
+    @Description(desc = "更新告警视图排序")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws IOException {
-        Long id = jsonObj.getLong("id");
-        alertViewMapper.deleteAlertViewById(id);
+    public Object myDoService(JSONObject jsonObj) throws Exception {
+        JSONArray idList = jsonObj.getJSONArray("idList");
+        if (CollectionUtils.isNotEmpty(idList)) {
+            for (int i = 0; i < idList.size(); i++) {
+                Long id = idList.getLong(i);
+                AlertViewVo viewVo = new AlertViewVo();
+                viewVo.setId(id);
+                viewVo.setSort(i + 1);
+                alertViewMapper.updateAlertViewSort(viewVo);
+            }
+        }
         return null;
     }
+
+
 }

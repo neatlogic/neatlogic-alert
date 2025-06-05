@@ -14,6 +14,8 @@ public interface AlertViewMapper {
 
     List<AlertViewVo> searchAlertView(AlertViewVo alertViewVo);
 
+    List<AlertViewVo> listAlertView(AlertViewVo alertViewVo);
+
     int searchAlertViewCount(AlertViewVo alertViewVo);
 
     void insertAlertViewAuth(AlertViewAuthVo alertViewAuthVo);
@@ -21,6 +23,8 @@ public interface AlertViewMapper {
     void saveAlertView(AlertViewVo alertViewVo);
 
     void deleteAlertViewAuthByViewId(Long viewId);
+
+    void updateAlertViewSort(AlertViewVo alertViewVo);
 
     void deleteAlertViewById(Long viewId);
 }

@@ -15,13 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package neatlogic.module.alert.api.alertview;
+package neatlogic.module.alert.api.alertcatalog;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
-import neatlogic.framework.alert.dto.AlertViewAuthVo;
-import neatlogic.framework.alert.dto.AlertViewVo;
+import neatlogic.framework.alert.dto.AlertCatalogAuthVo;
+import neatlogic.framework.alert.dto.AlertCatalogVo;
 import neatlogic.framework.alert.exception.alertview.AlertViewIsExistsException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthAction;
@@ -29,7 +29,7 @@ import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.dao.mapper.AlertViewMapper;
+import neatlogic.module.alert.dao.mapper.AlertCatalogMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,20 +40,20 @@ import javax.annotation.Resource;
 @AuthAction(action = ALERT_VIEW_MODIFY.class)
 @OperationType(type = OperationTypeEnum.UPDATE)
 @Transactional
-public class SaveAlertViewApi extends PrivateApiComponentBase {
+public class SaveAlertCatalogApi extends PrivateApiComponentBase {
 
     @Resource
-    private AlertViewMapper alertViewMapper;
+    private AlertCatalogMapper alertCatalogMapper;
 
 
     @Override
     public String getToken() {
-        return "alert/view/save";
+        return "alert/catalog/save";
     }
 
     @Override
     public String getName() {
-        return "保存告警视图";
+        return "保存告警目录";
     }
 
     @Override
@@ -63,37 +63,35 @@ public class SaveAlertViewApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "id", desc = "id", type = ApiParamType.LONG),
-            @Param(name = "name", desc = "唯一标识", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "label", desc = "名称", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "catalogId", desc = "目录id", isRequired = true, type = ApiParamType.LONG),
+            @Param(name = "name", desc = "名称", isRequired = true, maxLength = 50, type = ApiParamType.STRING),
             @Param(name = "isActive", desc = "是否激活", type = ApiParamType.INTEGER),
-            @Param(name = "config", desc = "配置", isRequired = true, type = ApiParamType.JSONOBJECT)
+            @Param(name = "authList", desc = "授权列表", type = ApiParamType.JSONARRAY)
     })
     @Output({@Param(name = "id", desc = "视图id", type = ApiParamType.LONG)})
-    @Description(desc = "保存告警视图")
+    @Description(desc = "保存告警目录")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
-        AlertViewVo alertViewVo = JSON.toJavaObject(jsonObj, AlertViewVo.class);
-        if (alertViewMapper.checkAlertViewIsExists(alertViewVo) > 0) {
-            throw new AlertViewIsExistsException(alertViewVo.getName());
+        AlertCatalogVo alertCatalogVo = JSON.toJavaObject(jsonObj, AlertCatalogVo.class);
+        if (alertCatalogMapper.checkAlertCatalogIsExists(alertCatalogVo) > 0) {
+            throw new AlertViewIsExistsException(alertCatalogVo.getName());
         }
         Long id = jsonObj.getLong("id");
         if (id != null) {
-            alertViewVo.setLcu(UserContext.get().getUserUuid(true));
-            alertViewMapper.deleteAlertViewAuthByViewId(id);
+            alertCatalogVo.setLcu(UserContext.get().getUserUuid(true));
+            alertCatalogMapper.deleteAlertCatalogAuthByCatalogId(id);
         } else {
-            alertViewVo.setFcu(UserContext.get().getUserUuid(true));
+            alertCatalogVo.setFcu(UserContext.get().getUserUuid(true));
         }
         //清除权限，重新从前端数据中获取
-        alertViewVo.setAlertViewAuthList(null);
-        alertViewMapper.saveAlertView(alertViewVo);
-        if (CollectionUtils.isNotEmpty(alertViewVo.getAlertViewAuthList())) {
-            for (AlertViewAuthVo authVo : alertViewVo.getAlertViewAuthList()) {
-                authVo.setViewId(alertViewVo.getId());
-                alertViewMapper.insertAlertViewAuth(authVo);
+        alertCatalogVo.setAlertCatalogAuthList(null);
+        alertCatalogMapper.saveAlertCatalog(alertCatalogVo);
+        if (CollectionUtils.isNotEmpty(alertCatalogVo.getAlertCatalogAuthList())) {
+            for (AlertCatalogAuthVo authVo : alertCatalogVo.getAlertCatalogAuthList()) {
+                authVo.setCatalogId(alertCatalogVo.getId());
+                alertCatalogMapper.insertAlertCatalogAuth(authVo);
             }
         }
-        return alertViewVo.getId();
+        return alertCatalogVo.getId();
     }
 
 
