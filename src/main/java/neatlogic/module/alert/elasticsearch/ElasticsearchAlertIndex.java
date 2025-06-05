@@ -177,6 +177,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             ));
             boolQueryBuilder.must(query);
         }
+        //告警来源
+        if (StringUtils.isNotBlank(alertVo.getSource())) {
+            Query query = Query.of(q -> q.term(r -> r
+                    .field("source")
+                    .value(alertVo.getSource()) // 开始时间
+            ));
+            boolQueryBuilder.must(query);
+        }
         //置顶自定义属性搜索
         if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
             for (AlertAttrFilterVo attrFilterVo : alertVo.getAttrFilterList()) {
