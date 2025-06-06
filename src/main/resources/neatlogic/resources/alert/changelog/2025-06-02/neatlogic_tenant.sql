@@ -7,7 +7,8 @@ CREATE TABLE `alert_catalog`
     `fcd`       timestamp NULL                          DEFAULT NULL,
     `fcu`       char(32) COLLATE utf8mb4_general_ci     DEFAULT NULL,
     `lcd`       timestamp NULL                          DEFAULT NULL,
-    `lcu`       char(1) COLLATE utf8mb4_general_ci      DEFAULT NULL
+    `lcu`       char(32) COLLATE utf8mb4_general_ci     DEFAULT NULL,
+    PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci;
