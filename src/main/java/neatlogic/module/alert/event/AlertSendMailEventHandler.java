@@ -27,15 +27,18 @@ import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateNameIsNotFoundException;
 import neatlogic.framework.common.constvalue.AuthType;
 import neatlogic.framework.dao.mapper.TeamMapper;
 import neatlogic.framework.dao.mapper.UserMapper;
 import neatlogic.framework.dto.TeamVo;
 import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.exception.core.ApiRuntimeException;
+import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
+import neatlogic.module.alert.dao.mapper.AlertNotifyTemplateMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +52,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     //private final Logger logger = LoggerFactory.getLogger(AlertSendMailEventHandler.class);
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+
+    @Resource
+    private AlertNotifyTemplateMapper alertNotifyTemplateMapper;
 
     @Resource
     private UserMapper userMapper;
@@ -100,8 +106,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
             JSONArray toUserList = config.getJSONArray("toUserList");
             JSONArray ccUserList = config.getJSONArray("ccUserList");
-            String title = config.getString("title");
-            String content = config.getString("content");
+            String type = config.getString("type");
+            String title;
+            String content;
             JSONObject paramObj = new JSONObject();
             JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
             for (AlertAttrDefineVo attr : attrList) {
@@ -113,8 +120,24 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                     paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
                 }
             }
+            if (StringUtils.isBlank(type) || !type.equalsIgnoreCase("template")) {
+                title = config.getString("title");
+                content = config.getString("content");
+            } else {
+                Long templateId = config.getLong("template");
+                if (templateId == null) {
+                    throw new ParamNotExistsException("模板");
+                }
+                AlertNotifyTemplateVo templateVo = alertNotifyTemplateMapper.getNotifyTemplateById(templateId);
+                if (templateVo == null) {
+                    throw new NotifyTemplateNameIsNotFoundException(templateId);
+                }
+                title = templateVo.getTitle();
+                content = templateVo.getContent();
+            }
             title = FreemarkerUtil.transform(paramObj, title);
             content = FreemarkerUtil.transform(paramObj, content);
+
 
             Set<String> to = makeupMailList(alertVo, toUserList);
 
