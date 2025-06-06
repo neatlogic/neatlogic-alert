@@ -164,9 +164,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="getAlertByParentId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertVo">
         select a.id,
-               a.status
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
         from alert a
-                 join alert_rel b on a.id = b.to_alert_id
+        join alert_rel b on a.id = b.to_alert_id
         where b.from_alert_id = #{value}
     </select>
 
@@ -213,16 +214,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </collection>
     </resultMap>
 
-    <select id="getOpenAlertByParentId" parameterType="java.lang.Long" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+    <select id="getOpenAlertByParentId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
+        select
+        a.id,
+        a.is_close as isClose,
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
+        from alert a
         join alert_rel rel on a.id = rel.to_alert_id
         where
         rel.from_alert_id = #{value}
         and a.is_close = 0
     </select>
 
-    <select id="getCloseAlertByParentId" parameterType="java.lang.Long" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+    <select id="getCloseAlertByParentId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
+        select
+        a.id,
+        a.is_close as isClose,
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
+        from alert a
         join alert_rel rel on a.id = rel.to_alert_id
         where
         rel.from_alert_id = #{value}

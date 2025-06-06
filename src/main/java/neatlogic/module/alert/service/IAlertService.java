@@ -26,6 +26,8 @@ import java.util.List;
 
 public interface IAlertService {
 
+    boolean updateAlertStatus(AlertVo alertVo);
+
     boolean openAlert(AlertVo alertVo);
 
     boolean closeAlert(AlertVo alertVo);

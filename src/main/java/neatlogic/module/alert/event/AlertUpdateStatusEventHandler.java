@@ -23,6 +23,8 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +60,11 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
                 String oldStatus = alertVo.getStatus();
                 alertVo.setStatus(status);
                 alertMapper.updateAlertStatus(alertVo);
+
+                IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+                index.updateDocument(alertVo.getId(), new JSONObject() {{
+                    this.put("status", alertVo.getStatus());
+                }}, false);
 
                 AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());

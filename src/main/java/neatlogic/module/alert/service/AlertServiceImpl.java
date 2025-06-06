@@ -36,7 +36,6 @@ import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundExc
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
-import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
@@ -72,6 +71,39 @@ public class AlertServiceImpl implements IAlertService {
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+
+    private boolean updateAlertStatus(AlertVo oldAlertVo, AlertVo alertVo) {
+        if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
+            List<AlertVo> childAlertList = alertMapper.getAlertByParentId(alertVo.getId());
+            if (CollectionUtils.isNotEmpty(childAlertList)) {
+                for (AlertVo childAlertVo : childAlertList) {
+                    //把新状态赋予子告警
+                    childAlertVo.setStatus(alertVo.getStatus());
+                    this.updateAlertStatus(childAlertVo);
+                }
+            }
+        }
+        if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
+            alertMapper.updateAlertStatus(alertVo);
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            index.updateDocument(alertVo.getId(), new JSONObject() {{
+                this.put("status", alertVo.getStatus());
+            }}, false);
+            AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateAlertStatus(AlertVo alertVo) {
+        AlertVo oldAlertVo = alertMapper.getAlertById(alertVo.getId());
+        if (oldAlertVo == null) {
+            throw new AlertNotFoundException(alertVo.getId());
+        }
+        return updateAlertStatus(oldAlertVo, alertVo);
+    }
 
     @Override
     public boolean openAlert(AlertVo alertVo) {
@@ -244,32 +276,22 @@ public class AlertServiceImpl implements IAlertService {
         }
         boolean hasChange = false;
         if (Objects.equals(1, alertVo.getIsClose())) {
-            hasChange = closeAlert(alertVo);
+            //需要传入旧告警，否则会导致判断状态错误而不执行
+            oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());
+            hasChange = closeAlert(oldAlertVo);
         } else if (Objects.equals(0, alertVo.getIsClose())) {
-            hasChange = openAlert(alertVo);
+            //需要传入旧告警，否则会导致判断状态错误而不执行
+            oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());
+            hasChange = openAlert(oldAlertVo);
         }
 
-       /* if (oldAlertVo.getIsClose() != alertVo.getIsClose()) {
-            hasChange = true;
-            alertMapper.updateAlertIsClose(alertVo.getId(), alertVo.getIsClose());
-            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
-            alertAuditVo.setAlertId(alertVo.getId());
-            alertAuditVo.setAttrName("const_isClose");
-            alertAuditVo.addOldValue(oldAlertVo.getIsClose());
-            alertAuditVo.addNewValue(alertVo.getIsClose());
-            alertAuditMapper.insertAlertAudit(alertAuditVo);
-            AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
-            if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
-                AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-ISCLOSE-UPDATER");
-                afterTransactionJob.execute(new ChildAlertIsCloseUpdateJob(alertVo));
-            }
-        }*/
 
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;
+            updateAlertStatus(oldAlertVo, alertVo);
             String oldStatus = oldAlertVo.getStatus();
-            oldAlertVo.setStatus(alertVo.getStatus());
-            alertMapper.updateAlertStatus(alertVo);
+            //oldAlertVo.setStatus(alertVo.getStatus());
+            //alertMapper.updateAlertStatus(alertVo);
 
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -278,12 +300,12 @@ public class AlertServiceImpl implements IAlertService {
             alertAuditVo.addNewValue(alertVo.getStatus());
             alertAuditMapper.insertAlertAudit(alertAuditVo);
 
-            AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
+            //AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
 
-            if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
+            /*if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
                 AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-STATUS-UPDATER");
                 afterTransactionJob.execute(new ChildAlertStatusUpdateJob(alertVo));
-            }
+            }*/
         }
 
         if (CollectionUtils.isNotEmpty(alertVo.getApplyUserList())) {
@@ -363,9 +385,6 @@ public class AlertServiceImpl implements IAlertService {
 
         if (hasChange) {
             IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
-            if (indexHandler == null) {
-                throw new ElasticSearchIndexNotFoundException("ALERT");
-            }
             indexHandler.createDocument(alertVo.getId());
         }
     }
@@ -418,7 +437,7 @@ public class AlertServiceImpl implements IAlertService {
                 //obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
                 //parentAlertVo.setUpdateTime();
                 //obj.put("status", parentAlertVo.getStatus());
-                Map<String,Object> document =  indexHandler.makeupDocument(parentAlertVo);
+                Map<String, Object> document = indexHandler.makeupDocument(parentAlertVo);
                 indexHandler.updateDocument(parentAlertVo.getId(), document, true);
 
                 /*if (!Objects.equals(oldStatus, alertVo.getStatus())) {
