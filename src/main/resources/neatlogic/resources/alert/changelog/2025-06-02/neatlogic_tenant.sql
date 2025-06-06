@@ -1,19 +1,19 @@
-CREATE TABLE `alert_catalog`
+CREATE TABLE IF NOT EXISTS `alert_catalog`
 (
-    `id`        bigint                                  DEFAULT NULL,
-    `name`      varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '名称',
-    `is_active` tinyint                                 DEFAULT NULL COMMENT '是否激活',
-    `sort`      int                                     DEFAULT NULL COMMENT '排序',
-    `fcd`       timestamp NULL                          DEFAULT NULL,
-    `fcu`       char(32) COLLATE utf8mb4_general_ci     DEFAULT NULL,
-    `lcd`       timestamp NULL                          DEFAULT NULL,
-    `lcu`       char(32) COLLATE utf8mb4_general_ci     DEFAULT NULL,
-    PRIMARY KEY (`id`) USING BTREE
+    `id`        bigint    NOT NULL,
+    `name`      varchar(255) COLLATE utf8mb4_general_ci                   DEFAULT NULL COMMENT '名称',
+    `is_active` tinyint                                                   DEFAULT NULL COMMENT '是否激活',
+    `sort`      int                                                       DEFAULT NULL COMMENT '排序',
+    `fcd`       timestamp NULL                                            DEFAULT NULL,
+    `fcu`       char(32) COLLATE utf8mb4_general_ci                       DEFAULT NULL,
+    `lcd`       timestamp NULL                                            DEFAULT NULL,
+    `lcu`       char(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+    PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci;
 
-CREATE TABLE `alert_catalog_auth`
+CREATE TABLE IF NOT EXISTS `alert_catalog_auth`
 (
     `catalog_id` bigint                                                                                NOT NULL,
     `auth_type`  enum ('user','team','role','common') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
