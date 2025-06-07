@@ -25,6 +25,7 @@ import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.dto.condition.ConditionGroupVo;
 import neatlogic.framework.alert.dto.condition.ConditionVo;
 import neatlogic.framework.alert.enums.AlertAttr;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.AlertEventType;
@@ -148,6 +149,8 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                     }
                 } else {
                     resultObj.put("result", false);
+                    //修改审计状态
+                    alertEventHandlerAuditVo.setStatus(AlertEventStatus.FAILED.getValue());
                 }
 
                 resultConditionList.add(resultObj);

@@ -27,6 +27,7 @@ import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateIsUnActiveException;
 import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateNameIsNotFoundException;
 import neatlogic.framework.common.constvalue.AuthType;
 import neatlogic.framework.dao.mapper.TeamMapper;
@@ -131,6 +132,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
                 AlertNotifyTemplateVo templateVo = alertNotifyTemplateMapper.getNotifyTemplateById(templateId);
                 if (templateVo == null) {
                     throw new NotifyTemplateNameIsNotFoundException(templateId);
+                }
+                if (Objects.equals(templateVo.getIsActive(), 0)) {
+                    throw new NotifyTemplateIsUnActiveException(templateVo.getName());
                 }
                 title = templateVo.getTitle();
                 content = templateVo.getContent();

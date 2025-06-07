@@ -30,6 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 and (name like concat(#{keyword}, '%')
                 or label like concat(#{keyword},'%'))
             </if>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
         </where>
     </sql>
 
