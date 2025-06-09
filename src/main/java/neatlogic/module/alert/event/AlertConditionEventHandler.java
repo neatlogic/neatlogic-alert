@@ -69,7 +69,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             for (int e = 0; e < eventConditionList.size(); e++) {
                 JSONObject resultObj = new JSONObject();
                 JSONObject eventConditionObj = eventConditionList.getJSONObject(e);
-                JSONObject handlerObj = eventConditionObj.getJSONObject("handler");
+                Object handlerObject = eventConditionObj.get("handler");
                 JSONObject rule = eventConditionObj.getJSONObject("rule");
                 resultObj.put("rule", rule);
 
@@ -141,11 +141,23 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                 }
                 if (isValid) {
                     resultObj.put("result", true);
-                    IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
-                    AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
-                    if (subHandler != null) {
-                        InputFromContext.init(InputFrom.EVENT);
-                        alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
+                    InputFromContext.init(InputFrom.EVENT);
+                    if (handlerObject instanceof JSONObject) {
+                        JSONObject handlerObj = (JSONObject) handlerObject;
+                        IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                        AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+                        if (subHandler != null) {
+                            alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
+                        }
+                    } else if (handlerObject instanceof JSONArray) {
+                        for (int i = 0; i < ((JSONArray) handlerObject).size(); i++) {
+                            JSONObject handlerObj = ((JSONArray) handlerObject).getJSONObject(i);
+                            IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                            AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+                            if (subHandler != null) {
+                                alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
+                            }
+                        }
                     }
                 } else {
                     resultObj.put("result", false);
@@ -213,25 +225,45 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             JSONArray eventConditionList = alertEventHandlerVo.getConfig().getJSONArray("conditionList");
             for (int e = 0; e < eventConditionList.size(); e++) {
                 JSONObject eventConditionObj = eventConditionList.getJSONObject(e);
-                JSONObject handlerObj = eventConditionObj.getJSONObject("handler");
-                IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
-                AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+                Object handler = eventConditionObj.get("handler");
+                if (handler instanceof JSONObject) {
+                    JSONObject handlerObj = (JSONObject) handler;
+                    IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                    AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
 
-                subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
-                subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
-                subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
-                subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
-                subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
-                subAlertEventHandlerVo.setName(handlerObj.getString("name"));
-                subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
-                subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
-                alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
-                eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+                    subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
+                    subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                    subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
+                    subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                    subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                    subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                    subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                    subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                    alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
+                    eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+                } else if (handler instanceof JSONArray) {
+                    for (int h = 0; h < eventConditionObj.getJSONArray("handler").size(); h++) {
+                        JSONObject handlerObj = eventConditionObj.getJSONArray("handler").getJSONObject(h);
+                        IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                        AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+
+                        subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
+                        subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                        subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
+                        subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                        subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                        subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                        subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                        subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                        alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
+                        eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+                    }
+                }
             }
         }
     }
 
-    @Override
+    /*@Override
     public List<AlertEventHandlerConfigVo> getHandlerConfig(AlertEventHandlerVo alertEventHandlerVo) {
         List<AlertEventHandlerConfigVo> configList = new ArrayList<>();
         if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
@@ -252,6 +284,6 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             }
         }
         return configList;
-    }
+    }*/
 
 }

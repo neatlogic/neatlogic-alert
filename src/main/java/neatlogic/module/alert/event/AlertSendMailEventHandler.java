@@ -266,7 +266,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
         }};
     }
 
-    @Override
+    /*@Override
     public List<AlertEventHandlerConfigVo> getHandlerConfig(AlertEventHandlerVo alertEventHandlerVo) {
         List<AlertEventHandlerConfigVo> configList = new ArrayList<>();
         AlertEventHandlerConfigVo alertEventHandlerConfigVo = new AlertEventHandlerConfigVo();
@@ -276,7 +276,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
         alertEventHandlerConfigVo.setConfig(alertEventHandlerVo.getConfig());
         configList.add(alertEventHandlerConfigVo);
         return configList;
-    }
+    }*/
 
     @Override
     public Set<String> supportParentHandler() {
