@@ -50,6 +50,8 @@ public interface AlertMapper {
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
+    List<Long> getNotUsedAlertOriginIdByDayBefore(int day);
+
     void updateAlertIsDeleteByIdList(AlertVo alertVo);
 
     void updateAlert(AlertVo alertVo);
@@ -87,4 +89,7 @@ public interface AlertMapper {
     void deleteAlertRel(@Param("fromAlertId") Long fromAlertId, @Param("toAlertId") Long toAlertId);
 
     void deleteAlertIntervalJob(@Param("alertId") Long alertId, @Param("alertEventHandlerId") Long alertEventHandlerId);
+
+    void deleteAlertOriginByIdList(@Param("idList") List<Long> idList);
+
 }

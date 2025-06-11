@@ -89,9 +89,12 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
             oldAlertObj.put("userAccountList", alertVo.getUserList().stream().map(AlertUserVo::getUserAccount).collect(Collectors.toList()));
         }
         if (CollectionUtils.isNotEmpty(alertVo.getTeamList())) {
-            oldAlertObj.put("userTeamList", alertVo.getTeamList().stream().map(AlertTeamVo::getTeamName).collect(Collectors.toList()));
+            oldAlertObj.put("teamNameList", alertVo.getTeamList().stream().map(AlertTeamVo::getTeamName).collect(Collectors.toList()));
         }
         oldAlertObj.put("attrObj", alertVo.getAttrObj());
+        if (alertVo.getPrevEventResult() != null) {
+            oldAlertObj.put("prevEventResult", alertVo.getPrevEventResult());
+        }
         JSONObject resultObj = new JSONObject();
         //旧告警数据，用于前端展示告警数据
         resultObj.put("oldAlertObj", oldAlertObj);
@@ -102,6 +105,8 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
             //转换后的告警数据，不一定能转换成json，因此先保存一份字符串
             resultObj.put("newAlertStr", transformed);
             JSONObject newAlertObj = JSON.parseObject(transformed);
+            //由于新告警数据默认就是就告警数据，转换后可能还残留prevEventResult信息，这里要清除一下
+            newAlertObj.remove("prevEventResult");
             //新告警数据，用于前端展示告警数据
             resultObj.put("newAlertObj", newAlertObj);
 
@@ -181,15 +186,17 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
                     oldUserIdList.addAll(alertVo.getUserIdList());
                 }
                 alertMapper.deleteAlertUserByAlertId(alertVo.getId());
-                for (int i = 0; i < newAlertObj.getJSONArray("userAccountList").size(); i++) {
-                    String userAccount = newAlertObj.getJSONArray("userAccountList").getString(i);
-                    UserVo userVo = userMapper.getUserByUserId(userAccount);
-                    if (userVo != null) {
-                        AlertUserVo alertUserVo = new AlertUserVo();
-                        alertUserVo.setUserId(userVo.getUuid());
-                        alertUserVo.setAlertId(alertVo.getId());
-                        newUserIdList.add(userVo.getUuid());
-                        alertMapper.insertAlertUser(alertUserVo);
+                if (CollectionUtils.isNotEmpty(newAlertObj.getJSONArray("userAccountList"))) {
+                    for (int i = 0; i < newAlertObj.getJSONArray("userAccountList").size(); i++) {
+                        String userAccount = newAlertObj.getJSONArray("userAccountList").getString(i);
+                        UserVo userVo = userMapper.getUserByUserId(userAccount);
+                        if (userVo != null) {
+                            AlertUserVo alertUserVo = new AlertUserVo();
+                            alertUserVo.setUserId(userVo.getUuid());
+                            alertUserVo.setAlertId(alertVo.getId());
+                            newUserIdList.add(userVo.getUuid());
+                            alertMapper.insertAlertUser(alertUserVo);
+                        }
                     }
                 }
                 auditList.add(generateAudit(alertVo.getId(), "const_userList", oldUserIdList, newUserIdList));
@@ -203,19 +210,22 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
                     oldTeamIdList.addAll(alertVo.getTeamIdList());
                 }
                 alertMapper.deleteAlertTeamByAlertId(alertVo.getId());
-                for (int i = 0; i < newAlertObj.getJSONArray("teamNameList").size(); i++) {
-                    String teamName = newAlertObj.getJSONArray("teamNameList").getString(i);
-                    List<String> uuidList = teamMapper.getTeamUuidByName(teamName);
-                    if (CollectionUtils.isNotEmpty(uuidList)) {
-                        for (String s : uuidList) {
-                            AlertTeamVo alertTeamVo = new AlertTeamVo();
-                            newTeamIdList.add(s);
-                            alertTeamVo.setTeamUuid(s);
-                            alertTeamVo.setAlertId(alertVo.getId());
-                            alertMapper.insertAlertTeam(alertTeamVo);
+                if (CollectionUtils.isNotEmpty(newAlertObj.getJSONArray("teamNameList"))) {
+                    for (int i = 0; i < newAlertObj.getJSONArray("teamNameList").size(); i++) {
+                        String teamName = newAlertObj.getJSONArray("teamNameList").getString(i);
+                        List<String> uuidList = teamMapper.getTeamUuidByName(teamName);
+                        if (CollectionUtils.isNotEmpty(uuidList)) {
+                            for (String s : uuidList) {
+                                AlertTeamVo alertTeamVo = new AlertTeamVo();
+                                newTeamIdList.add(s);
+                                alertTeamVo.setTeamUuid(s);
+                                alertTeamVo.setAlertId(alertVo.getId());
+                                alertMapper.insertAlertTeam(alertTeamVo);
+                            }
                         }
                     }
                 }
+
                 auditList.add(generateAudit(alertVo.getId(), "const_teamList", oldTeamIdList, newTeamIdList));
             }
             //写入audit
@@ -395,6 +405,7 @@ public class AlertScriptEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 

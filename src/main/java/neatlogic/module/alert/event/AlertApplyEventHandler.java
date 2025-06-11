@@ -164,6 +164,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 }

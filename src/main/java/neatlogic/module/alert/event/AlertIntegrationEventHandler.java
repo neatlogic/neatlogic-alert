@@ -22,8 +22,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
+import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.alert.event.IAlertEventHandler;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.exception.integration.IntegrationHandlerNotFoundException;
 import neatlogic.framework.exception.integration.IntegrationNotFoundException;
@@ -132,6 +135,35 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                 resultJson = resultVo.getRawResult();
             }
             resultObj.put("response", resultJson);
+            if (resultVo.getStatusCode() >= 200 && resultVo.getStatusCode() < 300) {
+                alertVo.setPrevEventResult(resultJson);
+                JSONArray handlerList = config.getJSONArray("successCallbackList");
+                if (CollectionUtils.isNotEmpty(handlerList)) {
+                    for (int i = 0; i < handlerList.size(); i++) {
+                        JSONObject handlerObj = handlerList.getJSONObject(i);
+                        IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                        AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+                        if (subHandler != null) {
+                            alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
+                        }
+                    }
+                }
+            } else {
+                //设置状态为已失败
+                alertEventHandlerAuditVo.setStatus(AlertEventStatus.FAILED.getValue());
+                alertVo.setPrevEventResult(resultJson);
+                JSONArray handlerList = config.getJSONArray("failedCallbackList");
+                if (CollectionUtils.isNotEmpty(handlerList)) {
+                    for (int i = 0; i < handlerList.size(); i++) {
+                        JSONObject handlerObj = handlerList.getJSONObject(i);
+                        IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                        AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+                        if (subHandler != null) {
+                            alertVo = eventHandler.trigger(subHandler, alertVo, alertEventHandlerAuditVo.getId());
+                        }
+                    }
+                }
+            }
         }
         alertEventHandlerAuditVo.setResult(resultObj);
         return alertVo;
@@ -179,6 +211,47 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
             this.add("condition");
             this.add("interval");
         }};
+    }
+
+    @Override
+    public void makeupChildHandler(AlertEventHandlerVo alertEventHandlerVo) {
+        if (MapUtils.isNotEmpty(alertEventHandlerVo.getConfig())) {
+            JSONArray handlerList = alertEventHandlerVo.getConfig().getJSONArray("successCallbackList");
+            for (int e = 0; e < handlerList.size(); e++) {
+                JSONObject handlerObj = handlerList.getJSONObject(e);
+                IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+
+                subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
+                subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
+                subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
+                eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+            }
+
+            JSONArray failedHandlerList = alertEventHandlerVo.getConfig().getJSONArray("failedCallbackList");
+            for (int e = 0; e < failedHandlerList.size(); e++) {
+                JSONObject handlerObj = failedHandlerList.getJSONObject(e);
+                IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+                AlertEventHandlerVo subAlertEventHandlerVo = new AlertEventHandlerVo();
+
+                subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
+                subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
+                subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
+                subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
+                subAlertEventHandlerVo.setName(handlerObj.getString("name"));
+                subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
+                subAlertEventHandlerVo.setConfig(handlerObj.getJSONObject("config"));
+                alertEventHandlerVo.addHandler(subAlertEventHandlerVo);
+                eventHandler.makeupChildHandler(subAlertEventHandlerVo);
+            }
+        }
     }
 
 }
