@@ -193,6 +193,14 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     protected void myCreateIndex(ElasticsearchVo elasticsearchVo) {
         CreateIndexRequest.Builder esBuilder = new CreateIndexRequest.Builder()
                 .index(this.getIndexName())
+                .settings(s -> s
+                        .analysis(a -> a
+                                .normalizer("lowercase_normalizer", n -> n
+                                        .custom(c -> c
+                                                .filter("lowercase")
+                                        )
+                                )
+                        ))
                 .mappings(m -> m
                         .properties("id", p -> p.long_(l -> l))
                         .properties("content", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
@@ -200,7 +208,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                         .properties("time", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm")))
                         .properties("type", p -> p.keyword(k -> k))
                         .properties("adaptor", p -> p.keyword(k -> k))
-                        .properties("source", p -> p.keyword(k -> k))
+                        .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))
                         .properties("status", p -> p.keyword(k -> k))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {

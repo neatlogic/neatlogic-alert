@@ -208,14 +208,12 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             }
         }
 
-        if (Objects.equals("simple", alertVo.getMode())) {
-            //简单模式需要加上关键字，规则使用视图规则
+        if (MapUtils.isEmpty(alertVo.getRule())) {
             if (StringUtils.isNotBlank(alertVo.getViewName())) {
                 AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
                 rule = alertViewVo.getConfig().getJSONObject("rule");
             }
-        }//高级模式直接使用传入的规则
-        else if (Objects.equals("advanced", alertVo.getMode())) {
+        } else {
             rule = alertVo.getRule();
         }
 
@@ -485,6 +483,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     protected void myCreateIndex(ElasticsearchVo elasticsearchVo) {
         CreateIndexRequest.Builder esBuilder = new CreateIndexRequest.Builder()
                 .index(this.getIndexName())
+                .settings(s -> s
+                        .analysis(a -> a
+                                .normalizer("lowercase_normalizer", n -> n
+                                        .custom(c -> c
+                                                .filter("lowercase")
+                                        )
+                                )
+                        ))
                 .mappings(m -> m
                         .properties("id", p -> p.long_(l -> l))                        // bigint -> long
                         .properties("fromAlertId", p -> p.long_(l -> l))
@@ -495,7 +501,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("isClose", p -> p.integer(i -> i))
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
-                        .properties("source", p -> p.keyword(k -> k))                 // varchar -> keyword
+                        .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
                         .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
                         .properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
                         .properties("entityName", p -> p.text(t -> t))               // varchar -> text
