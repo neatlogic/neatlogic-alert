@@ -180,6 +180,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="updateTime" property="updateTime"/>
         <result column="alertTime" property="alertTime"/>
         <result column="type" property="type"/>
+        <result column="alertTypeLabel" property="typeName"/>
         <result column="status" property="status"/>
         <result column="alertStatusName" property="statusName"/>
         <result column="alertStatusColor" property="statusColor"/>
