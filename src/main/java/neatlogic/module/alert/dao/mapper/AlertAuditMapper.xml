@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                end_time         AS endTime,
                status,
                error,
-               confit           AS configStr,
+               config           AS configStr,
                result           AS resultStr
         from alert_event_handler_audit
         where id = #{value}
