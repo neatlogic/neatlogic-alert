@@ -141,6 +141,7 @@ public class OriginalAlertManager {
                 if (alertVo != null) {
                     //补充必要信息
                     alertVo.setType(alertTypeVo.getId());
+                    alertVo.setTypeName(alertTypeVo.getLabel());
                     //如果告警信息没有来源，则使用系统来源
                     if (StringUtils.isBlank(alertVo.getSource())) {
                         alertVo.setSource(originalAlertVo.getSource());
