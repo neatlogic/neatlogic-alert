@@ -58,7 +58,7 @@ public class SaveAlertApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "type", desc = "告警类型", isRequired = true, type = ApiParamType.STRING),
-            @Param(name = "adaptor", desc = "转换器", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "adaptor", desc = "转换器", type = ApiParamType.STRING),
             @Param(name = "content", desc = "告警内容", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "time", desc = "告警时间，不提供自动生成", type = ApiParamType.LONG),
     })

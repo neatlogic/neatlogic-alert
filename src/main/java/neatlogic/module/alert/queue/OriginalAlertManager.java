@@ -119,7 +119,7 @@ public class OriginalAlertManager {
 
                 AlertVo alertVo;
 
-                if (CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
+                if (StringUtils.isNotBlank(originalAlertVo.getAdaptor()) && CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
                     List<AlertTypeAdaptorVo> adaptorList = alertTypeVo.getAdaptorList();
                     AlertTypeAdaptorVo adaptor = adaptorList.stream().filter(d -> d.getName().equals(originalAlertVo.getAdaptor())).findFirst().orElse(null);
                     if (adaptor == null) {
