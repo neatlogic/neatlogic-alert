@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <where>
             <if test="keyword != null and keyword != ''">
                 and (name like concat(#{keyword}, '%')
-                or label like concat(#{keyword}, '%')
+                or label like concat(#{keyword}, '%'))
             </if>
         </where>
     </sql>
