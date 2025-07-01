@@ -25,13 +25,16 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
+import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
 import neatlogic.module.alert.service.IAlertService;
+import neatlogic.module.alert.utils.AlertRuleUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class AlertCloseEventHandler extends AlertEventHandlerBase {
@@ -40,6 +43,9 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
 
     @Resource
     private AlertMapper alertMapper;
+
+    @Resource
+    private AlertRuleMapper alertRuleMapper;
 
     @Override
     public int getSort() {
@@ -69,6 +75,15 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
             }
         } else if (Objects.equals(closeType, "uniquekey")) {
             if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
+                List<AlertRuleVo> ruleList = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(config.getJSONArray("ruleList"))) {
+                    List<Long> ruleIdList = new ArrayList<>();
+                    for (int i = 0; i < config.getJSONArray("ruleList").size(); i++) {
+                        ruleIdList.add(config.getJSONArray("ruleList").getLong(i));
+                    }
+                    ruleList = alertRuleMapper.getAlertRuleByIdList(ruleIdList);
+                }
+
                 List<String> attrList = new ArrayList<>();
                 for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
                     attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
@@ -82,14 +97,24 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
                         if (StringUtils.isNotBlank(key)) {
                             key += "#";
                         }
-                        key += alertObj.getString(attr.substring("const_".length()));
+                        String value = alertObj.getString(attr.substring("const_".length()));
+                        List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                            value = AlertRuleUtils.doRule(value, tmpRuleList);
+                        }
+                        key += value;
                     } else if (attr.startsWith("attr_")) {
                         JSONObject attrObj = alertObj.getJSONObject("attrObj");
                         if (attrObj != null && attrObj.get(attr.substring("attr_".length())) != null) {
                             if (StringUtils.isNotBlank(key)) {
                                 key += "#";
                             }
-                            key += attrObj.getString(attr.substring("attr_".length()));
+                            String value = attrObj.getString(attr.substring("attr_".length()));
+                            List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
+                            if (CollectionUtils.isNotEmpty(tmpRuleList)) {
+                                value = AlertRuleUtils.doRule(value, tmpRuleList);
+                            }
+                            key += value;
                         }
                     }
                 }
@@ -148,6 +173,10 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
             this.add(AlertEventType.ALERT_INPUT.getName());
+            this.add(AlertEventType.ALERT_SAVE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
+            this.add(AlertEventType.ALERT_CONVERGE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }
@@ -157,6 +186,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 

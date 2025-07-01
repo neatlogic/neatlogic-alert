@@ -178,11 +178,9 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 
-    public static void main(String[] ar) {
-
-    }
 
 }

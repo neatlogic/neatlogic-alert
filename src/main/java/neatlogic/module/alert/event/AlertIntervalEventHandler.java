@@ -175,6 +175,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
     public Set<String> supportParentHandler() {
         return new HashSet<String>() {{
             this.add("condition");
+            this.add("integration");
         }};
     }
 }

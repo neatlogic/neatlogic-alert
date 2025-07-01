@@ -193,6 +193,14 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     protected void myCreateIndex(ElasticsearchVo elasticsearchVo) {
         CreateIndexRequest.Builder esBuilder = new CreateIndexRequest.Builder()
                 .index(this.getIndexName())
+                .settings(s -> s
+                        .analysis(a -> a
+                                .normalizer("lowercase_normalizer", n -> n
+                                        .custom(c -> c
+                                                .filter("lowercase")
+                                        )
+                                )
+                        ))
                 .mappings(m -> m
                         .properties("id", p -> p.long_(l -> l))
                         .properties("content", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
@@ -200,7 +208,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                         .properties("time", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm")))
                         .properties("type", p -> p.keyword(k -> k))
                         .properties("adaptor", p -> p.keyword(k -> k))
-                        .properties("source", p -> p.keyword(k -> k))
+                        .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))
                         .properties("status", p -> p.keyword(k -> k))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
@@ -221,10 +229,10 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     }
 
     @Override
-    protected void myDeleteDocument(OriginalAlertVo alertVo) {
+    protected void myDeleteDocument(Long targetId) {
         DeleteRequest deleteRequest = new DeleteRequest.Builder()
                 .index(getIndexName())
-                .id(alertVo.getId().toString())
+                .id(targetId.toString())
                 .build();
         ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         try {
@@ -235,9 +243,8 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     }
 
     @Override
-    protected void myCreateDocument(OriginalAlertVo alertVo) {
+    public Map<String, Object> makeupDocument(OriginalAlertVo alertVo) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         // 准备文档数据
         Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
@@ -248,6 +255,14 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
         document.put("adaptor", alertVo.getAdaptor());
         document.put("status", alertVo.getStatus());
         document.put("error", alertVo.getError());
+        return document;
+    }
+
+    @Override
+    protected void myCreateDocument(OriginalAlertVo alertVo) {
+
+        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+        Map<String, Object> document = this.makeupDocument(alertVo);
 
         // 创建或更新文档
         IndexRequest<Map<String, Object>> request = new IndexRequest.Builder<Map<String, Object>>()

@@ -19,6 +19,7 @@ package neatlogic.module.alert.queue;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.neatlogic.alert.plugin.adapter.core.AlertIgnoreException;
 import neatlogic.framework.alert.adaptor.core.AlertAdaptorManager;
 import neatlogic.framework.alert.dto.AlertTypeAdaptorVo;
 import neatlogic.framework.alert.dto.AlertTypeVo;
@@ -118,7 +119,7 @@ public class OriginalAlertManager {
 
                 AlertVo alertVo;
 
-                if (CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
+                if (StringUtils.isNotBlank(originalAlertVo.getAdaptor()) && CollectionUtils.isNotEmpty(alertTypeVo.getAdaptorList())) {
                     List<AlertTypeAdaptorVo> adaptorList = alertTypeVo.getAdaptorList();
                     AlertTypeAdaptorVo adaptor = adaptorList.stream().filter(d -> d.getName().equals(originalAlertVo.getAdaptor())).findFirst().orElse(null);
                     if (adaptor == null) {
@@ -140,6 +141,7 @@ public class OriginalAlertManager {
                 if (alertVo != null) {
                     //补充必要信息
                     alertVo.setType(alertTypeVo.getId());
+                    alertVo.setTypeName(alertTypeVo.getLabel());
                     //如果告警信息没有来源，则使用系统来源
                     if (StringUtils.isBlank(alertVo.getSource())) {
                         alertVo.setSource(originalAlertVo.getSource());
@@ -165,6 +167,8 @@ public class OriginalAlertManager {
                     AlertEventManager.doEvent(AlertEventType.ALERT_INPUT, alertVo);
                 }
                 originalAlertVo.setStatus(AlertOriginStatus.SUCCEED.getValue());
+            } catch (AlertIgnoreException ex) {
+                originalAlertVo.setStatus(AlertOriginStatus.IGNORED.getValue());
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
                 originalAlertVo.setError(ex.getMessage() == null ? ExceptionUtils.getStackTrace(ex) : ex.getMessage());

@@ -33,7 +33,7 @@ import java.io.IOException;
 
 @Service
 @AuthAction(action = ALERT_VIEW_MODIFY.class)
-@OperationType(type = OperationTypeEnum.SEARCH)
+@OperationType(type = OperationTypeEnum.DELETE)
 public class DeleteAlertViewApi extends PrivateApiComponentBase {
 
     @Resource

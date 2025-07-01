@@ -17,12 +17,6 @@
 
 package neatlogic.module.alert.service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
-import co.elastic.clients.elasticsearch._types.Script;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
-import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -38,13 +32,10 @@ import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
-import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
-import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
-import neatlogic.module.alert.aftertransaction.ChildAlertStatusUpdateJob;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
@@ -57,16 +48,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class AlertServiceImpl implements IAlertService {
+
     private final Logger logger = LoggerFactory.getLogger(AlertServiceImpl.class);
     @Resource
     private AlertMapper alertMapper;
+
+    @Resource
+    private AlertDeleteHandler alertDeleteHandler;
 
     @Resource
     private AlertCommentMapper alertCommentMapper;
@@ -78,6 +71,39 @@ public class AlertServiceImpl implements IAlertService {
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+
+    private boolean updateAlertStatus(AlertVo oldAlertVo, AlertVo alertVo) {
+        if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
+            List<AlertVo> childAlertList = alertMapper.getAlertByParentId(alertVo.getId());
+            if (CollectionUtils.isNotEmpty(childAlertList)) {
+                for (AlertVo childAlertVo : childAlertList) {
+                    //把新状态赋予子告警
+                    childAlertVo.setStatus(alertVo.getStatus());
+                    this.updateAlertStatus(childAlertVo);
+                }
+            }
+        }
+        if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
+            alertMapper.updateAlertStatus(alertVo);
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            index.updateDocument(alertVo.getId(), new JSONObject() {{
+                this.put("status", alertVo.getStatus());
+            }}, false);
+            AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateAlertStatus(AlertVo alertVo) {
+        AlertVo oldAlertVo = alertMapper.getAlertById(alertVo.getId());
+        if (oldAlertVo == null) {
+            throw new AlertNotFoundException(alertVo.getId());
+        }
+        return updateAlertStatus(oldAlertVo, alertVo);
+    }
 
     @Override
     public boolean openAlert(AlertVo alertVo) {
@@ -93,7 +119,7 @@ public class AlertServiceImpl implements IAlertService {
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 0);
-            }});
+            }}, false);
             alertMapper.updateAlertIsClose(alertVo.getId(), 0);
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -121,7 +147,7 @@ public class AlertServiceImpl implements IAlertService {
             }
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 1);
-            }});
+            }}, false);
             alertMapper.updateAlertIsClose(alertVo.getId(), 1);
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -135,47 +161,40 @@ public class AlertServiceImpl implements IAlertService {
         return false;
     }
 
-    @Override
-    public void deleteAlert(Long alertId, boolean isDeleteChildAlert) throws IOException {
-        AlertVo alertVo = alertMapper.getAlertById(alertId);
-        if (alertVo != null) {
+    /*private void deleteAlertByIdList(List<Long> alertIdList) throws IOException {
+        for (Long alertId : alertIdList) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-            if (isDeleteChildAlert) {
-                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertVo.getId());
-                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    for (Long toAlertId : toAlertIdList) {
-                        deleteAlert(toAlertId, false);
-                    }
+            IElasticsearchIndex<OriginalAlertVo> index_origin = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+            //修改formAlertId等于当前id的文档
+            List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertId);
+            if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+                BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+                for (Long toAlertId : toAlertIdList) {
+                    bulkRequestBuilder.operations(op -> op.update(u -> u
+                            .index(index.getIndexName())
+                            .id(toAlertId.toString())
+                            .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
+                    ));
                 }
-            } else {
-                //删除es中fromAlertId，只需要查询直系子节点
-                List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertVo.getId());
-                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
-                    ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-                    BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
-                    for (Long toAlertId : toAlertIdList) {
-                        bulkRequestBuilder.operations(op -> op.update(u -> u
-                                .index(index.getIndexName())
-                                .id(toAlertId.toString())
-                                .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
-                        ));
-                    }
-                    // 执行批量请求
-                    BulkRequest bulkRequest = bulkRequestBuilder.build();
-                    BulkResponse result = client.bulk(bulkRequest);
-                    if (result.errors()) {
-                        for (BulkResponseItem item : result.items()) {
-                            if (item.error() != null) {
-                                throw new ElasticSearchDeleteFieldException(item.id(), "fromAlertId", item.error().reason());
-                            }
+                // 执行批量请求
+                BulkRequest bulkRequest = bulkRequestBuilder.build();
+                BulkResponse result = client.bulk(bulkRequest);
+                if (result.errors()) {
+                    for (BulkResponseItem item : result.items()) {
+                        if (item.error() != null) {
+                            throw new ElasticSearchDeleteFieldException(item.id(), "fromAlertId", item.error().reason());
                         }
                     }
                 }
             }
-            index.deleteDocument(alertVo);
-            List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertVo.getId());
-            alertMapper.deleteAlertById(alertVo.getId());
-            AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, alertVo);
+
+            index.deleteDocument(alertId);
+            index_origin.deleteDocument(alertId);
+            List<Long> fromAlertIdList = alertMapper.listAllFromAlertIdByToAlertId(alertId);
+            AlertVo oldAlertVo = alertMapper.getAlertById(alertId);
+            alertMapper.deleteAlertById(alertId);
+            AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, oldAlertVo);
             if (CollectionUtils.isNotEmpty(fromAlertIdList)) {
                 for (Long fromAlertId : fromAlertIdList) {
                     AlertVo fromAlertVo = alertMapper.getAlertById(fromAlertId);
@@ -183,6 +202,59 @@ public class AlertServiceImpl implements IAlertService {
                 }
             }
         }
+    }*/
+
+    @Override
+    public void deleteAlert(List<Long> alertIdList, boolean isDeleteChildAlert) {
+        Long deleteBatch = System.currentTimeMillis();
+        List<Long> deleteAlertIdList = new ArrayList<>(alertIdList);
+        if (isDeleteChildAlert) {
+            for (Long alertId : alertIdList) {
+                List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertId);
+                if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                    deleteAlertIdList.addAll(toAlertIdList);
+                }
+            }
+        }
+        AlertVo tmpAlertVo = new AlertVo();
+        tmpAlertVo.setDeleteBatch(deleteBatch);
+        tmpAlertVo.setIdList(deleteAlertIdList);
+        alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
+        AfterTransactionJob<List<Long>> afterTransactionJob = new AfterTransactionJob<>("ALERT-DELETER");
+        afterTransactionJob.execute(deleteAlertIdList, idList -> {
+            try {
+                //deleteAlertByIdList(idList);
+                alertDeleteHandler.submitDeleteTask(idList);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public void deleteAlert(Long alertId, boolean isDeleteChildAlert) {
+        Long deleteBatch = System.currentTimeMillis();
+        List<Long> deleteAlertIdList = new ArrayList<>();
+        deleteAlertIdList.add(alertId);
+        if (isDeleteChildAlert) {
+            List<Long> toAlertIdList = alertMapper.listAllToAlertIdByFromAlertId(alertId);
+            if (CollectionUtils.isNotEmpty(toAlertIdList)) {
+                deleteAlertIdList.addAll(toAlertIdList);
+            }
+        }
+        AlertVo tmpAlertVo = new AlertVo();
+        tmpAlertVo.setDeleteBatch(deleteBatch);
+        tmpAlertVo.setIdList(deleteAlertIdList);
+        alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
+        AfterTransactionJob<List<Long>> afterTransactionJob = new AfterTransactionJob<>("ALERT-DELETER");
+        afterTransactionJob.execute(deleteAlertIdList, idList -> {
+            try {
+                //deleteAlertByIdList(idList);
+                alertDeleteHandler.submitDeleteTask(idList);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        });
     }
 
     @Override
@@ -204,32 +276,22 @@ public class AlertServiceImpl implements IAlertService {
         }
         boolean hasChange = false;
         if (Objects.equals(1, alertVo.getIsClose())) {
-            hasChange = closeAlert(alertVo);
+            //需要传入旧告警，否则会导致判断状态错误而不执行
+            oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());
+            hasChange = closeAlert(oldAlertVo);
         } else if (Objects.equals(0, alertVo.getIsClose())) {
-            hasChange = openAlert(alertVo);
+            //需要传入旧告警，否则会导致判断状态错误而不执行
+            oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());
+            hasChange = openAlert(oldAlertVo);
         }
 
-       /* if (oldAlertVo.getIsClose() != alertVo.getIsClose()) {
-            hasChange = true;
-            alertMapper.updateAlertIsClose(alertVo.getId(), alertVo.getIsClose());
-            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
-            alertAuditVo.setAlertId(alertVo.getId());
-            alertAuditVo.setAttrName("const_isClose");
-            alertAuditVo.addOldValue(oldAlertVo.getIsClose());
-            alertAuditVo.addNewValue(alertVo.getIsClose());
-            alertAuditMapper.insertAlertAudit(alertAuditVo);
-            AlertEventManager.doEvent(AlertEventType.ALERT_CLOSE, alertVo);
-            if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
-                AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-ISCLOSE-UPDATER");
-                afterTransactionJob.execute(new ChildAlertIsCloseUpdateJob(alertVo));
-            }
-        }*/
 
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;
+            updateAlertStatus(oldAlertVo, alertVo);
             String oldStatus = oldAlertVo.getStatus();
-            oldAlertVo.setStatus(alertVo.getStatus());
-            alertMapper.updateAlertStatus(alertVo);
+            //oldAlertVo.setStatus(alertVo.getStatus());
+            //alertMapper.updateAlertStatus(alertVo);
 
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -238,12 +300,12 @@ public class AlertServiceImpl implements IAlertService {
             alertAuditVo.addNewValue(alertVo.getStatus());
             alertAuditMapper.insertAlertAudit(alertAuditVo);
 
-            AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
+            //AlertEventManager.doEvent(AlertEventType.ALERT_STATUE_CHANGE, alertVo);
 
-            if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
+            /*if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
                 AfterTransactionJob<AlertVo> afterTransactionJob = new AfterTransactionJob<>("ALERT-STATUS-UPDATER");
                 afterTransactionJob.execute(new ChildAlertStatusUpdateJob(alertVo));
-            }
+            }*/
         }
 
         if (CollectionUtils.isNotEmpty(alertVo.getApplyUserList())) {
@@ -270,6 +332,7 @@ public class AlertServiceImpl implements IAlertService {
             boolean isEqual = new HashSet<>(list1).equals(new HashSet<>(list2));
 
             if (!isEqual) {
+                hasChange = true;
                 AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_userList");
@@ -301,6 +364,7 @@ public class AlertServiceImpl implements IAlertService {
             List<String> list2 = mergedTeamIdList != null ? mergedTeamIdList : Collections.emptyList();
             boolean isEqual = new HashSet<>(list1).equals(new HashSet<>(list2));
             if (!isEqual) {
+                hasChange = true;
                 AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                 alertAuditVo.setAlertId(alertVo.getId());
                 alertAuditVo.setAttrName("const_teamList");
@@ -321,11 +385,16 @@ public class AlertServiceImpl implements IAlertService {
 
         if (hasChange) {
             IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
-            if (indexHandler == null) {
-                throw new ElasticSearchIndexNotFoundException("ALERT");
-            }
             indexHandler.createDocument(alertVo.getId());
         }
+    }
+
+    private AlertVo getAlertById(Long alertId) {
+        AlertVo newAlertVo = alertEventMapper.getAlertById(alertId);
+        //补充完整的处理人信息和处理组信息
+        newAlertVo.setUserList(alertEventMapper.getAlertUserByAlertId(alertId));
+        newAlertVo.setTeamList(alertEventMapper.getAlertTeamByAlertId(alertId));
+        return newAlertVo;
     }
 
     @Override
@@ -345,13 +414,13 @@ public class AlertServiceImpl implements IAlertService {
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             Long parentAlertId = alertMapper.getFirstOpenAlertIdByUniqueKey(alertVo.getUniqueKey());
             if (parentAlertId != null) {
-                parentAlertVo = alertMapper.getAlertById(parentAlertId);
+                parentAlertVo = getAlertById(parentAlertId);
             }
             if (parentAlertVo != null) {
                 alertVo.setParentAlertVo(parentAlertVo);
-                String oldStatus = parentAlertVo.getStatus();
+                //String oldStatus = parentAlertVo.getStatus();
                 parentAlertVo.setUpdateTime(alertVo.getUpdateTime());
-                parentAlertVo.setStatus(alertVo.getStatus());
+                //parentAlertVo.setStatus(alertVo.getStatus());
                 if (parentAlertVo.getId().equals(alertVo.getId())) {
                     return;
                 }
@@ -363,20 +432,22 @@ public class AlertServiceImpl implements IAlertService {
                 alertVo.setFromAlertVo(parentAlertVo);
 
                 alertMapper.updateAlertUpdateTime(parentAlertVo);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                JSONObject obj = new JSONObject();
-                obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
-                obj.put("status", parentAlertVo.getStatus());
-                indexHandler.updateDocument(parentAlertVo.getId(), obj);
+                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                //JSONObject obj = new JSONObject();
+                //obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
+                //parentAlertVo.setUpdateTime();
+                //obj.put("status", parentAlertVo.getStatus());
+                Map<String, Object> document = indexHandler.makeupDocument(parentAlertVo);
+                indexHandler.updateDocument(parentAlertVo.getId(), document, true);
 
-                if (!Objects.equals(oldStatus, alertVo.getStatus())) {
+                /*if (!Objects.equals(oldStatus, alertVo.getStatus())) {
                     AlertAuditVo alertAuditVo = new AlertAuditVo(true);
                     alertAuditVo.setAlertId(parentAlertVo.getId());
                     alertAuditVo.setAttrName("const_status");
                     alertAuditVo.addOldValue(oldStatus);
                     alertAuditVo.addNewValue(alertVo.getStatus());
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
-                }
+                }*/
             }
         }
 
@@ -463,6 +534,7 @@ public class AlertServiceImpl implements IAlertService {
         }
         return new ArrayList<>();
     }
+
 
     @Override
     public List<OriginalAlertVo> searchOriginAlert(OriginalAlertVo originalAlertVo) {

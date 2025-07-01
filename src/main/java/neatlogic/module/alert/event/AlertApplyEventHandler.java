@@ -108,7 +108,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
             indexHandler.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("userList", userIdList);
                 this.put("teamList", teamIdList);
-            }});
+            }}, false);
 
             alertEventHandlerAuditVo.setResult(new JSONObject() {{
                 this.put("userIdList", userIdList);
@@ -164,6 +164,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 }

@@ -16,7 +16,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
-
+    <select id="getIsDeleteAlertIdList" resultType="java.lang.Long">
+        select id
+        from alert
+        where is_delete = 1
+          and delete_batch = #{deleteBatch}
+          and id &gt; #{id}
+        order by id
+        limit #{limit}
+    </select>
 
     <select id="getAlertIntervalJob" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         select alert_id               as alertId,
@@ -88,7 +96,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
-    <select id="getAlertTeamByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertTeamVo">
+    <select id="getAlertTeamByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertTeamVo">
         select a.alert_id  as alertId,
                a.team_uuid as teamUuid,
                b.name      as teamName
@@ -97,7 +106,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.alert_id = #{value}
     </select>
 
-    <select id="getAlertUserByAlertId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertUserVo">
+    <select id="getAlertUserByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertUserVo">
         select a.alert_id  AS alertId,
                a.user_id   AS userId,
                b.user_id   AS userAccount,
@@ -154,9 +164,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="getAlertByParentId" parameterType="java.lang.Long" resultType="neatlogic.framework.alert.dto.AlertVo">
         select a.id,
-               a.status
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
         from alert a
-                 join alert_rel b on a.id = b.to_alert_id
+        join alert_rel b on a.id = b.to_alert_id
         where b.from_alert_id = #{value}
     </select>
 
@@ -169,12 +180,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="updateTime" property="updateTime"/>
         <result column="alertTime" property="alertTime"/>
         <result column="type" property="type"/>
+        <result column="alertTypeLabel" property="typeName"/>
         <result column="status" property="status"/>
         <result column="alertStatusName" property="statusName"/>
         <result column="alertStatusColor" property="statusColor"/>
         <result column="source" property="source"/>
+        <result column="sourceName" property="sourceName"/>
         <result column="uniqueKey" property="uniqueKey"/>
         <result column="isClose" property="isClose"/>
+        <result column="isDelete" property="isDelete"/>
         <result column="entityType" property="entityType"/>
         <result column="entityName" property="entityName"/>
         <result column="ip" property="port"/>
@@ -202,16 +216,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         </collection>
     </resultMap>
 
-    <select id="getOpenAlertByParentId" parameterType="java.lang.Long" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+    <select id="getOpenAlertByParentId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
+        select
+        a.id,
+        a.is_close as isClose,
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
+        from alert a
         join alert_rel rel on a.id = rel.to_alert_id
         where
         rel.from_alert_id = #{value}
         and a.is_close = 0
     </select>
 
-    <select id="getCloseAlertByParentId" parameterType="java.lang.Long" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+    <select id="getCloseAlertByParentId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertVo">
+        select
+        a.id,
+        a.is_close as isClose,
+        a.status,
+        a.type<!--不能缺，否则无法触发事件-->
+        from alert a
         join alert_rel rel on a.id = rel.to_alert_id
         where
         rel.from_alert_id = #{value}
@@ -249,7 +275,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
     </select>
 
     <select id="searchAlert" parameterType="neatlogic.framework.alert.dto.AlertVo" resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+        <include refid="searchAlertColumnForSearch"></include>
         JOIN
         (select id from alert order by update_time limit #{startNum}, #{pageSize}) tmp
         ON a.id = tmp.id
@@ -262,6 +288,53 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where id = #{value}
     </select>
 
+    <sql id="searchAlertColumnForSearch">
+        select a.id,
+        <if test="searchMode == null or searchMode != 'flat'">
+            <!--扁平模式不需要查询子告警数量-->
+            (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
+        </if>
+        (select x.from_alert_id from alert_rel x where x.to_alert_id = a.id limit 1) as fromAlertId,
+        a.level,
+        a.title,
+        a.update_time as updateTime,
+        a.alert_time as alertTime,
+        a.type,
+        a.is_close as isClose,
+        a.is_delete as isDelete,
+        d.id as alertTypeId,
+        d.name as alertTypeName,
+        d.label as alertTypeLabel,
+        a.status,
+        als.label as alertStatusName,
+        als.color as alertStatusColor,
+        a.source,
+        also.label as sourceName,
+        a.unique_key as uniqueKey,
+        a.entity_type as entityType,
+        a.entity_name as entityName,
+        a.ip,
+        a.port,
+        b.content,
+        c.level as alertLevel,
+        c.name as alertLevelName,
+        c.label as alertLevelLabel,
+        c.color as alertLevelColor,
+        au.user_id as alertUserId,
+        au.alert_id as alertUserAlertId,
+        at.team_uuid as alertTeamUuid,
+        at.alert_id as alertTeamAlertId,
+        (select name from team x where x.uuid = at.team_uuid) as alertTeamName
+        from alert a
+        left join alert_attr b on a.id = b.alert_id
+        left join alert_level c on a.level = c.level
+        left join alert_type d on a.type = d.id
+        left join alert_user au on a.id = au.alert_id
+        left join alert_team at on a.id = at.alert_id
+        left join alert_status als on a.status = als.name
+        left join alert_source also on a.source = also.name
+    </sql>
+
     <sql id="searchAlertColumn">
         select a.id,
                (SELECT count(x.to_alert_id) FROM alert_rel x WHERE x.from_alert_id = a.id LIMIT 100) AS childAlertCount,
@@ -272,6 +345,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                a.alert_time                                                                          as alertTime,
                a.type,
                a.is_close                                                                            as isClose,
+               a.is_delete                                                                           as isDelete,
                d.id                                                                                  as alertTypeId,
                d.name                                                                                as alertTypeName,
                d.label                                                                               as alertTypeLabel,
@@ -279,6 +353,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                als.label                                                                             as alertStatusName,
                als.color                                                                             as alertStatusColor,
                a.source,
+               also.label                                                                            as sourceName,
                a.unique_key                                                                          as uniqueKey,
                a.entity_type                                                                         as entityType,
                a.entity_name                                                                         as entityName,
@@ -301,12 +376,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                  left join alert_user au on a.id = au.alert_id
                  left join alert_team at on a.id = at.alert_id
                  left join alert_status als on a.status = als.name
+                 left join alert_source also on a.source = also.name
     </sql>
 
 
     <select id="getAlertByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo"
             resultMap="alertResultMap">
-        <include refid="searchAlertColumn"></include>
+        <include refid="searchAlertColumnForSearch"></include>
         where
         a.id in
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
@@ -344,6 +420,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
+    <update id="updateAlertIsDeleteByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert set is_delete = 1,
+        delete_batch = #{deleteBatch} where (is_delete != 1 or is_delete is null) and id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
+
     <update id="updateAlertStatus" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert
         set status = #{status}
@@ -354,6 +438,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         update alert
         set update_time = #{updateTime},
             status      = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="updateAlert" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert
+        <set>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+            <if test="source != null and source != ''">
+                source = #{source},
+            </if>
+            update_time = now()
+        </set>
         where id = #{id}
     </update>
 
@@ -467,6 +568,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{alertDataStr, typeHandler=CompressHandler})
     </insert>
 
+    <delete id="deleteAlertRel">
+        delete
+        from alert_rel
+        where from_alert_id = #{fromAlertId}
+          and to_alert_id = #{toAlertId}
+    </delete>
+
     <delete id="deleteAlertUserByAlertId" parameterType="java.lang.Long">
         delete
         from alert_user
@@ -506,6 +614,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         from alert_interval_job
         where alert_id = #{alertId}
           and alert_event_handler_id = #{alertEventHandlerId}
+    </delete>
+
+    <select id="getNotUsedAlertOriginIdByDayBefore" parameterType="int" resultType="java.lang.Long">
+        SELECT id
+        FROM alert_origin
+        WHERE NOT EXISTS (SELECT 1
+                          FROM alert
+                          WHERE alert.id = alert_origin.id)
+          and alert_origin.time &lt; DATE_SUB(CURRENT_DATE, INTERVAL #{value} DAY)
+        LIMIT 1000
+    </select>
+
+    <delete id="deleteAlertOriginByIdList">
+        delete from alert_origin where id in
+        <foreach collection="idList" index="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </delete>
 
 </mapper>

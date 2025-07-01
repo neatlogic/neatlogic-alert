@@ -65,6 +65,7 @@ public class SaveAlertViewApi extends PrivateApiComponentBase {
             @Param(name = "id", desc = "id", type = ApiParamType.LONG),
             @Param(name = "name", desc = "唯一标识", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "label", desc = "名称", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "catalogId", desc = "目录id", isRequired = true, type = ApiParamType.LONG),
             @Param(name = "isActive", desc = "是否激活", type = ApiParamType.INTEGER),
             @Param(name = "config", desc = "配置", isRequired = true, type = ApiParamType.JSONOBJECT)
     })

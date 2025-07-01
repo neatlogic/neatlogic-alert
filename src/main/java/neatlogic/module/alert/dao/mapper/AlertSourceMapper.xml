@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertSourceMapper">
+    <sql id="searchAlertSql">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                and (name like concat(#{keyword}, '%')
+                or label like concat(#{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="checkAlertSourceIsExists" parameterType="neatlogic.framework.alert.dto.AlertSourceVo" resultType="int">
+        select count(1)
+        from alert_source
+        where name = #{name}
+    </select>
+
+    <select id="getAlertSourceByName" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertSourceVo">
+        select name, label
+        from alert_source
+        where name = #{value}
+    </select>
+
+    <select id="searchAlertSource" parameterType="neatlogic.framework.alert.dto.AlertSourceVo"
+            resultType="neatlogic.framework.alert.dto.AlertSourceVo">
+        select name, label
+        from alert_source
+        <include refid="searchAlertSql"/>
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="searchAlertSourceCount" parameterType="neatlogic.framework.alert.dto.AlertSourceVo" resultType="int">
+        select count(1)
+        from alert_source
+        <include refid="searchAlertSql"/>
+    </select>
+
+    <insert id="saveAlertSource" parameterType="neatlogic.framework.alert.dto.AlertSourceVo">
+        insert alert_source
+            (name, label)
+        values (#{name}, #{label})
+        ON DUPLICATE KEY
+            UPDATE label = #{label}
+    </insert>
+
+    <delete id="deleteAlertSourceByName" parameterType="java.lang.String">
+        delete
+        from alert_source
+        where name = #{value}
+    </delete>
+</mapper>

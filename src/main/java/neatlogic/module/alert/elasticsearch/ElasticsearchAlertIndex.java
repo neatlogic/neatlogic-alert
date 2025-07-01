@@ -34,6 +34,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertAttrFilterVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.enums.AlertSearchMode;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
@@ -98,7 +99,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     public Boolean needPage(AlertVo alertVo) {
-        return alertVo.getFromAlertId() == null;
+        //return alertVo.getFromAlertId() == null;
+        return true;
     }
 
     private JSONArray convertValue(String field, JSONArray value) {
@@ -175,6 +177,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             ));
             boolQueryBuilder.must(query);
         }
+        //告警来源
+        if (StringUtils.isNotBlank(alertVo.getSource())) {
+            Query query = Query.of(q -> q.term(r -> r
+                    .field("source")
+                    .value(alertVo.getSource()) // 开始时间
+            ));
+            boolQueryBuilder.must(query);
+        }
         //置顶自定义属性搜索
         if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
             for (AlertAttrFilterVo attrFilterVo : alertVo.getAttrFilterList()) {
@@ -198,14 +208,12 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             }
         }
 
-        if (Objects.equals("simple", alertVo.getMode())) {
-            //简单模式需要加上关键字，规则使用视图规则
+        if (MapUtils.isEmpty(alertVo.getRule())) {
             if (StringUtils.isNotBlank(alertVo.getViewName())) {
                 AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
                 rule = alertViewVo.getConfig().getJSONObject("rule");
             }
-        }//高级模式直接使用传入的规则
-        else if (Objects.equals("advanced", alertVo.getMode())) {
+        } else {
             rule = alertVo.getRule();
         }
 
@@ -404,14 +412,16 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
         }
         //最后处理fromAlertId
-        if (alertVo.getFromAlertId() == null) {
-            boolQueryBuilder.must(new Query.Builder()
-                    .bool(b -> b.mustNot(q -> q.exists(e -> e.field("fromAlertId"))))
-                    .build());
-        } else {
-            boolQueryBuilder.must(new Query.Builder()
-                    .bool(b -> b.must(q -> q.term(t -> t.field("fromAlertId").value(alertVo.getFromAlertId()))))
-                    .build());
+        if (!Objects.equals(alertVo.getSearchMode(), AlertSearchMode.FLAT.getValue())) {//尽量兼容旧模式，显示声明flat模式才去掉fromAlertId的判断
+            if (alertVo.getFromAlertId() == null) {
+                boolQueryBuilder.must(new Query.Builder()
+                        .bool(b -> b.mustNot(q -> q.exists(e -> e.field("fromAlertId"))))
+                        .build());
+            } else {
+                boolQueryBuilder.must(new Query.Builder()
+                        .bool(b -> b.must(q -> q.term(t -> t.field("fromAlertId").value(alertVo.getFromAlertId()))))
+                        .build());
+            }
         }
 
         finalQueryBuilder.bool(boolQueryBuilder.build());
@@ -437,6 +447,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         AlertVo alertVo = new AlertVo();
         alertVo.setPageSize(100);
         alertVo.setCurrentPage(1);
+        alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
         List<AlertVo> alertList = alertMapper.searchAlert(alertVo);
         while (CollectionUtils.isNotEmpty(alertList)) {
             for (AlertVo alert : alertList) {
@@ -472,6 +483,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     protected void myCreateIndex(ElasticsearchVo elasticsearchVo) {
         CreateIndexRequest.Builder esBuilder = new CreateIndexRequest.Builder()
                 .index(this.getIndexName())
+                .settings(s -> s
+                        .analysis(a -> a
+                                .normalizer("lowercase_normalizer", n -> n
+                                        .custom(c -> c
+                                                .filter("lowercase")
+                                        )
+                                )
+                        ))
                 .mappings(m -> m
                         .properties("id", p -> p.long_(l -> l))                        // bigint -> long
                         .properties("fromAlertId", p -> p.long_(l -> l))
@@ -482,7 +501,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("isClose", p -> p.integer(i -> i))
                         .properties("type", p -> p.long_(l -> l))                     // bigint -> long
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
-                        .properties("source", p -> p.keyword(k -> k))                 // varchar -> keyword
+                        .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
                         .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
                         .properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
                         .properties("entityName", p -> p.text(t -> t))               // varchar -> text
@@ -510,10 +529,10 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
-    protected void myDeleteDocument(AlertVo alertVo) {
+    protected void myDeleteDocument(Long targetId) {
         DeleteRequest deleteRequest = new DeleteRequest.Builder()
                 .index(getIndexName())
-                .id(alertVo.getId().toString())
+                .id(targetId.toString())
                 .build();
         ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         try {
@@ -524,10 +543,10 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
-    protected void myCreateDocument(AlertVo alertVo) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+    public Map<String, Object> makeupDocument(AlertVo alertVo) {
         // 准备文档数据
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
         Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
         document.put("fromAlertId", alertVo.getFromAlertId());
@@ -548,8 +567,13 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("commentList", alertVo.getCommentList());
         document.put("userList", alertVo.getUserIdList());
         document.put("teamList", alertVo.getTeamIdList());
+        return document;
+    }
 
-
+    @Override
+    protected void myCreateDocument(AlertVo alertVo) {
+        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+        Map<String, Object> document = makeupDocument(alertVo);
         // 创建或更新文档
         IndexRequest<Map<String, Object>> request = new IndexRequest.Builder<Map<String, Object>>()
                 .index(getIndexName()) // 索引名称

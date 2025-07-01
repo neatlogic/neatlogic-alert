@@ -21,12 +21,10 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
-import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.module.alert.service.IAlertService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,11 +41,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) {
         JSONObject config = alertEventHandlerVo.getConfig();
-        try {
-            alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
-        } catch (IOException e) {
-            throw new AlertEventHandlerTriggerException(e);
-        }
+        alertService.deleteAlert(alertVo.getId(), config.getIntValue("isDeleteChildAlert") == 1);
         return alertVo;
     }
 
@@ -89,6 +83,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
         return new HashSet<String>() {{
             this.add("condition");
             this.add("interval");
+            this.add("integration");
         }};
     }
 

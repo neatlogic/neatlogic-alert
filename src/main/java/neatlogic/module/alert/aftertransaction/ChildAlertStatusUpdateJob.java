@@ -53,7 +53,7 @@ public class ChildAlertStatusUpdateJob extends NeatLogicThread {
             for (AlertVo childAlertVo : alertList) {
                 childAlertVo.setIsChangeChildAlertStatus(alertVo.getIsChangeChildAlertStatus());
                 childAlertVo.setStatus(alertVo.getStatus());
-                alertService.handleAlert(childAlertVo);
+                alertService.updateAlertStatus(childAlertVo);
             }
         }
     }

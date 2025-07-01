@@ -59,6 +59,7 @@ public class SearchAlertNotifyTemplateApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
+            @Param(name = "isActive", desc = "是否激活", type = ApiParamType.INTEGER),
             @Param(name = "currentPage", desc = "当前页", type = ApiParamType.INTEGER),
             @Param(name = "pageSize", desc = "每页大小", type = ApiParamType.INTEGER)
     })
