@@ -192,7 +192,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="entityType" property="entityType"/>
         <result column="entityName" property="entityName"/>
         <result column="ip" property="port"/>
-        <result column="content" property="attrObjStr"/>
+        <result column="content" property="attrObjStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
         <association property="alertType" javaType="neatlogic.framework.alert.dto.AlertTypeVo">
             <result column="alertTypeName" property="name"/>
             <result column="alertTypeLabel" property="label"/>
