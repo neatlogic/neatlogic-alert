@@ -37,6 +37,7 @@ import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.file.dao.mapper.FileMapper;
 import neatlogic.framework.file.dto.FileVo;
 import neatlogic.framework.util.Md5Util;
+import neatlogic.module.alert.config.AlertConfig;
 import neatlogic.module.alert.dao.mapper.AlertTypeMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,7 +61,7 @@ public class OriginalAlertManager {
     private static FileMapper fileMapper;
     private static IAlertService alertService;
     private static final Logger logger = LoggerFactory.getLogger(OriginalAlertManager.class);
-    private static final Semaphore semaphore = new Semaphore(5);//最多5个线程处理告警
+    private static final Semaphore semaphore = new Semaphore(AlertConfig.ORIGINAL_ALERT_THREAD_COUNT());//最多5个线程处理告警
 
     private static final NeatLogicBlockingQueue<OriginalAlertVo> alertQueue = new NeatLogicBlockingQueue<>(new LinkedBlockingQueue<>());
 
