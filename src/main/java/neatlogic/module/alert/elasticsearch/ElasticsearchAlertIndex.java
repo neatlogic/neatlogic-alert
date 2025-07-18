@@ -146,7 +146,15 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
         Query.Builder finalQueryBuilder = new Query.Builder();
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
-
+        //id
+        if (alertVo.getKeywordId() != null) {
+            Query query = Query.of(q -> q.term(r -> r
+                    .field("_id")
+                    .value(alertVo.getKeywordId()) // 开始时间
+            ));
+            boolQueryBuilder.must(query);
+        }
+        //关键字
         if (StringUtils.isNotBlank(alertVo.getKeyword())) {
             boolQueryBuilder.must(new Query.Builder()
                     .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))

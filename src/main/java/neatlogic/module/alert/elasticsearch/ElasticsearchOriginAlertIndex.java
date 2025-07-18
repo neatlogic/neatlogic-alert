@@ -20,6 +20,7 @@ package neatlogic.module.alert.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -92,8 +93,20 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
         Query.Builder finalQueryBuilder = new Query.Builder();
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
         boolean hasCondition = false;
+        //id
+        if (alertVo.getKeywordId() != null) {
+            Query query = Query.of(q -> q.term(r -> r
+                    .field("_id")
+                    .value(alertVo.getKeywordId()) // 开始时间
+            ));
+            boolQuery.must(query);
+            hasCondition = true;
+        }
+        //关键字
         if (StringUtils.isNotBlank(alertVo.getKeyword())) {
-            boolQuery.must(m -> m.match(mt -> mt.field("content").query(alertVo.getKeyword())));
+            boolQuery.must(new Query.Builder()
+                    .multiMatch(m -> m.query(alertVo.getKeyword()).operator(Operator.And).fields("*"))
+                    .build());
             hasCondition = true;
         }
 
