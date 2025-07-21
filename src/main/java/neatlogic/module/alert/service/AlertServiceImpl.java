@@ -32,7 +32,6 @@ import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
-import neatlogic.framework.exception.elasticsearch.ElasticSearchIndexNotFoundException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
@@ -400,9 +399,6 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void saveOriginAlert(OriginalAlertVo originalAlertVo) {
         IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
-        if (indexHandler == null) {
-            throw new ElasticSearchIndexNotFoundException("ALERT_ORIGINAL");
-        }
         indexHandler.createDocument(originalAlertVo);
         alertMapper.insertAlertOrigin(originalAlertVo);
     }
@@ -502,9 +498,6 @@ public class AlertServiceImpl implements IAlertService {
             }
         }
 
-        if (indexHandler == null) {
-            throw new ElasticSearchIndexNotFoundException("ALERT");
-        }
         indexHandler.createDocument(alertVo);
 
         if (alertVo.getParentAlertVo() == null) {
