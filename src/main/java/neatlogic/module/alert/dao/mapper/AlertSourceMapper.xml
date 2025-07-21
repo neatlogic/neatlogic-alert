@@ -22,6 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 and (name like concat(#{keyword}, '%')
                 or label like concat(#{keyword}, '%'))
             </if>
+            <if test="defaultValue != null and defaultValue.size() > 0">
+                and name in
+                <foreach collection="defaultValue" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
         </where>
     </sql>
 
