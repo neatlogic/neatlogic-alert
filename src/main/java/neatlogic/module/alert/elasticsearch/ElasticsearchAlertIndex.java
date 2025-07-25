@@ -35,6 +35,7 @@ import neatlogic.framework.alert.dto.AlertAttrFilterVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertSearchMode;
+import neatlogic.framework.alert.exception.alert.AlertIndexException;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
@@ -593,7 +594,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         try {
             client.index(request);
         } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            //logger.error(ex.getMessage(), ex);
+            throw new AlertIndexException(ex);
         }
     }
 
