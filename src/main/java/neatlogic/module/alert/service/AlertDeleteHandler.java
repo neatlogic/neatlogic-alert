@@ -27,9 +27,7 @@ import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
-import neatlogic.framework.asynchronization.queue.NeatLogicNonBlockingQueue;
-import neatlogic.framework.asynchronization.thread.NeatLogicThread;
-import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
+import neatlogic.framework.asynchronization.taskmanager.AsyncTaskManager;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
@@ -40,70 +38,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class AlertDeleteHandler {
     private final Logger logger = LoggerFactory.getLogger(AlertDeleteHandler.class);
+    private AsyncTaskManager<Long> manager;
 
-    //删除告警队列
-    private final NeatLogicNonBlockingQueue<Long> deleteAlertQueue = new NeatLogicNonBlockingQueue<>();
-    //标记删除线程是否已经启动
-    private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    // 当前运行的 worker 数量
-    private final AtomicInteger activeWorkerCount = new AtomicInteger(0);
-    // 只能允许单线程处理，避免交叉删除关系时出现死锁
-    private static final int MAX_CONCURRENT_WORKERS = 1;
     @Resource
     private AlertMapper alertMapper;
 
+    @PostConstruct
+    public void init() {
+        // 只能允许单线程处理，避免交叉删除关系时出现死锁
+        manager = AsyncTaskManager.getInstance("ALERT-DELETE-HANDLER", 1, alertId -> {
+            try {
+                deleteAlertByIdList(alertId);
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
     public void submitDeleteTask(List<Long> alertIdList) {
-        alertIdList.forEach(deleteAlertQueue::offer);
-        if (isRunning.compareAndSet(false, true)) {
-            startWorkers();
-        }
-    }
-
-    // 启动 worker 线程
-    private void startWorkers() {
-        for (int i = 0; i < MAX_CONCURRENT_WORKERS; i++) {
-            CachedThreadPool.execute(new NeatLogicThread("ALERT-DELETE-WORKER-" + i, false) {
-                @Override
-                protected void execute() {
-                    consumeQueue();
-                }
-            });
-            activeWorkerCount.incrementAndGet();
-        }
-    }
-
-    // 消费队列的逻辑
-    private void consumeQueue() {
-        try {
-            while (true) {
-                Long alertId = deleteAlertQueue.poll();
-                if (alertId == null) {
-                    break;
-                }
-                try {
-                    deleteAlertByIdList(alertId);
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
-        } finally {
-            if (activeWorkerCount.decrementAndGet() == 0) {
-                // 所有线程退出后检查是否还有任务
-                isRunning.set(false);
-                if (!deleteAlertQueue.isEmpty() && isRunning.compareAndSet(false, true)) {
-                    startWorkers();
-                }
-            }
-        }
+        manager.submitTask(alertIdList);
     }
 
 
@@ -116,11 +76,7 @@ public class AlertDeleteHandler {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (Long toAlertId : toAlertIdList) {
-                bulkRequestBuilder.operations(op -> op.update(u -> u
-                        .index(index.getIndexName())
-                        .id(toAlertId.toString())
-                        .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))
-                ));
+                bulkRequestBuilder.operations(op -> op.update(u -> u.index(index.getIndexName()).id(toAlertId.toString()).action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))));
             }
             // 执行批量请求
             BulkRequest bulkRequest = bulkRequestBuilder.build();
