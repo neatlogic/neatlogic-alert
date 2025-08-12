@@ -15,6 +15,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
 package neatlogic.module.alert.groupsearch;
 
+import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.restful.groupsearch.core.GroupSearchOptionVo;
 import neatlogic.framework.restful.groupsearch.core.GroupSearchVo;
 import neatlogic.framework.restful.groupsearch.core.IGroupSearchHandler;
@@ -40,10 +41,18 @@ public class AlertUserTypeGroupHandler implements IGroupSearchHandler {
     @Override
     public List<GroupSearchOptionVo> search(GroupSearchVo groupSearchVo) {
         List<GroupSearchOptionVo> groupSearchOptionList = new ArrayList<>();
-        GroupSearchOptionVo groupSearchOptionVo = new GroupSearchOptionVo();
-        groupSearchOptionVo.setValue("worker");
-        groupSearchOptionVo.setText("处理人");
-        groupSearchOptionList.add(groupSearchOptionVo);
+        groupSearchOptionList.add(new GroupSearchOptionVo() {{
+            this.setValue(getHeader() + "worker");
+            this.setText("处理人");
+        }});
+        groupSearchOptionList.add(new GroupSearchOptionVo() {{
+            this.setValue(getHeader() + "workerteam");
+            this.setText("处理组");
+        }});
+        groupSearchOptionList.add(new GroupSearchOptionVo() {{
+            this.setValue(getHeader() + "workerteamuser");
+            this.setText("处理组成员");
+        }});
         return groupSearchOptionList;
     }
 
@@ -54,11 +63,14 @@ public class AlertUserTypeGroupHandler implements IGroupSearchHandler {
         if (CollectionUtils.isNotEmpty(valueList)) {
             for (String value : valueList) {
                 if (value.startsWith(getHeader())) {
-                    GroupSearchOptionVo groupSearchOptionVo = new GroupSearchOptionVo();
-                    groupSearchOptionVo.setValue("worker");
-                    groupSearchOptionVo.setText("处理人");
-                    groupSearchOptionList.add(groupSearchOptionVo);
-                    break;
+                    value = value.substring(getHeader().length());
+                    AlertUserType alertUserType = AlertUserType.get(value);
+                    if (alertUserType != null) {
+                        GroupSearchOptionVo groupSearchOptionVo = new GroupSearchOptionVo();
+                        groupSearchOptionVo.setValue(getHeader() + alertUserType.getValue());
+                        groupSearchOptionVo.setText(alertUserType.getText());
+                        groupSearchOptionList.add(groupSearchOptionVo);
+                    }
                 }
             }
 
@@ -66,7 +78,7 @@ public class AlertUserTypeGroupHandler implements IGroupSearchHandler {
         return groupSearchOptionList;
     }
 
-  
+
     @Override
     public int getSort() {
         return 0;
