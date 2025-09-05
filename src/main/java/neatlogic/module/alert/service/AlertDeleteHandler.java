@@ -23,6 +23,7 @@ import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.alert.event.AlertEventManager;
@@ -47,6 +48,9 @@ import java.util.List;
 public class AlertDeleteHandler {
     private final Logger logger = LoggerFactory.getLogger(AlertDeleteHandler.class);
     private AsyncTaskManager<Long> manager;
+
+    @Resource
+    private IAlertService alertService;
 
     @Resource
     private AlertMapper alertMapper;
@@ -96,6 +100,8 @@ public class AlertDeleteHandler {
         AlertVo oldAlertVo = alertMapper.getAlertById(alertId);
         if (oldAlertVo != null) {
             alertMapper.deleteAlertById(alertId);
+            //保存垃圾数据
+            alertService.saveAlertTrash(new AlertTrashVo(oldAlertVo));
             AlertEventManager.doEvent(AlertEventType.ALERT_DELETE, oldAlertVo);
         }
         if (CollectionUtils.isNotEmpty(fromAlertIdList)) {

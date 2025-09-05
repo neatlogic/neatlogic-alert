@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertTrashMapper">
+    <sql id="searchAlertColumnForSearch">
+        select a.id,
+               a.level,
+               a.title,
+               a.update_time as updateTime,
+               a.alert_time  as alertTime,
+               a.delete_time as deleteTime,
+               a.delete_user as deleteUser,
+               a.type,
+               a.is_close    as isClose,
+               d.id          as alertTypeId,
+               d.name        as alertTypeName,
+               d.label       as alertTypeLabel,
+               a.status,
+               als.label     as alertStatusName,
+               als.color     as alertStatusColor,
+               a.source,
+               also.label    as sourceName,
+               a.unique_key  as uniqueKey,
+               b.content,
+               c.level       as alertLevel,
+               c.name        as alertLevelName,
+               c.label       as alertLevelLabel,
+               c.color       as alertLevelColor
+        from alert_trash a
+                 left join alert_trash_attr b on a.id = b.alert_id
+                 left join alert_level c on a.level = c.level
+                 left join alert_type d on a.type = d.id
+                 left join alert_status als on a.status = als.name
+                 left join alert_source also on a.source = also.name
+    </sql>
+
+    <resultMap id="alertTrashResultMap" type="neatlogic.framework.alert.dto.AlertTrashVo">
+        <id column="id" property="id"/>
+        <result column="fromAlertId" property="fromAlertId"/>
+        <result column="level" property="level"/>
+        <result column="title" property="title"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="alertTime" property="alertTime"/>
+        <result column="deleteTime" property="deleteTime"/>
+        <result column="deleteUser" property="deleteUser"/>
+        <result column="type" property="type"/>
+        <result column="alertTypeLabel" property="typeName"/>
+        <result column="status" property="status"/>
+        <result column="alertStatusName" property="statusName"/>
+        <result column="alertStatusColor" property="statusColor"/>
+        <result column="source" property="source"/>
+        <result column="sourceName" property="sourceName"/>
+        <result column="uniqueKey" property="uniqueKey"/>
+        <result column="isClose" property="isClose"/>
+        <result column="content" property="attrObjStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
+        <association property="alertType" javaType="neatlogic.framework.alert.dto.AlertTypeVo">
+            <result column="alertTypeName" property="name"/>
+            <result column="alertTypeLabel" property="label"/>
+            <result column="alertTypeId" property="id"/>
+        </association>
+        <association property="alertLevel" javaType="neatlogic.framework.alert.dto.AlertLevelVo">
+            <result column="alertLevel" property="level"/>
+            <result column="alertLevelName" property="name"/>
+            <result column="alertLevelColor" property="color"/>
+            <result column="alertLevelLabel" property="label"/>
+        </association>
+    </resultMap>
+
+    <select id="getAlertTrashById" parameterType="java.lang.Long" resultMap="alertTrashResultMap">
+        <include refid="searchAlertColumnForSearch"></include>
+        where a.id = #{value}
+    </select>
+
+    <select id="searchAlertTrash" parameterType="neatlogic.framework.alert.dto.AlertTrashVo" resultMap="alertTrashResultMap">
+        <include refid="searchAlertColumnForSearch"></include>
+        JOIN
+        (select id from alert_trash order by update_time limit #{startNum}, #{pageSize}) tmp
+        ON a.id = tmp.id
+        order by a.delete_time desc
+    </select>
+
+    <select id="getAlertTrashByIdList" parameterType="neatlogic.framework.alert.dto.AlertTrashVo"
+            resultMap="alertTrashResultMap">
+        <include refid="searchAlertColumnForSearch"></include>
+        where
+        a.id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        order by a.delete_time desc
+    </select>
+
+    <insert id="saveAlertTrashAttr" parameterType="neatlogic.framework.alert.dto.AlertTrashVo">
+        insert into alert_trash_attr
+            (alert_id, content)
+        values (#{id}, #{attrObjStr,typeHandler=CompressHandler})
+        ON DUPLICATE KEY UPDATE content = #{attrObjStr,typeHandler=CompressHandler}
+    </insert>
+
+    <insert id="insertAlertTrash" parameterType="neatlogic.framework.alert.dto.AlertTrashVo">
+        insert into alert_trash
+        (id,
+         level,
+         title,
+         update_time,
+         alert_time,
+         delete_time,
+         delete_user,
+         type,
+         status,
+         source,
+         is_close,
+         unique_key)
+        values (#{id},
+                #{level},
+                #{title},
+                #{updateTime},
+                #{alertTime},
+                NOW(),
+                #{deleteUser},
+                #{type},
+                #{status},
+                #{source},
+                #{isClose},
+                #{uniqueKey})
+    </insert>
+</mapper>

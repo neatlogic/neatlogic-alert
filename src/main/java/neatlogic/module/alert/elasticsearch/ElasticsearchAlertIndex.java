@@ -512,10 +512,10 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
                         .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
                         .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
-                        .properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
-                        .properties("entityName", p -> p.text(t -> t))               // varchar -> text
-                        .properties("ip", p -> p.text(k -> k))                     // varchar -> keyword
-                        .properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
+                        //.properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
+                        //.properties("entityName", p -> p.text(t -> t))               // varchar -> text
+                        //.properties("ip", p -> p.text(k -> k))                     // varchar -> keyword
+                        //.properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
                         .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
@@ -568,10 +568,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("status", alertVo.getStatus());
         document.put("source", alertVo.getSource());
         document.put("uniqueKey", alertVo.getUniqueKey());
-        document.put("entityType", alertVo.getEntityType());
-        document.put("entityName", alertVo.getEntityName());
-        document.put("ip", alertVo.getIp());
-        document.put("port", alertVo.getPort());
         document.put("attrObj", alertVo.getAttrObj());
         document.put("commentList", alertVo.getCommentList());
         document.put("userList", alertVo.getUserIdList());

@@ -116,6 +116,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <include refid="searchAlertViewSql"></include>
     </select>
 
+
     <select id="searchAlertView" parameterType="neatlogic.framework.alert.dto.AlertViewVo"
             resultType="neatlogic.framework.alert.dto.AlertViewVo">
         select

@@ -35,10 +35,7 @@ import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
-import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
-import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
-import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
-import neatlogic.module.alert.dao.mapper.AlertMapper;
+import neatlogic.module.alert.dao.mapper.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +53,9 @@ public class AlertServiceImpl implements IAlertService {
     private final Logger logger = LoggerFactory.getLogger(AlertServiceImpl.class);
     @Resource
     private AlertMapper alertMapper;
+
+    @Resource
+    private AlertTrashMapper alertTrashMapper;
 
     @Resource
     private AlertDeleteHandler alertDeleteHandler;
@@ -404,6 +404,18 @@ public class AlertServiceImpl implements IAlertService {
     }
 
     @Override
+    public void saveAlertTrash(AlertTrashVo alertVo) {
+        alertVo.setDeleteUser(UserContext.get().getUserUuid(true));
+        IElasticsearchIndex<AlertTrashVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_TRASH");
+        alertTrashMapper.insertAlertTrash(alertVo);
+        if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
+            alertTrashMapper.saveAlertTrashAttr(alertVo);
+        }
+        indexHandler.createDocument(alertVo);
+    }
+
+
+    @Override
     public void saveAlert(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
@@ -512,6 +524,20 @@ public class AlertServiceImpl implements IAlertService {
     public long searchAlertCount(AlertVo alertVo) {
         IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
         return index.searchDocumentCount(alertVo);
+    }
+
+    @Override
+    public List<AlertTrashVo> searchAlertTrash(AlertTrashVo alertTrashVo) {
+        IElasticsearchIndex<AlertTrashVo> index = ElasticsearchIndexFactory.getIndex("ALERT_TRASH");
+        IndexResultVo indexResultVo = index.searchDocument(alertTrashVo, alertTrashVo.getCurrentPage(), alertTrashVo.getPageSize());
+        if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
+            alertTrashVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
+            alertTrashVo.setCurrentPage(indexResultVo.getCurrentPage());
+            alertTrashVo.setPageCount(indexResultVo.getPageCount());
+            alertTrashVo.setRowNum(indexResultVo.getRowNum());
+            return alertTrashMapper.getAlertTrashByIdList(alertTrashVo);
+        }
+        return new ArrayList<>();
     }
 
     @Override

@@ -18,6 +18,7 @@
 package neatlogic.module.alert.service;
 
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
+import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,11 @@ public interface IAlertService {
     @Transactional
     void saveAlert(AlertVo alertVo);
 
+    List<AlertTrashVo> searchAlertTrash(AlertTrashVo alertTrashVo);
+
     long searchAlertCount(AlertVo alertVo);
+
+    void saveAlertTrash(AlertTrashVo alertVo);
 
     List<AlertVo> searchAlert(AlertVo alertVo);
 
