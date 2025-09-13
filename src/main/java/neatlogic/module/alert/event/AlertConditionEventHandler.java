@@ -104,7 +104,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                         JSONObject dataObj = new JSONObject();
                         JSONObject defineObj = new JSONObject();
 
-                        List<AlertAttrDefineVo> constAttrList = AlertAttr.getConstAttrList();
+                        List<AlertAttrDefineVo> constAttrList = AlertAttr.getConditionConstAttrList();
                         JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
                         for (AlertAttrDefineVo constAttrVo : constAttrList) {
                             defineObj.put(constAttrVo.getName(), constAttrVo.getLabel());

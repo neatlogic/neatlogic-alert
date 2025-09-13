@@ -104,7 +104,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
         }
         List<AlertVo> alertList = alertService.searchAlert(alertVo);
         JSONArray theadList = new JSONArray();
-        List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList();
+        List<AlertAttrDefineVo> attrList = AlertAttr.getSearchConstAttrList();
         List<AlertAttrTypeVo> alertAttrTypeList = alertAttrTypeMapper.listAttrType();
         boolean hasExtend = false;
         List<String> extendAttrKeyList = new ArrayList<>();

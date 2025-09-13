@@ -86,7 +86,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
             if (handler == null) {
                 throw new IntegrationHandlerNotFoundException(integrationVo.getHandler());
             }
-            List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
+            List<AlertAttrDefineVo> attrList = AlertAttr.getTemplateConstAttrList();
             JSONObject integrationParam = new JSONObject();
             //获取集成的所有入参
             Map<String, String> paramTypeMap = new HashMap<>();

@@ -39,6 +39,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -71,7 +72,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
             @Param(name = "viewId", desc = "视图id", type = ApiParamType.LONG),
             @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING),
             @Param(name = "kind", desc = "属性大类", rule = "const,attr", type = ApiParamType.STRING),
-            @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER)
+            @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER),
+            @Param(name = "isCondition", desc = "是否用于条件判断", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
     @Description(desc = "返回告警属性列表")
@@ -81,9 +83,17 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         String viewName = jsonObj.getString("viewName");
         String kind = jsonObj.getString("kind");
         int isExpand = jsonObj.getIntValue("isExpand");
+        int isCondition = jsonObj.getIntValue("isCondition");
         List<AlertAttrDefineVo> attrList = new ArrayList<>();
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
-            attrList.addAll(AlertAttr.getConstAttrList(isExpand));
+            //TODO 逻辑是对的，后面再修改一下写法
+            if (isCondition == 1) {
+                attrList.addAll(AlertAttr.getConditionConstAttrList());
+            } else if (isExpand == 1) {
+                attrList.addAll(AlertAttr.getTemplateConstAttrList());
+            } else {
+                attrList.addAll(AlertAttr.getSearchConstAttrList());
+            }
         }
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr")) {
             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
@@ -96,6 +106,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                         .setType(attrTypeVo.getType())
                         .setExpressionList(attrTypeVo.getExpressionList())
                         .setConfig(attrTypeVo.getConfig())
+                        .setWholeRow(Objects.equals(1, attrTypeVo.getIsRow()))
+                        .setIsTab(Objects.equals(1, attrTypeVo.getIsTab()))
                         .setIsTop(attrTypeVo.getIsTop()));
             }
         }

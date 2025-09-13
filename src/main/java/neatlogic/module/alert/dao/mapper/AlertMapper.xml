@@ -189,9 +189,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="uniqueKey" property="uniqueKey"/>
         <result column="isClose" property="isClose"/>
         <result column="isDelete" property="isDelete"/>
-        <result column="entityType" property="entityType"/>
-        <result column="entityName" property="entityName"/>
-        <result column="ip" property="port"/>
         <result column="content" property="attrObjStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
         <association property="alertType" javaType="neatlogic.framework.alert.dto.AlertTypeVo">
             <result column="alertTypeName" property="name"/>
@@ -311,10 +308,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         a.source,
         also.label as sourceName,
         a.unique_key as uniqueKey,
-        a.entity_type as entityType,
-        a.entity_name as entityName,
-        a.ip,
-        a.port,
         b.content,
         c.level as alertLevel,
         c.name as alertLevelName,
@@ -355,10 +348,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                a.source,
                also.label                                                                            as sourceName,
                a.unique_key                                                                          as uniqueKey,
-               a.entity_type                                                                         as entityType,
-               a.entity_name                                                                         as entityName,
-               a.ip,
-               a.port,
                b.content,
                c.level                                                                               as alertLevel,
                c.name                                                                                as alertLevelName,
@@ -525,11 +514,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          status,
          source,
          is_close,
-         unique_key,
-         entity_type,
-         entity_name,
-         ip,
-         port)
+         unique_key)
         values (#{id},
                 #{level},
                 #{title},
@@ -539,11 +524,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{status},
                 #{source},
                 0,
-                #{uniqueKey},
-                #{entityType},
-                #{entityName},
-                #{ip},
-                #{port})
+                #{uniqueKey})
     </insert>
 
     <insert id="insertAlertOrigin" parameterType="neatlogic.framework.alert.dto.OriginalAlertVo">

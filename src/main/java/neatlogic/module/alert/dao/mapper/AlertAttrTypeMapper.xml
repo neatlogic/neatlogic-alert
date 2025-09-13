@@ -49,6 +49,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <if test="isNormal != null">
                 and a.is_normal = #{isNormal}
             </if>
+            <if test="isRow != null">
+                and a.is_row = #{isRow}
+            </if>
+            <if test="isTab != null">
+                and a.is_tab = #{isTab}
+            </if>
             <if test="isTop != null">
                 and a.is_top = #{isTop}
             </if>
@@ -63,6 +69,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                type,
                is_active as isActive,
                is_normal as isNormal,
+               is_tab    as isTab,
+               is_row    as isRow,
                is_top    as isTop
         from alert_attrtype
         where name = #{value}
@@ -76,6 +84,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                type,
                is_active as isActive,
                is_normal as isNormal,
+               is_tab    as isTab,
+               is_row    as isRow,
                is_top    as isTop
         from alert_attrtype
         where id = #{value}
@@ -137,6 +147,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                type,
                is_active as isActive,
                is_normal as isNormal,
+               is_tab    as isTab,
+               is_row    as isRow,
                is_top    as isTop
         from alert_attrtype
         where is_active = 1
@@ -152,6 +164,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         a.type,
         a.is_active as isActive,
         a.is_normal as isNormal,
+        a.is_row as isRow,
+        a.is_tab as isTab,
         a.sort as sort,
         a.is_top as isTop,
         (select count(1) from alert_enum x where x.attr_type = a.id) as enumCount
@@ -186,6 +200,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
          type,
          is_active,
          is_normal,
+         is_row,
+         is_tab,
          config,
          is_top,
          sort)
@@ -195,6 +211,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                 #{type},
                 #{isActive},
                 #{isNormal},
+                #{isRow},
+                #{isTab},
                 #{configStr, typeHandler=CompressHandler},
                 #{isTop},
                 #{sort})
@@ -203,6 +221,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                                 type      = #{type},
                                 is_active = #{isActive},
                                 is_normal = #{isNormal},
+                                is_row    = #{isRow},
+                                is_tab    = #{isTab},
                                 is_top    = #{isTop},
                                 config    = #{configStr, typeHandler=CompressHandler}
     </insert>

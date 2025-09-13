@@ -63,6 +63,7 @@ public class SaveAttrTypeApi extends PrivateApiComponentBase {
             @Param(name = "label", isRequired = true, desc = "名称", type = ApiParamType.STRING),
             @Param(name = "isNormal", rule = "0,1", desc = "作为普通属性展示", type = ApiParamType.INTEGER),
             @Param(name = "isActive", isRequired = true, rule = "0,1", desc = "是否激活", type = ApiParamType.INTEGER),
+            @Param(name = "isRow", rule = "0,1", desc = "是否独立一行展示", type = ApiParamType.INTEGER),
             @Param(name = "type", desc = "类型", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "config", desc = "配置", type = ApiParamType.JSONOBJECT)
     })

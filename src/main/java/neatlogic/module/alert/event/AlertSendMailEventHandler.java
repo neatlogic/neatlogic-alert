@@ -85,7 +85,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
         }
         if (MapUtils.isNotEmpty(config)) {
             Long mailServerId = config.getLong("mailServerId");
-            List<AlertAttrDefineVo> attrList = AlertAttr.getConstAttrList(1);
+            List<AlertAttrDefineVo> attrList = AlertAttr.getTemplateConstAttrList();
             int interval = config.getIntValue("interval");
             if (interval > 0) {
                 AlertEventHandlerAuditVo paramAuditVo = new AlertEventHandlerAuditVo();
