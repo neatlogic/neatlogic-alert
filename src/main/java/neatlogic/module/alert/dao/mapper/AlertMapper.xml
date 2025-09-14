@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
+
+
     <select id="getIsDeleteAlertIdList" resultType="java.lang.Long">
         select id
         from alert
@@ -378,6 +380,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             #{item}
         </foreach>
         order by a.update_time desc
+    </select>
+
+    <select id="getParentAlertByAlertId" parameterType="java.lang.Long" resultMap="alertResultMap">
+        <include refid="searchAlertColumn"></include>
+        join alert_rel rel on a.id = rel.from_alert_id
+        where rel.to_alert_id = #{value}
     </select>
 
     <select id="getAlertById" parameterType="java.lang.Long" resultMap="alertResultMap">

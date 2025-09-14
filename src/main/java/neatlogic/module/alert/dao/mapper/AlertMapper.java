@@ -44,6 +44,8 @@ public interface AlertMapper {
 
     List<AlertVo> getAlertByIdList(AlertVo alertVo);
 
+    AlertVo getParentAlertByAlertId(Long alertId);
+
     AlertVo getAlertById(Long id);
 
     Long getFirstOpenAlertIdByUniqueKey(String uniqueKey);
