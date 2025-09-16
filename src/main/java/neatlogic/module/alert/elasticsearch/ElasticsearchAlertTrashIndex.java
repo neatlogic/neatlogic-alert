@@ -20,7 +20,6 @@ package neatlogic.module.alert.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
-import co.elastic.clients.elasticsearch._types.mapping.FieldType;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -132,7 +131,6 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
                         .field("deleteTime") // 按 deleteTime 排序，因为子告警更新后父告警的updateTime也会更新
                         .order(SortOrder.Desc) // 倒序排列
                         .missing("_last")             // 空值放最后
-                        .unmappedType(FieldType.valueOf("date"))
                 )
         );
     }
