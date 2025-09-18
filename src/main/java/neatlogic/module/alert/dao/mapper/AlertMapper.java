@@ -54,6 +54,7 @@ public interface AlertMapper {
 
     List<Long> getNotUsedAlertOriginIdByDayBefore(int day);
 
+
     void updateAlertIsDeleteByIdList(AlertVo alertVo);
 
     void updateAlert(AlertVo alertVo);
@@ -77,6 +78,7 @@ public interface AlertMapper {
     void insertAlertUser(AlertUserVo alertUserVo);
 
     void insertAlertTeam(AlertTeamVo alertTeamVo);
+
 
     void insertAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 

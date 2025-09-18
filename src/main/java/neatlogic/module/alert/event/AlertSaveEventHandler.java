@@ -122,7 +122,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         }
         JSONObject resultObj = new JSONObject();
         try {
-            alertService.saveAlert(alertVo);
+            alertService.saveAlert(alertVo, config.getBooleanValue("serialSave"));
             resultObj.put("alertId", alertVo.getId());
             resultObj.put("alertTitle", alertVo.getTitle());
             if (alertVo.getFromAlertVo() != null) {

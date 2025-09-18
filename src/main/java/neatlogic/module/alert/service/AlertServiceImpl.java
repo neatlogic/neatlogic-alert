@@ -32,6 +32,7 @@ import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
+import neatlogic.framework.lock.dao.mapper.LockMapper;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
@@ -59,6 +60,9 @@ public class AlertServiceImpl implements IAlertService {
 
     @Resource
     private AlertDeleteHandler alertDeleteHandler;
+
+    @Resource
+    private LockMapper lockMapper;
 
     @Resource
     private AlertCommentMapper alertCommentMapper;
@@ -416,7 +420,10 @@ public class AlertServiceImpl implements IAlertService {
 
 
     @Override
-    public void saveAlert(AlertVo alertVo) {
+    public void saveAlert(AlertVo alertVo, boolean isSerial) {
+        if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            lockMapper.getMysqlLock(alertVo.getUniqueKey(), 30);
+        }
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
@@ -440,22 +447,8 @@ public class AlertServiceImpl implements IAlertService {
                 alertVo.setFromAlertVo(parentAlertVo);
 
                 alertMapper.updateAlertUpdateTime(parentAlertVo);
-                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                //JSONObject obj = new JSONObject();
-                //obj.put("updateTime", sdf.format(parentAlertVo.getUpdateTime()));
-                //parentAlertVo.setUpdateTime();
-                //obj.put("status", parentAlertVo.getStatus());
                 Map<String, Object> document = indexHandler.makeupDocument(parentAlertVo);
                 indexHandler.updateDocument(parentAlertVo.getId(), document, true);
-
-                /*if (!Objects.equals(oldStatus, alertVo.getStatus())) {
-                    AlertAuditVo alertAuditVo = new AlertAuditVo(true);
-                    alertAuditVo.setAlertId(parentAlertVo.getId());
-                    alertAuditVo.setAttrName("const_status");
-                    alertAuditVo.addOldValue(oldStatus);
-                    alertAuditVo.addNewValue(alertVo.getStatus());
-                    alertAuditMapper.insertAlertAudit(alertAuditVo);
-                }*/
             }
         }
 
@@ -517,6 +510,10 @@ public class AlertServiceImpl implements IAlertService {
         } else {
             AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE, alertVo);
             AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE_IN, alertVo.getParentAlertVo());
+        }
+
+        if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            lockMapper.releaseMysqlLock(alertVo.getUniqueKey());
         }
     }
 

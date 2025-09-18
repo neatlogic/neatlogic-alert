@@ -44,7 +44,7 @@ public interface IAlertService {
     void saveOriginAlert(OriginalAlertVo originalAlertVo);
 
     @Transactional
-    void saveAlert(AlertVo alertVo);
+    void saveAlert(AlertVo alertVo, boolean isSerial);
 
     List<AlertTrashVo> searchAlertTrash(AlertTrashVo alertTrashVo);
 

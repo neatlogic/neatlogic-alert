@@ -417,6 +417,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         limit #{startNum}, #{pageSize}
     </select>
 
+
     <update id="updateAlertIsDeleteByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert set is_delete = 1,
         delete_batch = #{deleteBatch} where (is_delete != 1 or is_delete is null) and id in
@@ -468,6 +469,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         set is_close = #{isClose}
         where id = #{alertId}
     </update>
+
 
     <insert id="insertAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         insert into alert_interval_job
