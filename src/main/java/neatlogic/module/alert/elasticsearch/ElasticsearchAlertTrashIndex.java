@@ -39,7 +39,6 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertTrashMapper;
-import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -58,9 +57,6 @@ import java.util.Objects;
 @Component
 public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTrashVo> {
     static Logger logger = LoggerFactory.getLogger(ElasticsearchAlertTrashIndex.class);
-
-    @Resource
-    private AlertViewMapper alertViewMapper;
 
 
     @Resource
