@@ -75,6 +75,26 @@ public class AlertServiceImpl implements IAlertService {
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
+    @Resource
+    private AlertMarkMapper alertMarkMapper;
+
+    private boolean updateAlertMark(AlertVo alertVo) {
+        alertMarkMapper.deleteAlertAlertMarkByAlertId(alertVo.getId());
+        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
+            for (String markName : alertVo.getMarkNameList()) {
+                AlertMarkVo markVo = new AlertMarkVo();
+                markVo.setName(markName);
+                alertMarkMapper.insertAlertMark(markVo);
+                alertMarkMapper.insertAlertAlertMark(alertVo.getId(), markVo.getUuid());
+            }
+        }
+        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        index.updateDocument(alertVo.getId(), new JSONObject() {{
+            this.put("markList", alertVo.getMarkNameList());
+        }}, false);
+        return true;
+    }
+
     private boolean updateAlertStatus(AlertVo oldAlertVo, AlertVo alertVo) {
         if (Objects.equals(1, alertVo.getIsChangeChildAlertStatus())) {
             List<AlertVo> childAlertList = alertMapper.getAlertByParentId(alertVo.getId());
@@ -289,12 +309,32 @@ public class AlertServiceImpl implements IAlertService {
         }
 
 
+        Set<String> newMarkSet = new HashSet<>();
+        Set<String> oldMarkSet = new HashSet<>();
+        if (CollectionUtils.isNotEmpty(oldAlertVo.getMarkNameList())) {
+            oldMarkSet.addAll(oldAlertVo.getMarkNameList());
+        }
+        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
+            newMarkSet.addAll(alertVo.getMarkNameList());
+        }
+        if (!newMarkSet.equals(oldMarkSet)) {
+            hasChange = true;
+
+            updateAlertMark(alertVo);
+
+            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
+            alertAuditVo.setAlertId(alertVo.getId());
+            alertAuditVo.setAttrName("const_markList");
+            alertAuditVo.addOldValue(oldAlertVo.getMarkNameList());
+            alertAuditVo.addNewValue(alertVo.getMarkNameList());
+            alertAuditMapper.insertAlertAudit(alertAuditVo);
+        }
+
+
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;
             updateAlertStatus(oldAlertVo, alertVo);
             String oldStatus = oldAlertVo.getStatus();
-            //oldAlertVo.setStatus(alertVo.getStatus());
-            //alertMapper.updateAlertStatus(alertVo);
 
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
@@ -484,6 +524,16 @@ public class AlertServiceImpl implements IAlertService {
             }
         }
 
+        //检查标签是否有值
+        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
+            for (String mark : alertVo.getMarkNameList()) {
+                AlertMarkVo alertMarkVo = new AlertMarkVo();
+                alertMarkVo.setName(mark);
+                alertMarkMapper.insertAlertMark(alertMarkVo);
+                alertMarkMapper.insertAlertAlertMark(alertVo.getId(), alertMarkVo.getUuid());
+            }
+        }
+
         //检查是否有处理人和处理组，有的话也一并写入
         if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
             for (String userId : alertVo.getUserIdList()) {
@@ -511,6 +561,7 @@ public class AlertServiceImpl implements IAlertService {
             AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE, alertVo);
             AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE_IN, alertVo.getParentAlertVo());
         }
+
 
         if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             lockMapper.releaseMysqlLock(alertVo.getUniqueKey());

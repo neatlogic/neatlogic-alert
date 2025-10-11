@@ -126,13 +126,23 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     @Override
-    public void mySortQuery(SearchRequest.Builder builder) {
-        builder.sort(s -> s
-                .field(f -> f
-                        .field("updateTime") // 按 updateTime 排序，因为子告警更新后父告警的updateTime也会更新
-                        .order(SortOrder.Desc) // 倒序排列
-                )
-        );
+    public void mySortQuery(SearchRequest.Builder builder, AlertVo alertVo) {
+        if (MapUtils.isEmpty(alertVo.getSortData())) {
+            builder.sort(s -> s
+                    .field(f -> f
+                            .field("updateTime") // 按 updateTime 排序，因为子告警更新后父告警的updateTime也会更新
+                            .order(SortOrder.Desc) // 倒序排列
+                    )
+            );
+        } else {
+            for (String field : alertVo.getSortData().keySet()) {
+                if (field.startsWith("const_")) {
+                    String type = alertVo.getSortData().getString(field);
+                    builder.sort(s -> s.field(f -> f.field(field.replace("const_", "")).order(
+                            type.equalsIgnoreCase("desc") ? SortOrder.Desc : SortOrder.Asc)));
+                }
+            }
+        }
     }
 
     @Override
@@ -198,13 +208,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
             for (AlertAttrFilterVo attrFilterVo : alertVo.getAttrFilterList()) {
                 if (CollectionUtils.isNotEmpty(attrFilterVo.getValueList())) {
-                    /*Query query = new Query.Builder()
-                            .bool(b -> b.should(attrFilterVo.getValueList().stream()
-                                    .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField("attr_" + attrFilterVo.getName())).query(value.toString()))))
-                                    .collect(Collectors.toList())))
-                            .build();
-                    boolQueryBuilder.must(new Query.Builder().bool(b -> b.must(query)).build());*/
-
                     List<FieldValue> values = attrFilterVo.getValueList().stream()
                             .map(FieldValue::of)
                             .collect(Collectors.toList());
@@ -518,6 +521,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         //.properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
                         .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
+                        .properties("markList", p -> p.keyword(k -> k)) // 字符串数组，不分词
                         .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
@@ -572,6 +576,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("commentList", alertVo.getCommentList());
         document.put("userList", alertVo.getUserIdList());
         document.put("teamList", alertVo.getTeamIdList());
+        document.put("markList", alertVo.getMarkNameList());
         return document;
     }
 

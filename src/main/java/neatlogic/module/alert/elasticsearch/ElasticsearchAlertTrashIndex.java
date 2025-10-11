@@ -121,7 +121,7 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
     }
 
     @Override
-    public void mySortQuery(SearchRequest.Builder builder) {
+    public void mySortQuery(SearchRequest.Builder builder, AlertTrashVo alertTrashVo) {
         builder.sort(s -> s
                 .field(f -> f
                         .field("deleteTime") // 按 deleteTime 排序，因为子告警更新后父告警的updateTime也会更新

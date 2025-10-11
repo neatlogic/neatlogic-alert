@@ -213,6 +213,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
             <id column="alertTeamAlertId" property="alertId"/>
             <result column="alertTeamName" property="teamName"/>
         </collection>
+        <collection property="markList" ofType="neatlogic.framework.alert.dto.AlertMarkVo">
+            <id column="alertMarkUuid" property="uuid"/>
+            <result column="alertMarkName" property="name"/>
+            <result column="alertMarkStyle" property="style"/>
+        </collection>
     </resultMap>
 
     <select id="getOpenAlertByParentId" parameterType="java.lang.Long"
@@ -319,7 +324,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         au.alert_id as alertUserAlertId,
         at.team_uuid as alertTeamUuid,
         at.alert_id as alertTeamAlertId,
-        (select name from team x where x.uuid = at.team_uuid) as alertTeamName
+        (select name from team x where x.uuid = at.team_uuid) as alertTeamName,
+        am.name as alertMarkName,
+        am.uuid as alertMarkUuid,
+        am.style as alertMarkStyle
         from alert a
         left join alert_attr b on a.id = b.alert_id
         left join alert_level c on a.level = c.level
@@ -328,6 +336,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         left join alert_team at on a.id = at.alert_id
         left join alert_status als on a.status = als.name
         left join alert_source also on a.source = also.name
+        left join alert_alert_mark aam on a.id = aam.alert_id
+        left join alert_mark am on aam.mark_uuid = am.uuid
     </sql>
 
     <sql id="searchAlertColumn">
@@ -359,7 +369,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                au.alert_id                                                                           as alertUserAlertId,
                at.team_uuid                                                                          as alertTeamUuid,
                at.alert_id                                                                           as alertTeamAlertId,
-               (select name from team x where x.uuid = at.team_uuid)                                 as alertTeamName
+               (select name from team x where x.uuid = at.team_uuid)                                 as alertTeamName,
+               am.name                                                                               as alertMarkName,
+               am.uuid                                                                               as alertMarkUuid,
+               am.style                                                                              as alertMarkStyle
         from alert a
                  left join alert_attr b on a.id = b.alert_id
                  left join alert_level c on a.level = c.level
@@ -368,6 +381,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
                  left join alert_team at on a.id = at.alert_id
                  left join alert_status als on a.status = als.name
                  left join alert_source also on a.source = also.name
+                 left join alert_alert_mark aam on a.id = aam.alert_id
+                 left join alert_mark am on aam.mark_uuid = am.uuid
     </sql>
 
 

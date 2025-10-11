@@ -90,6 +90,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             @Param(name = "viewName", desc = "视图", type = ApiParamType.STRING),
             @Param(name = "attrFilterList", desc = "自定义属性过滤列表", type = ApiParamType.JSONARRAY),
             @Param(name = "rule", desc = "高级模式搜索条件", type = ApiParamType.JSONOBJECT),
+            @Param(name = "sortData", desc = "排序", type = ApiParamType.JSONOBJECT),
             @Param(name = "searchMode", desc = "搜索模式", rule = "tree,flat", defaultValue = "tree", type = ApiParamType.STRING),
     })
     @Description(desc = "搜索告警")
@@ -118,6 +119,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                         op.ifPresent(valueTextVo -> theadList.add(new JSONObject() {{
                             this.put("key", valueTextVo.getName());
                             this.put("title", valueTextVo.getLabel());
+                            this.put("sort", valueTextVo.getIsSort());
                         }}));
                     } else if (attr.startsWith("attr_")) {
                         Optional<AlertAttrTypeVo> op = alertAttrTypeList.stream().filter(d -> d.getName().equals(attr.replace("attr_", ""))).findAny();
@@ -149,6 +151,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                     theadList.add(new JSONObject() {{
                         this.put("key", attr.getName());
                         this.put("title", attr.getLabel());
+                        this.put("sort", attr.getIsSort());
                     }});
                 }
             }

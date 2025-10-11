@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertMarkMapper">
+
+    <select id="listAlertMarkByNameList"
+            resultType="neatlogic.framework.alert.dto.AlertMarkVo">
+        select
+        uuid,
+        name,
+        style from alert_mark
+        <where>
+            <if test="nameList != null and nameList.size() > 0">
+                name like concat(#{keyword}, '%')
+            </if>
+        </where>
+        order by name
+    </select>
+
+    <select id="searchAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo"
+            resultType="neatlogic.framework.alert.dto.AlertMarkVo">
+        select uuid,name,style from alert_mark
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name like concat(#{keyword}, '%')
+            </if>
+            <if test="defaultValue != null and defaultValue.size() > 0">
+                name IN
+                <foreach collection="defaultValue" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by name
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="getAlertMarkByAlertId" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertMarkVo">
+        select distinct b.uuid, b.name, b.style
+        from alert_alert_mark a
+                 join alert_mark b on a.mark_uuid = b.uuid
+        where a.alert_id = #{value}
+    </select>
+
+    <select id="getAlertMarkNameByAlertId" parameterType="java.lang.Long" resultType="java.lang.String">
+        select distinct b.name
+        from alert_alert_mark a
+                 join alert_mark b on a.mark_uuid = b.uuid
+        where a.alert_id = #{value}
+    </select>
+
+    <insert id="insertAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo">
+        insert ignore into alert_mark (uuid, name)
+        values (#{uuid}, #{name})
+    </insert>
+
+    <insert id="insertAlertAlertMark">
+        insert into alert_alert_mark (alert_id, mark_uuid, mark_time)
+        values (#{alertId}, #{markUuid}, now())
+        on duplicate key update mark_time = now()
+    </insert>
+
+    <delete id="deleteAlertAlertMark">
+        delete
+        from alert_alert_mark
+        where alert_id = #{alertId}
+          and mark_uuid = #{markUuid}
+    </delete>
+
+    <delete id="deleteAlertAlertMarkByAlertId" parameterType="java.lang.Long">
+        delete
+        from alert_alert_mark
+        where alert_id = #{value}
+    </delete>
+</mapper>

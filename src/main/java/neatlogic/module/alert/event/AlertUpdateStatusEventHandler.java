@@ -118,6 +118,7 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
             this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
             this.add(AlertEventType.ALERT_CONVERGE.getName());
+            this.add(AlertEventType.ALERT_SUPPRESS.getName());
         }};
     }
 

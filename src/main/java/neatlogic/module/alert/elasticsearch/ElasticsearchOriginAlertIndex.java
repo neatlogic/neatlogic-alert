@@ -69,7 +69,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
 
 
     @Override
-    public void mySortQuery(SearchRequest.Builder builder) {
+    public void mySortQuery(SearchRequest.Builder builder, OriginalAlertVo originalAlertVo) {
         builder.sort(s -> s
                 .field(f -> f
                         .field("id") // 按 id 排序

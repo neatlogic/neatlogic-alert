@@ -109,7 +109,10 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                         for (AlertAttrDefineVo constAttrVo : constAttrList) {
                             defineObj.put(constAttrVo.getName(), constAttrVo.getLabel());
                             dataObj.put(constAttrVo.getName(), new JSONArray() {{
-                                this.add(alertObj.get(constAttrVo.getName().replace("const_", "")));
+                                Object o = alertObj.get(constAttrVo.getName().replace("const_", ""));
+                                if (o != null) {
+                                    this.add(o);
+                                }
                             }});
                         }
                         JSONObject attrObj = alertObj.getJSONObject("attrObj");
@@ -211,6 +214,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
             this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
             this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
+            this.add(AlertEventType.ALERT_SUPPRESS.getName());
         }};
     }
 
