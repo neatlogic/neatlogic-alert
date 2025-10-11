@@ -14,6 +14,8 @@ public interface AlertMarkMapper {
 
     List<AlertMarkVo> getAlertMarkByAlertId(Long alertId);
 
+    void updateAlertMark(AlertMarkVo vo);
+
     void insertAlertMark(AlertMarkVo vo);
 
     void insertAlertAlertMark(@Param("alertId") Long alertId, @Param("markUuid") String markUuid);

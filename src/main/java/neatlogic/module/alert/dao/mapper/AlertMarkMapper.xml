@@ -64,6 +64,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.alert_id = #{value}
     </select>
 
+    <update id="updateAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo">
+        update alert_mark
+        set style = #{style}
+        where uuid = #{uuid}
+    </update>
+
     <insert id="insertAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo">
         insert ignore into alert_mark (uuid, name)
         values (#{uuid}, #{name})
