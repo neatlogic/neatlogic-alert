@@ -137,7 +137,7 @@ public class AlertUnMarkEventHandler extends AlertEventHandlerBase {
 
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             index.updateDocument(alertVo.getId(), new JSONObject() {{
-                this.put("markList", newMarkList);
+                this.put("markList", newMarkObjList);
             }}, false);
         }
         return alertVo;
