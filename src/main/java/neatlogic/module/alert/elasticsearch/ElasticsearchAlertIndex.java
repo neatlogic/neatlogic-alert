@@ -465,7 +465,11 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             for (AlertVo alert : alertList) {
                 if (isAll || !this.isDocumentExists(alert)) {
                     alert.setCommentList(alertCommentMapper.getAlertCommentByAlertId(alertVo.getId()));
-                    this.createDocument(alert);
+                    try {
+                        this.createDocument(alert);
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage(), ex);
+                    }
                 }
             }
             alertVo.setCurrentPage(alertVo.getCurrentPage() + 1);
