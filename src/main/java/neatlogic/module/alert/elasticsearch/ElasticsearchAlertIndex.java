@@ -519,10 +519,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
                         .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
                         .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
-                        //.properties("entityType", p -> p.keyword(k -> k))            // varchar -> keyword
-                        //.properties("entityName", p -> p.text(t -> t))               // varchar -> text
-                        //.properties("ip", p -> p.text(k -> k))                     // varchar -> keyword
-                        //.properties("port", p -> p.keyword(k -> k))                   // varchar -> keyword
                         .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("markList", p -> p.keyword(k -> k)) // 字符串数组，不分词
