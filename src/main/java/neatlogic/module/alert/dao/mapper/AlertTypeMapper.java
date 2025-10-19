@@ -15,6 +15,8 @@ public interface AlertTypeMapper {
 
     List<AlertTypeVo> searchAlertType(AlertTypeVo alertTypeVo);
 
+    List<AlertTypeAdaptorVo> getAlertAdaptorNameList();
+
     int searchAlertTypeCount(AlertTypeVo alertTypeVo);
 
     void insertAlertType(AlertTypeVo alertTypeVo);

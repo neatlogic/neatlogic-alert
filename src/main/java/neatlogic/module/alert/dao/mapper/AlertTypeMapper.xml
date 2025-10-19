@@ -16,6 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertTypeMapper">
+    <select id="getAlertAdaptorNameList"
+            resultType="neatlogic.framework.alert.dto.AlertTypeAdaptorVo">
+        select distinct name, label
+        from alert_adaptor
+    </select>
+
     <select id="searchAlertTypeCount" parameterType="neatlogic.framework.alert.dto.AlertTypeVo" resultType="int">
         select count(1)
         from alert_type a
