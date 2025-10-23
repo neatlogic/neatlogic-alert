@@ -82,6 +82,7 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
                     //没有任何配置默认激活插件
                     plugin.setIsActive(1);
                 }
+                plugin.setIsAsync(handler.isAsync() ? 1 : 0);
                 pluginList.add(plugin);
             }
         }

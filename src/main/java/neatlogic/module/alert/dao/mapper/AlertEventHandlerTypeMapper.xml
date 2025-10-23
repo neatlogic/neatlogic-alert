@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Copyright (C) 2024  深圳极向量科技有限公司 All Rights Reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertEventHandlerTypeMapper">
+
+    <select id="searchAlertEventHandlerType" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerTypeVo"
+            resultType="neatlogic.framework.alert.dto.AlertEventHandlerTypeVo">
+        select id,
+        name,
+        label
+        from alert_event_handler_type
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name like concat('%',#{name},'%')
+                or label like concat('%',#{name},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="checkAlertEventHandlerTypeNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerTypeVo" resultType="int">
+        select count(1)
+        from alert_event_handler_type
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <select id="checkAlertEventHandlerTypeIsInUsed" parameterType="java.lang.Long" resultType="int">
+        select count(1)
+        from alert_event_handler
+        where type_id = #{value}
+    </select>
+
+    <insert id="insertAlertEventHandlerType" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerTypeVo">
+        insert into alert_event_handler_type
+        (id,
+         name,
+         label)
+        values (#{id},
+                #{name},
+                #{label})
+    </insert>
+
+    <update id="updateAlertEventHandlerType" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerTypeVo">
+        update alert_event_handler_type
+        set name  = #{name},
+            label = #{label}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteAlertEventHandlerType" parameterType="java.lang.Long">
+        delete
+        from alert_event_handler_type
+        where id = #{value}
+    </delete>
+
+
+</mapper>

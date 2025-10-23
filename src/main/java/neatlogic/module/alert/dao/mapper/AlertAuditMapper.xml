@@ -37,22 +37,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
 
     <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
-        select id,
-               parent_id        AS parentId,
-               alert_id         AS alertId,
-               event,
-               handler,
-               handler_name     AS handlerName,
-               event_handler_id AS eventHandlerId,
-               start_time       AS startTime,
-               end_time         AS endTime,
-               status,
-               error,
-               config           AS configStr,
-               result           AS resultStr
-        from alert_event_handler_audit
-        where alert_id = #{alertId}
-        order by id desc
+        select a.id,
+               a.parent_id                                                                  AS parentId,
+               a.alert_id                                                                   AS alertId,
+               a.event,
+               a.handler,
+               a.handler_name                                                               AS handlerName,
+               a.event_handler_id                                                           AS eventHandlerId,
+               a.start_time                                                                 AS startTime,
+               a.end_time                                                                   AS endTime,
+               (select is_async from alert_event_handler x where x.id = a.event_handler_id) as isAsync,
+               a.status,
+               a.error,
+               a.config                                                                     AS configStr,
+               a.result                                                                     AS resultStr
+        from alert_event_handler_audit a
+        where a.alert_id = #{alertId}
+        order by a.id desc
     </select>
 
     <sql id="searchAlertAudit">
