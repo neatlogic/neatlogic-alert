@@ -73,7 +73,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
             @Param(name = "viewName", desc = "视图唯一标识", type = ApiParamType.STRING),
             @Param(name = "kind", desc = "属性大类", rule = "const,attr", type = ApiParamType.STRING),
             @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER),
-            @Param(name = "isCondition", desc = "是否用于条件判断", rule = "0,1", type = ApiParamType.INTEGER)
+            @Param(name = "isCondition", desc = "是否用于条件判断", rule = "0,1", type = ApiParamType.INTEGER),
+            @Param(name = "isColumn", desc = "是否用于展示", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
     @Description(desc = "返回告警属性列表")
@@ -84,6 +85,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         String kind = jsonObj.getString("kind");
         int isExpand = jsonObj.getIntValue("isExpand");
         int isCondition = jsonObj.getIntValue("isCondition");
+        int isColumn = jsonObj.getIntValue("isColumn");
         List<AlertAttrDefineVo> attrList = new ArrayList<>();
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
             //TODO 逻辑是对的，后面再修改一下写法
@@ -91,6 +93,8 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                 attrList.addAll(AlertAttr.getConditionConstAttrList());
             } else if (isExpand == 1) {
                 attrList.addAll(AlertAttr.getTemplateConstAttrList());
+            } else if (isColumn == 1) {
+                attrList.addAll(AlertAttr.getColumnConstAttrList());
             } else {
                 attrList.addAll(AlertAttr.getSearchConstAttrList());
             }
