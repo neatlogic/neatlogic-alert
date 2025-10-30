@@ -90,7 +90,7 @@ public class AlertUnMarkEventHandler extends AlertEventHandlerBase {
 
     @Override
     public Set<String> supportParentHandler() {
-        return new HashSet<String>() {{
+        return new HashSet<>() {{
             this.add("condition");
             this.add("interval");
             this.add("integration");

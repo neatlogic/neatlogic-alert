@@ -220,9 +220,10 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
 
     @Override
     public Set<String> supportParentHandler() {
-        return new HashSet<String>() {{
+        return new HashSet<>() {{
             this.add("interval");
             this.add("integration");
+            this.add("similar");
         }};
     }
 

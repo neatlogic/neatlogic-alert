@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_ADMIN;
+import neatlogic.framework.alert.crossover.IAlertEmbeddingCrossoverService;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttrType;
@@ -30,6 +31,7 @@ import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
+import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.lock.dao.mapper.LockMapper;
@@ -555,6 +557,7 @@ public class AlertServiceImpl implements IAlertService {
 
         indexHandler.createDocument(alertVo);
 
+
         if (alertVo.getParentAlertVo() == null) {
             AlertEventManager.doEvent(AlertEventType.ALERT_SAVE, alertVo);
         } else {
@@ -565,6 +568,12 @@ public class AlertServiceImpl implements IAlertService {
 
         if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             lockMapper.releaseMysqlLock(alertVo.getUniqueKey());
+        }
+
+        //商业模块功能，对告警进行向量化处理并保存，用于分析告警相似度
+        IAlertEmbeddingCrossoverService alertEmbeddingService = CrossoverServiceFactory.tryToGetApi(IAlertEmbeddingCrossoverService.class);
+        if (alertEmbeddingService != null) {
+            alertEmbeddingService.saveEmbedding(alertVo);
         }
     }
 

@@ -19,13 +19,13 @@ package neatlogic.module.alert.api.alertrule;
 
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_RULE_MODIFY;
+import neatlogic.framework.alert.utils.AlertRuleUtils;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
-import neatlogic.module.alert.utils.AlertRuleUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

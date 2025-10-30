@@ -190,6 +190,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <result column="sourceName" property="sourceName"/>
         <result column="uniqueKey" property="uniqueKey"/>
         <result column="isClose" property="isClose"/>
+        <result column="similarCount" property="similarCount"/>
         <result column="isDelete" property="isDelete"/>
         <result column="content" property="attrObjStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
         <association property="alertType" javaType="neatlogic.framework.alert.dto.AlertTypeVo">
@@ -305,6 +306,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         a.alert_time as alertTime,
         a.type,
         a.is_close as isClose,
+        a.similar_count as similarCount,
         a.is_delete as isDelete,
         d.id as alertTypeId,
         d.name as alertTypeName,
@@ -451,6 +453,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         update alert
         set update_time = #{updateTime},
             status      = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="updateAlertSimilarCount" parameterType="neatlogic.framework.alert.dto.AlertVo">
+        update alert
+        set similar_count = #{similarCount}
         where id = #{id}
     </update>
 

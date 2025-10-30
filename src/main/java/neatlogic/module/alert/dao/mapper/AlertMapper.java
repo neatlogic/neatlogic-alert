@@ -59,6 +59,8 @@ public interface AlertMapper {
 
     void updateAlert(AlertVo alertVo);
 
+    void updateAlertSimilarCount(AlertVo alertVo);
+
     void updateAlertUpdateTime(AlertVo alertVo);
 
     int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);

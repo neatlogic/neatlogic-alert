@@ -25,7 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         style from alert_mark
         <where>
             <if test="nameList != null and nameList.size() > 0">
-                name like concat(#{keyword}, '%')
+                name in
+                <foreach collection="nameList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
             </if>
         </where>
         order by name

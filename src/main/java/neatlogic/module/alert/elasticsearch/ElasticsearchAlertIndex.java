@@ -20,7 +20,6 @@ package neatlogic.module.alert.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.mapping.DynamicMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -203,6 +202,16 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                     .value(alertVo.getSource()) // 开始时间
             ));
             boolQueryBuilder.must(query);
+        }
+        //告警标签
+        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
+            for (String markName : alertVo.getMarkNameList()) {
+                Query markQuery = Query.of(q -> q.term(t -> t
+                        .field("markList") // 假设 markList 是 keyword 类型
+                        .value(markName)
+                ));
+                boolQueryBuilder.must(markQuery);
+            }
         }
         //置顶自定义属性搜索
         if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
@@ -421,7 +430,6 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                     }
                 }
             }
-
         }
         //最后处理fromAlertId
         if (!Objects.equals(alertVo.getSearchMode(), AlertSearchMode.FLAT.getValue())) {//尽量兼容旧模式，显示声明flat模式才去掉fromAlertId的判断
@@ -522,7 +530,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                         .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
                         .properties("markList", p -> p.keyword(k -> k)) // 字符串数组，不分词
-                        .properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
+                        //.properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
+                        .properties("attrObj", p -> p.flattened(f -> f))
                 );
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
             if (elasticsearchVo.getConfig().containsKey("numberOfShards")) {

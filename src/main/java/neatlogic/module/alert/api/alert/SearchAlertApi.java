@@ -87,6 +87,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             @Param(name = "status", desc = "状态", type = ApiParamType.STRING),
             @Param(name = "source", desc = "来源", type = ApiParamType.STRING),
             @Param(name = "level", desc = "级别", type = ApiParamType.INTEGER),
+            @Param(name = "markNameList", desc = "标签列表", type = ApiParamType.JSONARRAY),
             @Param(name = "viewName", desc = "视图", type = ApiParamType.STRING),
             @Param(name = "attrFilterList", desc = "自定义属性过滤列表", type = ApiParamType.JSONARRAY),
             @Param(name = "rule", desc = "高级模式搜索条件", type = ApiParamType.JSONOBJECT),
@@ -105,7 +106,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
         }
         List<AlertVo> alertList = alertService.searchAlert(alertVo);
         JSONArray theadList = new JSONArray();
-        List<AlertAttrDefineVo> attrList = AlertAttr.getSearchConstAttrList();
+        List<AlertAttrDefineVo> attrList = AlertAttr.getColumnConstAttrList();
         List<AlertAttrTypeVo> alertAttrTypeList = alertAttrTypeMapper.listAttrType();
         boolean hasExtend = false;
         List<String> extendAttrKeyList = new ArrayList<>();
