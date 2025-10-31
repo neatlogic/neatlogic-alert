@@ -50,6 +50,7 @@ public interface AlertMapper {
 
     List<Long> getOpenAlertId(AlertVo alertVo);
 
+
     Long getFirstOpenAlertIdByUniqueKey(String uniqueKey);
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
