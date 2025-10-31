@@ -59,7 +59,9 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
                 subAlertEventHandlerVo.setParentId(alertEventHandlerVo.getId());
                 subAlertEventHandlerVo.setEvent(alertEventHandlerVo.getEvent());
                 subAlertEventHandlerVo.setAlertType(alertEventHandlerVo.getAlertType());
-                subAlertEventHandlerVo.setIsActive(alertEventHandlerVo.getIsActive());
+                subAlertEventHandlerVo.setIsActive(handlerObj.getIntValue("isActive"));
+                subAlertEventHandlerVo.setTypeId(handlerObj.getLong("typeId"));
+                subAlertEventHandlerVo.setIsAsync(handlerObj.getIntValue("isAsync"));
                 subAlertEventHandlerVo.setUuid(handlerObj.getString("uuid"));
                 subAlertEventHandlerVo.setName(handlerObj.getString("name"));
                 subAlertEventHandlerVo.setHandler(handlerObj.getString("handler"));
