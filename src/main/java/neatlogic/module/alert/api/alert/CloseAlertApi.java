@@ -24,10 +24,13 @@ import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
+import neatlogic.framework.asynchronization.thread.NeatLogicThread;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.common.constvalue.ApiParamType;
+import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
@@ -43,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
@@ -74,17 +78,22 @@ public class CloseAlertApi extends PrivateApiComponentBase {
     @Input({
             @Param(name = "id", desc = "id", type = ApiParamType.LONG),
             @Param(name = "idList", desc = "id列表", type = ApiParamType.JSONARRAY),
-            @Param(name = "isCloseChildAlert", isRequired = true, rule = "0,1", desc = "是否关闭子告警", type = ApiParamType.INTEGER)
+            @Param(name = "isAll", rule = "0,1", desc = "是否全部关闭，输入1或0", type = ApiParamType.INTEGER),
+            @Param(name = "isCloseChildAlert", rule = "0,1", desc = "是否关闭子告警", type = ApiParamType.INTEGER)
     })
     @Description(desc = "关闭告警")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         Long alertId = jsonObj.getLong("id");
         JSONArray idList = jsonObj.getJSONArray("idList");
-        if (alertId == null && CollectionUtils.isEmpty(idList)) {
-            throw new ParamNotExistsException("id", "idList");
+        Integer isAll = jsonObj.getInteger("isAll");
+        if (alertId == null && CollectionUtils.isEmpty(idList) && isAll == null) {
+            throw new ParamNotExistsException("id", "idList", "isAll");
         }
         Integer isCloseChildAlert = jsonObj.getInteger("isCloseChildAlert");
+        if (isCloseChildAlert == null) {
+            isCloseChildAlert = 0;
+        }
         if (alertId != null) {
             AlertVo alertVo = alertMapper.getAlertById(alertId);
             if (alertVo == null) {
@@ -108,6 +117,29 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                     alertVo.setIsCloseChildAlert(isCloseChildAlert);
                     alertService.closeAlert(alertVo);
                 }
+            }
+        } else if (Objects.equals(1, isAll)) {
+            if (AuthActionChecker.check(ALERT_ADMIN.class)) {
+                CachedThreadPool.execute(new NeatLogicThread("CLOSE_ALL_ALERT") {
+                    @Override
+                    protected void execute() {
+                        AlertVo paramAlertVo = new AlertVo();
+                        paramAlertVo.setPageSize(100);
+                        List<Long> idList = alertMapper.getOpenAlertId(paramAlertVo);
+                        while (CollectionUtils.isNotEmpty(idList)) {
+                            for (Long id : idList) {
+                                AlertVo alertVo = new AlertVo();
+                                alertVo.setId(id);
+                                alertVo.setIsClose(0);
+                                alertVo.setIsCloseChildAlert(0);
+                                alertService.closeAlert(alertVo);
+                            }
+                            idList = alertMapper.getOpenAlertId(paramAlertVo);
+                        }
+                    }
+                });
+            } else {
+                throw new ApiRuntimeException("没有权限");
             }
         }
         return null;

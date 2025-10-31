@@ -410,6 +410,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.id = #{value}
     </select>
 
+    <select id="getOpenAlertId" parameterType="neatlogic.framework.alert.dto.AlertVo" resultType="java.lang.Long">
+        select id
+        from alert
+        where is_close = 0
+        limit #{pageSize}
+    </select>
+
 
     <select id="getFirstOpenAlertIdByUniqueKey" parameterType="java.lang.String"
             resultType="java.lang.Long">

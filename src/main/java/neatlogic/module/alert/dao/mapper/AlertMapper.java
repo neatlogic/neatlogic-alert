@@ -48,6 +48,8 @@ public interface AlertMapper {
 
     AlertVo getAlertById(Long id);
 
+    List<Long> getOpenAlertId(AlertVo alertVo);
+
     Long getFirstOpenAlertIdByUniqueKey(String uniqueKey);
 
     List<AlertIntervalJobVo> searchAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
