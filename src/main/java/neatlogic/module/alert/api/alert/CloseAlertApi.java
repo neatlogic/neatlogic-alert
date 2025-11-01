@@ -41,6 +41,8 @@ import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +55,7 @@ import java.util.Objects;
 @OperationType(type = OperationTypeEnum.UPDATE)
 @Transactional
 public class CloseAlertApi extends PrivateApiComponentBase {
-
+    private final Logger logger = LoggerFactory.getLogger(CloseAlertApi.class);
     @Resource
     private IAlertService alertService;
 
@@ -132,7 +134,13 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                                 alertVo.setId(id);
                                 alertVo.setIsClose(0);
                                 alertVo.setIsCloseChildAlert(0);
-                                alertService.closeAlert(alertVo);
+                                try {
+                                    alertService.closeAlert(alertVo);
+                                } catch (Exception e) {
+                                    logger.error(e.getMessage(), e);
+                                }
+                                //切换id基线
+                                paramAlertVo.setId(id);
                             }
                             idList = alertMapper.getOpenAlertId(paramAlertVo);
                         }
