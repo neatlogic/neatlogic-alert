@@ -410,11 +410,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         where a.id = #{value}
     </select>
 
-    <select id="getOpenAlertId" parameterType="neatlogic.framework.alert.dto.AlertVo" resultType="java.lang.Long">
+    <select id="getAllOpenAlertId" parameterType="neatlogic.framework.alert.dto.AlertVo" resultType="java.lang.Long">
         select id
         from alert
-        where is_close = 0
-          and id &lt;= #{id}
+        where id &lt; #{id}
+          and is_close = 0
         order by id desc
         limit #{pageSize}
     </select>

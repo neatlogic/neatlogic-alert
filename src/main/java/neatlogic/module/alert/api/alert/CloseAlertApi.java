@@ -127,11 +127,10 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                     protected void execute() {
                         AlertVo paramAlertVo = new AlertVo();
                         paramAlertVo.setPageSize(100);
-                        List<Long> idList = alertMapper.getOpenAlertId(paramAlertVo);
+                        List<Long> idList = alertMapper.getAllOpenAlertId(paramAlertVo);
                         while (CollectionUtils.isNotEmpty(idList)) {
                             for (Long id : idList) {
-                                AlertVo alertVo = new AlertVo();
-                                alertVo.setId(id);
+                                AlertVo alertVo = alertMapper.getAlertById(id);
                                 alertVo.setIsClose(0);
                                 alertVo.setIsCloseChildAlert(0);
                                 try {
@@ -142,7 +141,7 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                                 //切换id基线
                                 paramAlertVo.setId(id);
                             }
-                            idList = alertMapper.getOpenAlertId(paramAlertVo);
+                            idList = alertMapper.getAllOpenAlertId(paramAlertVo);
                         }
                     }
                 });
