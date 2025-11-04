@@ -414,7 +414,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         select id
         from alert
         where id &lt; #{id}
-          and is_close = 0
+          and (is_close = 0 or status != 'closed')
         order by id desc
         limit #{pageSize}
     </select>

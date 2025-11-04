@@ -96,7 +96,39 @@ public class CloseAlertApi extends PrivateApiComponentBase {
         if (isCloseChildAlert == null) {
             isCloseChildAlert = 0;
         }
-        if (alertId != null) {
+        if (Objects.equals(1, isAll)) {
+            if (AuthActionChecker.check(ALERT_ADMIN.class)) {
+                if (alertId == null) {
+                    throw new ParamNotExistsException("id");
+                }
+                CachedThreadPool.execute(new NeatLogicThread("CLOSE_ALL_ALERT") {
+                    @Override
+                    protected void execute() {
+                        AlertVo paramAlertVo = new AlertVo();
+                        paramAlertVo.setPageSize(100);
+                        paramAlertVo.setId(alertId);
+                        List<Long> idList = alertMapper.getAllOpenAlertId(paramAlertVo);
+                        while (CollectionUtils.isNotEmpty(idList)) {
+                            for (Long id : idList) {
+                                AlertVo alertVo = alertMapper.getAlertById(id);
+                                alertVo.setIsClose(0);
+                                alertVo.setIsCloseChildAlert(0);
+                                try {
+                                    alertService.closeAlert(alertVo);
+                                } catch (Exception e) {
+                                    logger.error(e.getMessage(), e);
+                                }
+                                //切换id基线
+                                paramAlertVo.setId(id);
+                            }
+                            idList = alertMapper.getAllOpenAlertId(paramAlertVo);
+                        }
+                    }
+                });
+            } else {
+                throw new ApiRuntimeException("没有权限");
+            }
+        } else if (alertId != null) {
             AlertVo alertVo = alertMapper.getAlertById(alertId);
             if (alertVo == null) {
                 throw new AlertNotFoundException(alertId);
@@ -119,34 +151,6 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                     alertVo.setIsCloseChildAlert(isCloseChildAlert);
                     alertService.closeAlert(alertVo);
                 }
-            }
-        } else if (Objects.equals(1, isAll)) {
-            if (AuthActionChecker.check(ALERT_ADMIN.class)) {
-                CachedThreadPool.execute(new NeatLogicThread("CLOSE_ALL_ALERT") {
-                    @Override
-                    protected void execute() {
-                        AlertVo paramAlertVo = new AlertVo();
-                        paramAlertVo.setPageSize(100);
-                        List<Long> idList = alertMapper.getAllOpenAlertId(paramAlertVo);
-                        while (CollectionUtils.isNotEmpty(idList)) {
-                            for (Long id : idList) {
-                                AlertVo alertVo = alertMapper.getAlertById(id);
-                                alertVo.setIsClose(0);
-                                alertVo.setIsCloseChildAlert(0);
-                                try {
-                                    alertService.closeAlert(alertVo);
-                                } catch (Exception e) {
-                                    logger.error(e.getMessage(), e);
-                                }
-                                //切换id基线
-                                paramAlertVo.setId(id);
-                            }
-                            idList = alertMapper.getAllOpenAlertId(paramAlertVo);
-                        }
-                    }
-                });
-            } else {
-                throw new ApiRuntimeException("没有权限");
             }
         }
         return null;
