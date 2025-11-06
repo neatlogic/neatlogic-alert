@@ -263,7 +263,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                             case "equal":
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
-                                            .bool(b -> b.should(values.stream()
+                                            .bool(b -> b.must(values.stream()
                                                     .map(value -> Query.of(q -> q.matchPhrase(ma -> ma.field(transformField(field)).query(value.toString()))))
                                                     .collect(Collectors.toList())))
                                             .build();
