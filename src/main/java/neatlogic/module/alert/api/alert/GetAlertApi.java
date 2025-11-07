@@ -54,12 +54,13 @@ public class GetAlertApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({
-            @Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG),
-    })
-    @Output({
-            @Param(explode = AlertVo.class)
-    })
+    @Override
+    public boolean isMcp() {
+        return true;
+    }
+
+    @Input({@Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG)})
+    @Output({@Param(explode = AlertVo.class)})
     @Description(desc = "获取告警详情")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {

@@ -80,6 +80,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
         return null;
     }
 
+
     @Input({
             @Param(name = "fromAlertId", desc = "来源告警id", type = ApiParamType.LONG),
             @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING),
