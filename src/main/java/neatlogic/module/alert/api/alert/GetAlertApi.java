@@ -49,6 +49,7 @@ public class GetAlertApi extends PrivateApiComponentBase {
         return "获取告警详情";
     }
 
+
     @Override
     public String getConfig() {
         return null;
