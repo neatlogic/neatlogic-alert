@@ -7,7 +7,7 @@ To use source code files that are located in a directory containing cs in its na
 All third-party components incorporated into the NeatLogic Software are licensed under the original license provided by the owner of the applicable component.
 Content outside of the above mentioned files or restrictions is available under the “NeatLogic Sustainable Use License” defined below.
 
-## Neatlogic Sustainable Use License (NSUL)
+## Sustainable Use License (SUL)
 
 Version 4.x — 2025
 
@@ -70,7 +70,7 @@ As far as the law allows, the software comes “as is,” without any warranty o
 	•	Use: anything you do with the software requiring your license.
 	•	Trademark: trademarks, service marks, and similar rights.
 
-### Notice:
+### Notice
 This license is source-available but not an open-source license approved by the Open Source Initiative (OSI).
 It is designed to ensure sustainable use, transparency, and fair compensation for the creators of NeatLogic.
 
