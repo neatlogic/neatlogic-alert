@@ -594,14 +594,21 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public List<AlertVo> searchAlert(AlertVo alertVo) {
-        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-        IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
-        if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
-            alertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
-            alertVo.setCurrentPage(indexResultVo.getCurrentPage());
-            alertVo.setPageCount(indexResultVo.getPageCount());
-            alertVo.setRowNum(indexResultVo.getRowNum());
+        if (CollectionUtils.isNotEmpty(alertVo.getIdList())) {
             return alertMapper.getAlertByIdList(alertVo);
+        } else {
+            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
+            if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
+                alertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
+                alertVo.setCurrentPage(indexResultVo.getCurrentPage());
+                alertVo.setPageCount(indexResultVo.getPageCount());
+                alertVo.setRowNum(indexResultVo.getRowNum());
+                List<AlertVo> alertList = alertMapper.getAlertByIdList(alertVo);
+                //清空idList数据，避免分页搜索时判断错误
+                alertVo.setIdList(null);
+                return alertList;
+            }
         }
         return new ArrayList<>();
     }

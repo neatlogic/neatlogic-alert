@@ -324,6 +324,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         c.color as alertLevelColor,
         au.user_id as alertUserId,
         au.alert_id as alertUserAlertId,
+        (select user_name from user x where x.uuid = au.user_id) as alertUserName,
         at.team_uuid as alertTeamUuid,
         at.alert_id as alertTeamAlertId,
         (select name from team x where x.uuid = at.team_uuid) as alertTeamName,
@@ -396,7 +397,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.-->
         <foreach collection="idList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-        order by a.update_time desc
+        ORDER BY FIELD(a.id,  <foreach collection="idList" separator="," item="item">#{item}</foreach>)
     </select>
 
     <select id="getParentAlertByAlertId" parameterType="java.lang.Long" resultMap="alertResultMap">
