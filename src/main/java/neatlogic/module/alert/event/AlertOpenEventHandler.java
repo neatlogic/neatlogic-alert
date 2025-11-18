@@ -141,14 +141,14 @@ public class AlertOpenEventHandler extends AlertEventHandlerBase {
 
     @Override
     public Set<String> supportEventTypes() {
-        return new HashSet<String>() {{
+        return new HashSet<>() {{
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
         }};
     }
 
     @Override
     public Set<String> supportParentHandler() {
-        return new HashSet<String>() {{
+        return new HashSet<>() {{
             this.add("condition");
             this.add("interval");
             this.add("integration");
