@@ -170,7 +170,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             long now = System.currentTimeMillis();
             Query query = Query.of(q -> q.range(r -> r
                     .field("updateTime")
-                    .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
+                    .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000))
             ));
             boolQueryBuilder.must(query);
         }
@@ -202,12 +202,33 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
             for (String markName : alertVo.getMarkNameList()) {
                 Query markQuery = Query.of(q -> q.term(t -> t
-                        .field("markList") // 假设 markList 是 keyword 类型
+                        .field("markList")
                         .value(markName)
                 ));
                 boolQueryBuilder.must(markQuery);
             }
         }
+        //处理组
+        if (CollectionUtils.isNotEmpty(alertVo.getTeamIdList())) {
+            for (String teamId : alertVo.getTeamIdList()) {
+                Query markQuery = Query.of(q -> q.term(t -> t
+                        .field("teamList")
+                        .value(teamId)
+                ));
+                boolQueryBuilder.must(markQuery);
+            }
+        }
+        //处理人
+        if (CollectionUtils.isNotEmpty(alertVo.getUserIdList())) {
+            for (String userId : alertVo.getUserIdList()) {
+                Query markQuery = Query.of(q -> q.term(t -> t
+                        .field("userList")
+                        .value(userId)
+                ));
+                boolQueryBuilder.must(markQuery);
+            }
+        }
+
         //置顶自定义属性搜索
         if (CollectionUtils.isNotEmpty(alertVo.getAttrFilterList())) {
             for (AlertAttrFilterVo attrFilterVo : alertVo.getAttrFilterList()) {

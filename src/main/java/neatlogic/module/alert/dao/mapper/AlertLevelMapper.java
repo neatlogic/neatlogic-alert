@@ -1,10 +1,11 @@
 package neatlogic.module.alert.dao.mapper;
 
+import neatlogic.framework.alert.crossover.IAlertLevelCrossoverMapper;
 import neatlogic.framework.alert.dto.AlertLevelVo;
 
 import java.util.List;
 
-public interface AlertLevelMapper {
+public interface AlertLevelMapper extends IAlertLevelCrossoverMapper {
     int checkAlertLevelIsExists(AlertLevelVo alertLevel);
 
     int checkAlertLevelNameIsExists(AlertLevelVo alertLevel);

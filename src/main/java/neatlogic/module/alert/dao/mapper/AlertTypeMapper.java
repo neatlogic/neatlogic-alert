@@ -1,12 +1,13 @@
 package neatlogic.module.alert.dao.mapper;
 
+import neatlogic.framework.alert.crossover.IAlertTypeCrossoverMapper;
 import neatlogic.framework.alert.dto.AlertTypeAdaptorVo;
 import neatlogic.framework.alert.dto.AlertTypeVo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-public interface AlertTypeMapper {
+public interface AlertTypeMapper extends IAlertTypeCrossoverMapper {
     int checkAlertTypeNameIsExists(AlertTypeVo alertTypeVo);
 
     AlertTypeVo getAlertTypeById(Long id);
