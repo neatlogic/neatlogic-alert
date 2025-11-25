@@ -18,12 +18,14 @@ import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import neatlogic.framework.alert.crossover.IAlertEmbeddingCrossoverService;
 import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.asynchronization.taskmanager.AsyncTaskManager;
+import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
@@ -106,6 +108,12 @@ public class AlertDeleteHandler {
                     AlertEventManager.doEvent(AlertEventType.ALERT_CONVERGE_OUT, fromAlertVo);
                 }
             }
+        }
+
+        //商业模块功能，对告警进行向量化处理并保存，用于分析告警相似度
+        IAlertEmbeddingCrossoverService alertEmbeddingService = CrossoverServiceFactory.tryToGetApi(IAlertEmbeddingCrossoverService.class);
+        if (alertEmbeddingService != null) {
+            alertEmbeddingService.deleteEmbedding(alertId);
         }
     }
 }
