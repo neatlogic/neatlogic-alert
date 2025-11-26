@@ -238,7 +238,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                             .collect(Collectors.toList());
 
                     boolQueryBuilder.must(Query.of(q -> q.terms(t -> t
-                            .field(transformField(attrFilterVo.getName()) + ".keyword")//attrObj中的数据可能已经被分词，加上keyword关键字用于匹配原始值
+                            .field(transformField(attrFilterVo.getName()))
                             .terms(v -> v.value(values))
                     )));
                 }
