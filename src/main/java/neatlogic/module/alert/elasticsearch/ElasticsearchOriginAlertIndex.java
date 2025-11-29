@@ -268,23 +268,8 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
 
     @Override
     protected void myCreateDocument(OriginalAlertVo alertVo) {
-
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        Map<String, Object> document = this.makeupDocument(alertVo);
-
-        // 创建或更新文档
-        IndexRequest<Map<String, Object>> request = new IndexRequest.Builder<Map<String, Object>>()
-                .index(getIndexName()) // 索引名称
-                .id(alertVo.getId().toString())      // 文档 ID
-                .document(document) // 文档内容
-                .build();
-
-        // 执行请求
-        try {
-            client.index(request);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-        }
+        Map<String, Object> document = makeupDocument(alertVo);
+        this.createDocument(alertVo.getId(), document);
     }
 
     @Override

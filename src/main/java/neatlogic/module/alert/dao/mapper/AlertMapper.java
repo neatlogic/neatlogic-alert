@@ -26,6 +26,8 @@ public interface AlertMapper {
 
     List<OriginalAlertVo> searchAlertOrigin(OriginalAlertVo alertOriginVo);
 
+    Long getAlertIdByUniqueKey(String uniqueKey);
+
     int searchAlertOriginCount(OriginalAlertVo alertOriginVo);
 
     List<Long> listToAlertIdByFromAlertId(Long fromAlertId);
@@ -84,6 +86,7 @@ public interface AlertMapper {
 
     void insertAlertTeam(AlertTeamVo alertTeamVo);
 
+    int insertAlertParentUniqueKey(@Param("alertId") Long alertId, @Param("uniqueKey") String uniqueKey);
 
     void insertAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 
@@ -101,4 +104,5 @@ public interface AlertMapper {
 
     void deleteAlertOriginByIdList(@Param("idList") List<Long> idList);
 
+    void deleteAlertParentUniqueKeyByAlertId(Long alertId);
 }

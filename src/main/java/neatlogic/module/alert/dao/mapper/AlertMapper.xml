@@ -431,6 +431,11 @@
         limit #{startNum}, #{pageSize}
     </select>
 
+    <select id="getAlertIdByUniqueKey" parameterType="java.lang.String" resultType="java.lang.Long">
+        select alert_id
+        from alert_parent_uniquekey
+        where unique_key = #{value}
+    </select>
 
     <update id="updateAlertIsDeleteByIdList" parameterType="neatlogic.framework.alert.dto.AlertVo">
         update alert set is_delete = 1,
@@ -489,6 +494,11 @@
         set is_close = #{isClose}
         where id = #{alertId}
     </update>
+
+    <insert id="insertAlertParentUniqueKey">
+        insert ignore into alert_parent_uniquekey (alert_id, unique_key)
+        values (#{alertId}, #{uniqueKey})
+    </insert>
 
 
     <insert id="insertAlertIntervalJob" parameterType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
@@ -605,7 +615,7 @@
     </delete>
 
     <delete id="deleteAlertById" parameterType="java.lang.Long">
-        delete a,b,d,e,f,g,h,at,au,aeha,aij
+        delete a,b,d,e,f,g,h,at,au,aeha,aij,apu
         from alert a
                  left join alert_rel b on a.id = b.from_alert_id or a.id = b.to_alert_id
                  left join alert_origin d on a.id = d.id
@@ -618,6 +628,7 @@
                  left join alert_event_handler_audit aeha on a.id = aeha.alert_id
                  left join alert_interval_job aij on a.id = aij.alert_id
                  left join alert_alert_mark aam on a.id = aam.alert_id
+                 left join alert_parent_uniquekey apu on a.id = apu.alert_id
         where a.id = #{value}
     </delete>
 
@@ -643,6 +654,12 @@
         <foreach collection="idList" index="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
+    </delete>
+
+    <delete id="deleteAlertParentUniqueKeyByAlertId" parameterType="java.lang.Long">
+        delete
+        from alert_parent_uniquekey
+        where alert_id = #{value}
     </delete>
 
 </mapper>

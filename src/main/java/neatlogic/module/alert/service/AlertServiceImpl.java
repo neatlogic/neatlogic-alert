@@ -26,6 +26,7 @@ import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
+import neatlogic.framework.common.util.TransactionDebugUtils;
 import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
@@ -155,6 +156,7 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public boolean closeAlert(AlertVo alertVo) {
+        TransactionDebugUtils.printTransactionInfo("CLOSE ALERT");
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
@@ -169,6 +171,7 @@ public class AlertServiceImpl implements IAlertService {
                 this.put("isClose", 1);
             }}, false);
             alertMapper.updateAlertIsClose(alertVo.getId(), 1);
+            alertMapper.deleteAlertParentUniqueKeyByAlertId(alertVo.getId());
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
             alertAuditVo.setAttrName("const_isClose");
@@ -458,15 +461,18 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public void saveAlert(AlertVo alertVo, boolean isSerial) {
-        if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+        /*if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             lockMapper.getMysqlLock(alertVo.getUniqueKey(), 30);
-        }
+        }*/
         IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
-            Long parentAlertId = alertMapper.getFirstOpenAlertIdByUniqueKey(alertVo.getUniqueKey());
-            if (parentAlertId != null) {
-                parentAlertVo = getAlertById(parentAlertId);
+            int inserted = alertMapper.insertAlertParentUniqueKey(alertVo.getId(), alertVo.getUniqueKey());
+            if (inserted == 0) {
+                Long parentAlertId = alertMapper.getAlertIdByUniqueKey(alertVo.getUniqueKey());
+                if (parentAlertId != null) {
+                    parentAlertVo = getAlertById(parentAlertId);
+                }
             }
             if (parentAlertVo != null) {
                 alertVo.setParentAlertVo(parentAlertVo);
@@ -484,6 +490,9 @@ public class AlertServiceImpl implements IAlertService {
                 alertVo.setFromAlertVo(parentAlertVo);
 
                 alertMapper.updateAlertUpdateTime(parentAlertVo);
+                /*
+                避免并发高的时候更新父文档失败，使用upsert方式更新父告警文档
+                 */
                 Map<String, Object> document = indexHandler.makeupDocument(parentAlertVo);
                 indexHandler.updateDocument(parentAlertVo.getId(), document, true);
             }
@@ -561,9 +570,9 @@ public class AlertServiceImpl implements IAlertService {
         }
 
 
-        if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+        /*if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             lockMapper.releaseMysqlLock(alertVo.getUniqueKey());
-        }
+        }*/
 
         //商业模块功能，对告警进行向量化处理并保存，用于分析告警相似度
         IAlertEmbeddingCrossoverService alertEmbeddingService = CrossoverServiceFactory.tryToGetApi(IAlertEmbeddingCrossoverService.class);

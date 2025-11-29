@@ -29,7 +29,6 @@ import neatlogic.framework.alert.dto.AlertAttrFilterVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertSearchMode;
-import neatlogic.framework.alert.exception.alert.AlertIndexException;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
@@ -607,22 +606,8 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     protected void myCreateDocument(AlertVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         Map<String, Object> document = makeupDocument(alertVo);
-        // 创建或更新文档
-        IndexRequest<Map<String, Object>> request = new IndexRequest.Builder<Map<String, Object>>()
-                .index(getIndexName()) // 索引名称
-                .id(alertVo.getId().toString())      // 文档 ID
-                .document(document) // 文档内容
-                .build();
-
-        // 执行请求
-        try {
-            client.index(request);
-        } catch (Exception ex) {
-            //logger.error(ex.getMessage(), ex);
-            throw new AlertIndexException(ex);
-        }
+        this.createDocument(alertVo.getId(), document);
     }
 
     @Override
