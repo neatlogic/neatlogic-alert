@@ -26,7 +26,6 @@ import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.auth.core.AuthActionChecker;
-import neatlogic.framework.common.util.TransactionDebugUtils;
 import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
@@ -156,7 +155,6 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public boolean closeAlert(AlertVo alertVo) {
-        TransactionDebugUtils.printTransactionInfo("CLOSE ALERT");
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
