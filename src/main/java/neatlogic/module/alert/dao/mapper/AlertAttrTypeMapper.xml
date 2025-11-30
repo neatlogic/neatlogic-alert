@@ -10,6 +10,7 @@
         <!-- Ehcache 堆内条目数 -->
         <property name="heapEntries" value="100"/>
     </cache>
+
     <select id="getAttrTypeCount" resultType="java.lang.Integer" useCache="false">
         select count(1)
         from alert_attrtype
@@ -50,6 +51,9 @@
             <if test="isTop != null">
                 and a.is_top = #{isTop}
             </if>
+            <if test="isIndex != null">
+                and a.is_index = #{isIndex}
+            </if>
         </where>
     </sql>
 
@@ -63,7 +67,8 @@
                is_normal as isNormal,
                is_tab    as isTab,
                is_row    as isRow,
-               is_top    as isTop
+               is_top    as isTop,
+               is_index  as isIndex
         from alert_attrtype
         where name = #{value}
     </select>
@@ -78,7 +83,8 @@
                is_normal as isNormal,
                is_tab    as isTab,
                is_row    as isRow,
-               is_top    as isTop
+               is_top    as isTop,
+               is_index  as isIndex
         from alert_attrtype
         where id = #{value}
     </select>
@@ -141,7 +147,8 @@
                is_normal as isNormal,
                is_tab    as isTab,
                is_row    as isRow,
-               is_top    as isTop
+               is_top    as isTop,
+               is_index  as isIndex
         from alert_attrtype
         where is_active = 1
         order by is_top desc, sort
@@ -160,6 +167,7 @@
         a.is_tab as isTab,
         a.sort as sort,
         a.is_top as isTop,
+        a.is_index as isIndex,
         (select count(1) from alert_enum x where x.attr_type = a.id) as enumCount
         from alert_attrtype a
         <include refid="searchAttrTypeSql"></include>
@@ -196,6 +204,7 @@
          is_tab,
          config,
          is_top,
+         is_index,
          sort)
         values (#{id},
                 #{name},
@@ -207,6 +216,7 @@
                 #{isTab},
                 #{configStr, typeHandler=CompressHandler},
                 #{isTop},
+                #{isIndex},
                 #{sort})
         ON DUPLICATE KEY UPDATE name      = #{name},
                                 label     = #{label},
@@ -216,6 +226,7 @@
                                 is_row    = #{isRow},
                                 is_tab    = #{isTab},
                                 is_top    = #{isTop},
+                                is_index  = #{isIndex},
                                 config    = #{configStr, typeHandler=CompressHandler}
     </insert>
 

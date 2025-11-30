@@ -26,6 +26,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.AlertAttrFilterVo;
+import neatlogic.framework.alert.dto.AlertAttrTypeVo;
 import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertSearchMode;
@@ -34,6 +35,7 @@ import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentEx
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
+import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
@@ -62,6 +64,9 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Resource
     private AlertCommentMapper alertCommentMapper;
+
+    @Resource
+    private AlertAttrTypeMapper alertAttrTypeMapper;
 
     @Override
     public String getName() {
@@ -583,6 +588,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     public Map<String, Object> makeupDocument(AlertVo alertVo) {
         // 准备文档数据
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
 
         Map<String, Object> document = new HashMap<>();
         document.put("id", alertVo.getId());
@@ -596,7 +602,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         document.put("status", alertVo.getStatus());
         document.put("source", alertVo.getSource());
         document.put("uniqueKey", alertVo.getUniqueKey());
-        document.put("attrObj", alertVo.getAttrObj());
+        document.put("attrObj", alertVo.getAttrObj(attrTypeList));
         document.put("commentList", alertVo.getCommentList());
         document.put("userList", alertVo.getUserIdList());
         document.put("teamList", alertVo.getTeamIdList());

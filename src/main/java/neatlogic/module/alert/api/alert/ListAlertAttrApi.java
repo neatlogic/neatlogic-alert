@@ -81,6 +81,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         int isExpand = jsonObj.getIntValue("isExpand");
         int isCondition = jsonObj.getIntValue("isCondition");
         int isColumn = jsonObj.getIntValue("isColumn");
+        int isSearch = 0;
         List<AlertAttrDefineVo> attrList = new ArrayList<>();
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
             //TODO 逻辑是对的，后面再修改一下写法
@@ -92,11 +93,15 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                 attrList.addAll(AlertAttr.getColumnConstAttrList());
             } else {
                 attrList.addAll(AlertAttr.getSearchConstAttrList());
+                isSearch = 1;
             }
         }
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr")) {
             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
             for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
+                if (isSearch == 1 && !Objects.equals(attrTypeVo.getIsIndex(), 1)) {
+                    continue;
+                }
                 attrList.add(new AlertAttrDefineVo()
                         .setId(attrTypeVo.getId())
                         .setName("attr_" + attrTypeVo.getName())
