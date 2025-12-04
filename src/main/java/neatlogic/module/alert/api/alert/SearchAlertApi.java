@@ -154,13 +154,15 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                 }
             }
             for (AlertAttrTypeVo alertAttrType : alertAttrTypeList) {
-                if (Objects.equals(1, alertAttrType.getIsNormal())) {
-                    theadList.add(new JSONObject() {{
-                        this.put("key", "attr_" + alertAttrType.getName());
-                        this.put("title", alertAttrType.getLabel());
-                    }});
-                } else {
-                    extendAttrKeyList.add("attr_" + alertAttrType.getName());
+                if (Objects.equals(1, alertAttrType.getIsShow())) {
+                    if (Objects.equals(1, alertAttrType.getIsNormal())) {
+                        theadList.add(new JSONObject() {{
+                            this.put("key", "attr_" + alertAttrType.getName());
+                            this.put("title", alertAttrType.getLabel());
+                        }});
+                    } else {
+                        extendAttrKeyList.add("attr_" + alertAttrType.getName());
+                    }
                 }
             }
             //没有视图情况下扩展属性永远在最后显示

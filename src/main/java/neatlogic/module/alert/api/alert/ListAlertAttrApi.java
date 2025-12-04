@@ -102,6 +102,9 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                 if (isSearch == 1 && !Objects.equals(attrTypeVo.getIsIndex(), 1)) {
                     continue;
                 }
+                if (isColumn == 1 && !Objects.equals(attrTypeVo.getIsShow(), 1)) {
+                    continue;
+                }
                 attrList.add(new AlertAttrDefineVo()
                         .setId(attrTypeVo.getId())
                         .setName("attr_" + attrTypeVo.getName())

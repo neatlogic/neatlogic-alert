@@ -54,6 +54,9 @@
             <if test="isIndex != null">
                 and a.is_index = #{isIndex}
             </if>
+            <if test="isShow != null">
+                and a.is_show = #{isShow}
+            </if>
         </where>
     </sql>
 
@@ -68,6 +71,7 @@
                is_tab    as isTab,
                is_row    as isRow,
                is_top    as isTop,
+               is_show   as isShow,
                is_index  as isIndex
         from alert_attrtype
         where name = #{value}
@@ -84,6 +88,7 @@
                is_tab    as isTab,
                is_row    as isRow,
                is_top    as isTop,
+               is_show   as isShow,
                is_index  as isIndex
         from alert_attrtype
         where id = #{value}
@@ -148,6 +153,7 @@
                is_tab    as isTab,
                is_row    as isRow,
                is_top    as isTop,
+               is_show   as isShow,
                is_index  as isIndex
         from alert_attrtype
         where is_active = 1
@@ -167,6 +173,7 @@
         a.is_tab as isTab,
         a.sort as sort,
         a.is_top as isTop,
+        a.is_show as isShow,
         a.is_index as isIndex,
         (select count(1) from alert_enum x where x.attr_type = a.id) as enumCount
         from alert_attrtype a
@@ -204,6 +211,7 @@
          is_tab,
          config,
          is_top,
+         is_show,
          is_index,
          sort)
         values (#{id},
@@ -216,6 +224,7 @@
                 #{isTab},
                 #{configStr, typeHandler=CompressHandler},
                 #{isTop},
+                #{isShow},
                 #{isIndex},
                 #{sort})
         ON DUPLICATE KEY UPDATE name      = #{name},
@@ -226,6 +235,7 @@
                                 is_row    = #{isRow},
                                 is_tab    = #{isTab},
                                 is_top    = #{isTop},
+                                is_show   = #{isShow},
                                 is_index  = #{isIndex},
                                 config    = #{configStr, typeHandler=CompressHandler}
     </insert>
