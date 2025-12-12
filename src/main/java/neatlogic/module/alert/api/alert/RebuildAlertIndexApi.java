@@ -13,7 +13,7 @@
 package neatlogic.module.alert.api.alert;
 
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.auth.ALERT_BASE;
+import neatlogic.framework.alert.auth.ALERT_INDEX;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
@@ -28,7 +28,7 @@ import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
 import org.springframework.stereotype.Service;
 
 @Service
-@AuthAction(action = ALERT_BASE.class)
+@AuthAction(action = ALERT_INDEX.class)
 @OperationType(type = OperationTypeEnum.OPERATE)
 public class RebuildAlertIndexApi extends PrivateApiComponentBase {
 
