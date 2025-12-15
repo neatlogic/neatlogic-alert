@@ -440,9 +440,12 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public void saveOriginAlert(OriginalAlertVo originalAlertVo) {
-        IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
-        indexHandler.createDocument(originalAlertVo);
         alertMapper.insertAlertOrigin(originalAlertVo);
+        AfterTransactionJob<OriginalAlertVo> job = new AfterTransactionJob<>("ORIGINAL_ALERT_INDEX");
+        job.execute(originalAlertVo, _originalAlertVo -> {
+            IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+            indexHandler.createDocument(originalAlertVo);
+        });
     }
 
     @Override
@@ -557,7 +560,9 @@ public class AlertServiceImpl implements IAlertService {
             }
         }
 
-        indexHandler.createDocument(alertVo);
+        //如果创建索引失败，让告警继续正常保存
+        AfterTransactionJob<AlertVo> indexJob = new AfterTransactionJob<>("ALERT_CREATE_INDEX");
+        indexJob.execute(alertVo, indexHandler::createDocument);
 
 
         if (alertVo.getParentAlertVo() == null) {
