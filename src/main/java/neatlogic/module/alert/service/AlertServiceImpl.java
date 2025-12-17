@@ -156,6 +156,10 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public boolean closeAlert(AlertVo alertVo) {
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
+            //先判断告警是否存在，不存在直接返回
+            if (alertMapper.checkAlertIsExists(alertVo.getId()) == 0) {
+                return false;
+            }
             IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
             if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
                 List<AlertVo> childAlertList = alertMapper.getOpenAlertByParentId(alertVo.getId());
@@ -441,11 +445,11 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void saveOriginAlert(OriginalAlertVo originalAlertVo) {
         alertMapper.insertAlertOrigin(originalAlertVo);
-        AfterTransactionJob<OriginalAlertVo> job = new AfterTransactionJob<>("ORIGINAL_ALERT_INDEX");
-        job.execute(originalAlertVo, _originalAlertVo -> {
-            IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
-            indexHandler.createDocument(originalAlertVo);
-        });
+        //AfterTransactionJob<OriginalAlertVo> job = new AfterTransactionJob<>("ORIGINAL_ALERT_INDEX");
+        //job.execute(originalAlertVo, _originalAlertVo -> {
+        IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        indexHandler.createDocument(originalAlertVo);
+        //});
     }
 
     @Override
@@ -560,10 +564,9 @@ public class AlertServiceImpl implements IAlertService {
             }
         }
 
-        //如果创建索引失败，让告警继续正常保存
-        AfterTransactionJob<AlertVo> indexJob = new AfterTransactionJob<>("ALERT_CREATE_INDEX");
-        indexJob.execute(alertVo, indexHandler::createDocument);
-
+        //AfterTransactionJob<AlertVo> indexJob = new AfterTransactionJob<>("ALERT_CREATE_INDEX");
+        //indexJob.execute(alertVo, indexHandler::createDocument);
+        indexHandler.createDocument(alertVo);
 
         if (alertVo.getParentAlertVo() == null) {
             AlertEventManager.doEvent(AlertEventType.ALERT_SAVE, alertVo);

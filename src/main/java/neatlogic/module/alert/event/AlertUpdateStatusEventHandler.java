@@ -45,6 +45,10 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
+        //先判断告警是否存在，不存在直接返回
+        if (alertMapper.checkAlertIsExists(alertVo.getId()) == 0) {
+            return alertVo;
+        }
         JSONObject config = alertEventHandlerVo.getConfig();
         if (config == null) {
             config = new JSONObject();
