@@ -15,7 +15,6 @@ package neatlogic.module.alert.event;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.dto.condition.ConditionGroupVo;
 import neatlogic.framework.alert.dto.condition.ConditionVo;
@@ -27,7 +26,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.event.IAlertEventHandler;
 import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.common.constvalue.InputFrom;
-import neatlogic.framework.exception.core.ApiRuntimeException;
+import neatlogic.framework.util.javascript.JavascriptResult;
 import neatlogic.framework.util.javascript.JavascriptUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,10 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class AlertConditionEventHandler extends AlertEventHandlerBase {
@@ -48,8 +44,6 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
 
-    @Resource
-    private AlertEventMapper alertEventMapper;
 
     @Override
     public int getSort() {
@@ -127,12 +121,13 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                         paramObj.put("define", defineObj);
                         paramObj.put("data", dataObj);
                         paramObj.put("condition", conditionObj);
-                        List<ApiRuntimeException> errorList = new ArrayList<>();
+                        Map<String, JavascriptResult> resultMap = new HashMap<>();
+                        resultObj.put("resultMap", resultMap);
                         try {
-                            isValid = JavascriptUtil.runExpression(paramObj, script.toString(), errorList);
+                            isValid = JavascriptUtil.runExpression(paramObj, script.toString(), resultMap);
                         } catch (Exception ex) {
                             logger.error(ex.getMessage(), ex);
-                            errorList.add(new ApiRuntimeException(ex.getMessage()));
+                            //JavascriptResult.put(new ApiRuntimeException(ex.getMessage()));
                             isValid = false;
                         }
                     }
