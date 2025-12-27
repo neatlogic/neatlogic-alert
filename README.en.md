@@ -45,6 +45,33 @@ Alert views are used to configure alert lists visible to different roles.
 
 ![img.png](README_IMAGES/img_4.png)
 
+### Event-Driven Lifecycle Management
+
+Complex lifecycle management is achieved through event-driven orchestration and coupling.
+
+- Supports 10 types of events, with a framework that provides strong extensibility for event expansion
+- Provides more than 15 event plugins, supporting scenarios such as alert status changes, escalation, assignment, delayed execution, condition evaluation, tagging, and closure. The framework offers strong extensibility for plugin expansion.
+
+![img.png](README_IMAGES/img5.png)
+
+### Alert Topology (Commercial Edition)
+
+Alerts are visualized using topology graphs.
+
+- Supports multiple types of topology elements
+- Supports binding multiple alert data sources to topology elements
+
+![img.png](README_IMAGES/img_7.png)
+![img.png](README_IMAGES/img_6.png)
+
+### Large Model Integration (Commercial Edition)
+
+Alert content is analyzed using large language models.
+
+- Supports both OpenAI and Ollama interfaces
+
+![img.png](README_IMAGES/img_8.png)
+
 ## Feature List
 
 <table>

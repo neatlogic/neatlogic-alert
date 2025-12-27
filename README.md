@@ -47,6 +47,33 @@ neatlogic-alert不能单独部署，也不能单独构建，如需构建和部�
 
 ![img.png](README_IMAGES/img_4.png)
 
+### 事件驱动式生命周期管理
+
+通过事件驱动和纠缠实现复杂的生命周期管理。
+
+- 支持10种事件，框架具备强大的事件扩充能力
+- 提供15多个事件插件，支持告警状态修改、升级、分派、延时执行、条件判断、打标、关闭等场景，框架具备强大的插件扩充能力。
+
+![img.png](README_IMAGES/img5.png)
+
+### 告警拓扑（商业版）
+
+通过拓扑图方式展示告警
+
+- 支持多种拓扑图元
+- 支持绑定多种告警数据到图元
+
+![img.png](README_IMAGES/img_7.png)
+![img.png](README_IMAGES/img_6.png)
+
+### 接入大模型（商业版）
+
+通过大模型解析告警内容
+
+- 支持openai和ollama两种接口
+
+![img.png](README_IMAGES/img_8.png)
+
 ## 功能列表
 
 <table>
