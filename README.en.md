@@ -4,11 +4,14 @@
 
 ## About
 
-**neatlogic-alert** is the Alert Center module, mainly used for centralized collection, processing, and visualization of alerts from multiple sources.  
-**neatlogic-alert** cannot be deployed or built independently. For build and deployment instructions, please refer to the documentation of  
+**neatlogic-alert** is the Alert Center module, mainly used for centralized collection, processing, and visualization of
+alerts from multiple sources.  
+**neatlogic-alert** cannot be deployed or built independently. For build and deployment instructions, please refer to
+the documentation of  
 [neatlogic-itom-all](../../../neatlogic-itom-all/blob/develop3.0.0/README.md).
 
 ## Architecture Diagram
+
 ![img_1.png](README_IMAGES/img_1.png)
 
 ## Main Features
@@ -25,8 +28,12 @@ Configure alert types and adaptors.
 
 ### Alert Event Management
 
-- Currently supported events include: alert ingestion (start event), create alert, alert convergence, sub-alert join, sub-alert removal, update alert status, close alert, open alert, and delete alert. More events may be added as needed in the future.
-- Currently supported plugins include: create alert, assign handler, condition judgment, scheduled execution, email notification, integration invocation, etc. More event plugins may be added in the future, and custom event plugins can also be implemented in custom projects.
+- Currently supported events include: alert ingestion (start event), create alert, alert convergence, sub-alert join,
+  sub-alert removal, update alert status, close alert, open alert, and delete alert. More events may be added as needed
+  in the future.
+- Currently supported plugins include: create alert, assign handler, condition judgment, scheduled execution, email
+  notification, integration invocation, etc. More event plugins may be added in the future, and custom event plugins can
+  also be implemented in custom projects.
 
 ### Extended Attribute Management
 
@@ -50,7 +57,9 @@ Alert views are used to configure alert lists visible to different roles.
 Complex lifecycle management is achieved through event-driven orchestration and coupling.
 
 - Supports 10 types of events, with a framework that provides strong extensibility for event expansion
-- Provides more than 15 event plugins, supporting scenarios such as alert status changes, escalation, assignment, delayed execution, condition evaluation, tagging, and closure. The framework offers strong extensibility for plugin expansion.
+- Provides more than 15 event plugins, supporting scenarios such as alert status changes, escalation, assignment,
+  delayed execution, condition evaluation, tagging, and closure. The framework offers strong extensibility for plugin
+  expansion.
 
 ![img.png](README_IMAGES/img5.png)
 
@@ -181,4 +190,18 @@ Alert content is analyzed using large language models.
         <td>Provides comprehensive APIs for ingestion, querying, processing, and statistics, enabling integration with CMDBs, automation platforms, and monitoring systems.</td>
         <td>✅</td>
     </tr>
+<tr>
+    <td>15</td>
+    <td>Alert Suppression</td>
+    <td>Custom Suppression Policies</td>
+    <td>Supports custom condition-based and time-based suppression of event plugin execution.</td>
+    <td>❌</td>
+</tr>
+<tr>
+    <td>16</td>
+    <td>Alert Subscription</td>
+    <td>Custom Subscriptions</td>
+    <td>Supports subscribing to specific alerts based on custom conditions, with multiple subscription plugins such as email and third-party integrations.</td>
+    <td>❌</td>
+</tr>
 </table>
