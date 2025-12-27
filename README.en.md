@@ -55,8 +55,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>Description</td>
         <td>Open Source</td>
     </tr>
-
-    <!-- Data Ingestion -->
     <tr>
         <td>1</td>
         <td>Data Ingestion</td>
@@ -78,7 +76,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>Adaptors support hot updates and dynamic loading, allowing new alert source types to be added without restarting the system.</td>
         <td>✅</td>
     </tr>
-
     <!-- Alert Processing -->
     <tr>
         <td>4</td>
@@ -101,8 +98,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>Developers can provide new event plugins to extend processing logic and meet special business requirements.</td>
         <td>✅</td>
     </tr>
-
-    <!-- Customization -->
     <tr>
         <td>7</td>
         <td>Customization</td>
@@ -131,8 +126,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>All list and detail pages support configuration of field visibility, ordering, mandatory rules, and validation rules.</td>
         <td>✅</td>
     </tr>
-
-    <!-- Subscription and Suppression -->
     <tr>
         <td>11</td>
         <td>Policy Management</td>
@@ -147,8 +140,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>Supports suppression rules based on time ranges, sources, severity levels, and regular expressions to reduce alert noise.</td>
         <td>❌</td>
     </tr>
-
-    <!-- AI Capabilities -->
     <tr>
         <td>13</td>
         <td>AI Analysis</td>
@@ -156,8 +147,6 @@ Alert views are used to configure alert lists visible to different roles.
         <td>The commercial edition supports integration with large AI models to perform alert classification, pattern recognition, root cause analysis, and provide handling suggestions.</td>
         <td>❌</td>
     </tr>
-
-    <!-- Integration -->
     <tr>
         <td>14</td>
         <td>Integration</td>
