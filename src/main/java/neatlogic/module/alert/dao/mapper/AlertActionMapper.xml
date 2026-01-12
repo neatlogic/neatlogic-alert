@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertActionMapper">
+    <select id="checkAlertActionNameIsExists" parameterType="neatlogic.framework.alert.dto.AlertActionVo"
+            resultType="int">
+        select count(1)
+        from alert_action
+        where name = #{name}
+          and id != #{id}
+    </select>
+
+    <select id="getAlertActionById" parameterType="java.lang.Long"
+            resultType="neatlogic.framework.alert.dto.AlertActionVo">
+        select id,
+               name,
+               label,
+               icon,
+               is_active   as isActive,
+               script      as script,
+               description as description
+        from alert_action
+        where id = #{value}
+    </select>
+
+    <select id="getAlertActionByName" parameterType="java.lang.String"
+            resultType="neatlogic.framework.alert.dto.AlertActionVo">
+        select id,
+               name,
+               label,
+               icon,
+               is_active   as isActive,
+               script      as script,
+               description as description
+        from alert_action
+        where name = #{value}
+    </select>
+
+    <select id="searchAlertAction" parameterType="neatlogic.framework.alert.dto.AlertActionVo"
+            resultType="neatlogic.framework.alert.dto.AlertActionVo">
+        select
+        id,
+        name,
+        label,
+        icon,
+        is_active as isActive,
+        script as script,
+        description as description
+        from alert_action
+        <where>
+            <if test="isActive != null">
+                and is_active = #{isActive}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                name like concat('%', #{keyword}, '%')
+                or
+                label like concat('%',#{keyword}, '%')
+                )
+            </if>
+            <if test="defaultValue != null and defaultValue.size() > 0">
+                and name in
+                <foreach collection="defaultValue" item="item" open="(" close=")" separator=",">#{item}</foreach>
+            </if>
+        </where>
+    </select>
+
+    <update id="updateAlertAction" parameterType="neatlogic.framework.alert.dto.AlertActionVo">
+        update alert_action
+        set name        = #{name},
+            label       = #{label},
+            icon        = #{icon},
+            is_active   = #{isActive},
+            script      = #{script,typeHandler=CompressHandler},
+            description = #{description}
+        where id = #{id}
+    </update>
+
+    <insert id="insertAlertActionRel">
+        insert ignore into alert_action_rel (alert_id, action_name)
+        values (#{alertId}, #{actionName})
+    </insert>
+
+    <insert id="insertAlertAction" parameterType="neatlogic.framework.alert.dto.AlertActionVo">
+        insert into alert_action
+        (id,
+         name,
+         icon,
+         label,
+         is_active,
+         description,
+         script)
+        values (#{id},
+                #{name},
+                #{icon},
+                #{label},
+                #{isActive},
+                #{description},
+                #{script,typeHandler=CompressHandler})
+    </insert>
+
+    <delete id="deleteAlertActionRel">
+        delete
+        from alert_action_rel
+        where alert_id = #{alertId}
+          and action_name = #{actionName}
+    </delete>
+
+</mapper>
