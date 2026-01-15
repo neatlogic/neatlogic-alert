@@ -64,6 +64,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
         JSONObject resultObj = new JSONObject();
+        alertEventHandlerAuditVo.setResult(resultObj);
         if (config == null) {
             config = new JSONObject();
         }
@@ -107,6 +108,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                         paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
                     }
                 }
+                resultObj.put("sourceParam", paramObj);
                 for (int i = 0; i < paramMapping.size(); i++) {
                     JSONObject mapping = paramMapping.getJSONObject(i);
                     //尝试把转换好的数据转换成对象或数组，不行才当字符串处理
@@ -123,6 +125,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                     }
                 }
             }
+            resultObj.put("param", integrationParam);
             integrationVo.setParamObj(integrationParam);
             IntegrationResultVo resultVo = handler.sendRequest(integrationVo, FrameworkRequestFrom.API);
             String resultJson = resultVo.getTransformedResult();
@@ -160,7 +163,6 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
                 }
             }
         }
-        alertEventHandlerAuditVo.setResult(resultObj);
         return alertVo;
     }
 
