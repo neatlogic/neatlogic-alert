@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -152,18 +151,34 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
         //告警时间
         if (alertVo.getUpdateTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            Query query = Query.of(q -> q.range(r -> r
+            /*Query query = Query.of(q -> q.range(r -> r
                     .field("updateTime")
                     .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
+            ));*/
+            long gte = now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000;
+
+            Query query = Query.of(q -> q.range(r -> r
+                    .untyped(u -> u
+                            .field("updateTime")
+                            .gte(JsonData.of(gte))
+                    )
             ));
+
             boolQueryBuilder.must(query);
         }
         //删除时间
         if (alertVo.getDeleteTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            Query query = Query.of(q -> q.range(r -> r
+            /*Query query = Query.of(q -> q.range(r -> r
                     .field("deleteTime")
                     .gte(JsonData.of(now - (long) alertVo.getDeleteTimeHour() * 60 * 60 * 1000)) // 开始时间
+            ));*/
+
+            Query query = Query.of(q -> q.range(r -> r
+                    .untyped(u -> u
+                            .field("updateTime")
+                            .gte(JsonData.of(now - (long) alertVo.getDeleteTimeHour() * 60 * 60 * 1000))
+                    )
             ));
             boolQueryBuilder.must(query);
         }
@@ -206,12 +221,12 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
     }
 
     protected boolean isDocumentExists(AlertTrashVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        ExistsRequest existsRequest = new ExistsRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            ExistsRequest existsRequest = new ExistsRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             BooleanResponse response = client.exists(existsRequest);
             return response.value(); // t
         } catch (Exception ex) {
@@ -240,12 +255,12 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
 
     @Override
     protected AlertTrashVo myGetDocument(AlertTrashVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        GetRequest existsRequest = new GetRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            GetRequest existsRequest = new GetRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             GetResponse<JSONObject> response = client.get(existsRequest, JSONObject.class);
             JSONObject returnObj = response.source();
             return JSON.toJavaObject(returnObj, AlertTrashVo.class);// t
@@ -291,10 +306,11 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
             }
         }
         CreateIndexRequest request = esBuilder.build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.indices().create(request);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
     }
@@ -305,8 +321,9 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
                 .index(getIndexName())
                 .id(targetId.toString())
                 .build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.delete(deleteRequest);
         } catch (Exception e) {
             throw new ElasticSearchDeleteDocumentException(e);

@@ -13,7 +13,6 @@
 package neatlogic.module.alert.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
 import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
@@ -39,6 +38,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -68,7 +70,7 @@ public class AlertDeleteHandler {
     }
 
 
-    private void deleteAlertByIdList(Long alertId) throws IOException {
+    private void deleteAlertByIdList(Long alertId) throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
         IElasticsearchIndex<OriginalAlertVo> index_origin = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
         //修改formAlertId等于当前id的文档
@@ -77,7 +79,16 @@ public class AlertDeleteHandler {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (Long toAlertId : toAlertIdList) {
-                bulkRequestBuilder.operations(op -> op.update(u -> u.index(index.getIndexName()).id(toAlertId.toString()).action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))));
+                /*bulkRequestBuilder.operations(op -> op.update(u -> u.index(index.getIndexName()).id(toAlertId.toString())
+                        .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))));*/
+                bulkRequestBuilder.operations(op -> op.update(u -> u
+                        .index(index.getIndexName())
+                        .id(toAlertId.toString())
+                        .action(a -> a.script(Script.of(s -> s
+                                .lang("painless")
+                                .source("ctx._source.remove('fromAlertId')")
+                        )))
+                ));
             }
             // 执行批量请求
             BulkRequest bulkRequest = bulkRequestBuilder.build();

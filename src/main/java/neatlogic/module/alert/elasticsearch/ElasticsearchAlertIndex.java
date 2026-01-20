@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -172,10 +171,18 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         //告警时间
         if (alertVo.getUpdateTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            Query query = Query.of(q -> q.range(r -> r
+            /*Query query = Query.of(q -> q.range(r -> r
                     .field("updateTime")
                     .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000))
+            ));*/
+
+            Query query = Query.of(q -> q.range(r -> r
+                    .untyped(u -> u
+                            .field("updateTime")
+                            .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000))
+                    )
             ));
+
             boolQueryBuilder.must(query);
         }
         //告警状态
@@ -302,10 +309,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    Query.of(q -> q.range(r -> r
+                                                    /*Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gt(JsonData.of(values.getString(0)))
-                                                    ))
+                                                    ))*/
+                                                    Query.of(q -> q.range(r -> r.untyped(u -> u
+                                                            .field(transformField(field))
+                                                            .gt(JsonData.of(values.getString(0)))
+                                                    )))
                                             ))
                                             .build();
                                 }
@@ -314,10 +325,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    Query.of(q -> q.range(r -> r
+                                                    /*Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .lt(JsonData.of(values.getString(0)))
-                                                    ))
+                                                    ))*/
+                                                    Query.of(q -> q.range(r -> r.untyped(u -> u
+                                                            .field(transformField(field))
+                                                            .lt(JsonData.of(values.getString(0)))
+                                                    )))
                                             ))
                                             .build();
                                 }
@@ -326,10 +341,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    Query.of(q -> q.range(r -> r
+                                                    /*Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0)))
-                                                    ))
+                                                    ))*/
+                                                    Query.of(q -> q.range(r -> r.untyped(u -> u
+                                                            .field(transformField(field))
+                                                            .gte(JsonData.of(values.getString(0)))
+                                                    )))
                                             ))
                                             .build();
                                 }
@@ -338,10 +357,14 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    Query.of(q -> q.range(r -> r
+                                                    /*Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .lte(JsonData.of(values.getString(0)))
-                                                    ))
+                                                    ))*/
+                                                    Query.of(q -> q.range(r -> r.untyped(u -> u
+                                                            .field(transformField(field))
+                                                            .lte(JsonData.of(values.getString(0)))
+                                                    )))
                                             ))
                                             .build();
                                 }
@@ -368,11 +391,16 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (values.size() == 2) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    Query.of(q -> q.range(r -> r
+                                                    /*Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0))) // 开始时间
                                                             .lte(JsonData.of(values.getString(1))) // 结束时间
-                                                    ))
+                                                    ))*/
+                                                    Query.of(q -> q.range(r -> r.untyped(u -> u
+                                                            .field(transformField(field))
+                                                            .gte(JsonData.of(values.getString(0))) // 开始时间
+                                                            .lte(JsonData.of(values.getString(1))) // 结束时间
+                                                    )))
                                             ))
                                             .build();
                                 }
@@ -469,12 +497,12 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
     }
 
     protected boolean isDocumentExists(AlertVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        ExistsRequest existsRequest = new ExistsRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            ExistsRequest existsRequest = new ExistsRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             BooleanResponse response = client.exists(existsRequest);
             return response.value(); // t
         } catch (Exception ex) {
@@ -508,12 +536,12 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
 
     @Override
     protected AlertVo myGetDocument(AlertVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        GetRequest existsRequest = new GetRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            GetRequest existsRequest = new GetRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             GetResponse<JSONObject> response = client.get(existsRequest, JSONObject.class);
             JSONObject returnObj = response.source();
             return JSON.toJavaObject(returnObj, AlertVo.class);// t
@@ -562,10 +590,11 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
             }
         }
         CreateIndexRequest request = esBuilder.build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.indices().create(request);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
     }
@@ -576,8 +605,9 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                 .index(getIndexName())
                 .id(targetId.toString())
                 .build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.delete(deleteRequest);
         } catch (Exception e) {
             throw new ElasticSearchDeleteDocumentException(e);

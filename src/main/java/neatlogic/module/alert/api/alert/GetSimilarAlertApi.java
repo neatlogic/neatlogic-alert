@@ -33,6 +33,9 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
@@ -64,7 +67,7 @@ public class GetSimilarAlertApi extends PrivateApiComponentBase {
     })
     @Description(desc = "获取告警详情")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws IOException {
+    public Object myDoService(JSONObject jsonObj) throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         ElasticsearchClient client = ElasticsearchClientFactory.getClient();
         Query query = new Query.Builder()
                 .moreLikeThis(new MoreLikeThisQuery.Builder()

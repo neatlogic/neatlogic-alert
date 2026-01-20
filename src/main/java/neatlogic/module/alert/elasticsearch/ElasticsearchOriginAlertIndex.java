@@ -19,7 +19,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.json.JsonData;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -38,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -131,6 +129,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
         }
 
         if (CollectionUtils.isNotEmpty(alertVo.getTimeRange())) {
+            /*
             boolQuery.filter(f -> f.range(r -> {
                 r.field("time");
                 r.gte(JsonData.of(alertVo.getTimeRange().get(0)));
@@ -138,7 +137,17 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                     r.lte(JsonData.of(alertVo.getTimeRange().get(1)));
                 }
                 return r;
-            }));
+            }));*/
+            boolQuery.filter(f -> f.range(r -> r
+                    .date(d -> {
+                        d.field("time")
+                                .gte(alertVo.getTimeRange().get(0));
+                        if (alertVo.getTimeRange().size() > 1) {
+                            d.lte(alertVo.getTimeRange().get(1));
+                        }
+                        return d;
+                    })
+            ));
             hasCondition = true;
         }
         if (hasCondition) {
@@ -149,12 +158,12 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
     }
 
     protected boolean isDocumentExists(OriginalAlertVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        ExistsRequest existsRequest = new ExistsRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            ExistsRequest existsRequest = new ExistsRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             BooleanResponse response = client.exists(existsRequest);
             return response.value(); // t
         } catch (Exception ex) {
@@ -182,12 +191,12 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
 
     @Override
     protected OriginalAlertVo myGetDocument(OriginalAlertVo alertVo) {
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
-        GetRequest existsRequest = new GetRequest.Builder()
-                .index(this.getIndexName())
-                .id(alertVo.getId().toString())
-                .build();
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            GetRequest existsRequest = new GetRequest.Builder()
+                    .index(this.getIndexName())
+                    .id(alertVo.getId().toString())
+                    .build();
             GetResponse<JSONObject> response = client.get(existsRequest, JSONObject.class);
             JSONObject returnObj = response.source();
             return JSON.toJavaObject(returnObj, OriginalAlertVo.class);// t
@@ -228,10 +237,11 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
             }
         }
         CreateIndexRequest request = esBuilder.build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.indices().create(request);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
     }
@@ -242,8 +252,9 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                 .index(getIndexName())
                 .id(targetId.toString())
                 .build();
-        ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+
         try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             client.delete(deleteRequest);
         } catch (Exception e) {
             throw new ElasticSearchDeleteDocumentException(e);
