@@ -127,7 +127,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
                             isValid = JavascriptUtil.runExpression(paramObj, script.toString(), resultMap);
                         } catch (Exception ex) {
                             logger.warn(ex.getMessage(), ex);
-                            //JavascriptResult.put(new ApiRuntimeException(ex.getMessage()));
+                            resultObj.put("error", ex.getMessage());
                             isValid = false;
                         }
                     }
