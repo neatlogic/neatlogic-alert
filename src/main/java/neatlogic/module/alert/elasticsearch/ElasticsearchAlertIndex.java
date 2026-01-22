@@ -171,17 +171,19 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
         //告警时间
         if (alertVo.getUpdateTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            /*Query query = Query.of(q -> q.range(r -> r
+            /*es7*/
+            Query query = Query.of(q -> q.range(r -> r
                     .field("updateTime")
                     .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000))
-            ));*/
-
+            ));
+            /*es8
             Query query = Query.of(q -> q.range(r -> r
                     .untyped(u -> u
                             .field("updateTime")
                             .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000))
                     )
             ));
+             */
 
             boolQueryBuilder.must(query);
         }
@@ -309,14 +311,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    /*Query.of(q -> q.range(r -> r
+                                                    /*es7*/
+                                                    Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gt(JsonData.of(values.getString(0)))
-                                                    ))*/
+                                                    ))
+                                                    /*es8
                                                     Query.of(q -> q.range(r -> r.untyped(u -> u
                                                             .field(transformField(field))
                                                             .gt(JsonData.of(values.getString(0)))
                                                     )))
+                                                     */
                                             ))
                                             .build();
                                 }
@@ -325,14 +330,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    /*Query.of(q -> q.range(r -> r
+                                                    /*es7*/
+                                                    Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .lt(JsonData.of(values.getString(0)))
-                                                    ))*/
+                                                    ))
+                                                    /*es8
                                                     Query.of(q -> q.range(r -> r.untyped(u -> u
                                                             .field(transformField(field))
                                                             .lt(JsonData.of(values.getString(0)))
                                                     )))
+                                                     */
                                             ))
                                             .build();
                                 }
@@ -341,14 +349,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    /*Query.of(q -> q.range(r -> r
+                                                    /*es7*/
+                                                    Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0)))
-                                                    ))*/
+                                                    ))
+                                                    /*es8
                                                     Query.of(q -> q.range(r -> r.untyped(u -> u
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0)))
                                                     )))
+                                                     */
                                             ))
                                             .build();
                                 }
@@ -357,14 +368,17 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (CollectionUtils.isNotEmpty(values)) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    /*Query.of(q -> q.range(r -> r
+                                                    /*es7*/
+                                                    Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .lte(JsonData.of(values.getString(0)))
-                                                    ))*/
+                                                    ))
+                                                    /*es8
                                                     Query.of(q -> q.range(r -> r.untyped(u -> u
                                                             .field(transformField(field))
                                                             .lte(JsonData.of(values.getString(0)))
                                                     )))
+                                                     */
                                             ))
                                             .build();
                                 }
@@ -391,16 +405,19 @@ public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
                                 if (values.size() == 2) {
                                     query = new Query.Builder()
                                             .bool(b -> b.must(
-                                                    /*Query.of(q -> q.range(r -> r
+                                                    /*es7*/
+                                                    Query.of(q -> q.range(r -> r
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0))) // 开始时间
                                                             .lte(JsonData.of(values.getString(1))) // 结束时间
-                                                    ))*/
+                                                    ))
+                                                    /*es8
                                                     Query.of(q -> q.range(r -> r.untyped(u -> u
                                                             .field(transformField(field))
                                                             .gte(JsonData.of(values.getString(0))) // 开始时间
                                                             .lte(JsonData.of(values.getString(1))) // 结束时间
                                                     )))
+                                                     */
                                             ))
                                             .build();
                                 }
