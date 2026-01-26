@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 public interface AlertMapper {
+    int getAlertCountByIdList(@Param("idList") List<Long> idList);
+
     List<Long> getIsDeleteAlertIdList(@Param("id") Long id, @Param("deleteBatch") Long deleteBatch, @Param("limit") Integer limit);
 
     List<AlertTeamVo> getAlertTeamByAlertId(Long alertId);

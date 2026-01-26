@@ -4,6 +4,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertMapper">
 
+    <select id="getAlertCountByIdList" resultType="int">
+        select count(1) from alert where id in
+        <foreach collection="idList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 
     <select id="getIsDeleteAlertIdList" resultType="java.lang.Long">
         select id
