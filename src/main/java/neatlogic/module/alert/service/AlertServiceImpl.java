@@ -37,7 +37,10 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -72,6 +75,12 @@ public class AlertServiceImpl implements IAlertService {
 
     @Resource
     private AlertMarkMapper alertMarkMapper;
+    @Resource
+    private ApplicationContext applicationContext;
+
+    private IAlertService getProxy() {
+        return applicationContext.getBean(IAlertService.class);
+    }
 
     private boolean updateAlertMark(AlertVo alertVo) {
         alertMarkMapper.deleteAlertAlertMarkByAlertId(alertVo.getId());
@@ -152,6 +161,7 @@ public class AlertServiceImpl implements IAlertService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean closeAlert(AlertVo alertVo) {
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 1)) {
             //先判断告警是否存在，不存在直接返回
@@ -163,7 +173,7 @@ public class AlertServiceImpl implements IAlertService {
                 List<AlertVo> childAlertList = alertMapper.getOpenAlertByParentId(alertVo.getId());
                 if (CollectionUtils.isNotEmpty(childAlertList)) {
                     for (AlertVo childAlertVo : childAlertList) {
-                        this.closeAlert(childAlertVo);
+                        getProxy().closeAlert(childAlertVo);
                     }
                 }
             }
@@ -301,7 +311,7 @@ public class AlertServiceImpl implements IAlertService {
         if (Objects.equals(1, alertVo.getIsClose())) {
             //需要传入旧告警，否则会导致判断状态错误而不执行
             oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());
-            hasChange = closeAlert(oldAlertVo);
+            hasChange = getProxy().closeAlert(oldAlertVo);
         } else if (Objects.equals(0, alertVo.getIsClose())) {
             //需要传入旧告警，否则会导致判断状态错误而不执行
             oldAlertVo.setIsCloseChildAlert(alertVo.getIsCloseChildAlert());

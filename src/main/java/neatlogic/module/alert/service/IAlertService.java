@@ -16,6 +16,7 @@ import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public interface IAlertService {
 
     boolean openAlert(AlertVo alertVo);
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     boolean closeAlert(AlertVo alertVo);
 
     void deleteAlert(List<Long> alertIdList, boolean isDeleteChildAlert);
