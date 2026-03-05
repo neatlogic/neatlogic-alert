@@ -13,7 +13,6 @@
 package neatlogic.module.alert.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
 import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
@@ -80,10 +79,11 @@ public class AlertDeleteHandler {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (Long toAlertId : toAlertIdList) {
-                /*es7*/
+                /*es7
                 bulkRequestBuilder.operations(op -> op.update(u -> u.index(index.getIndexName()).id(toAlertId.toString())
                         .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))));
-                /*es8
+                */
+                /*es8*/
                 bulkRequestBuilder.operations(op -> op.update(u -> u
                         .index(index.getIndexName())
                         .id(toAlertId.toString())
@@ -91,7 +91,7 @@ public class AlertDeleteHandler {
                                 .lang("painless")
                                 .source("ctx._source.remove('fromAlertId')")
                         )))
-                ));*/
+                ));
             }
             // 执行批量请求
             BulkRequest bulkRequest = bulkRequestBuilder.build();

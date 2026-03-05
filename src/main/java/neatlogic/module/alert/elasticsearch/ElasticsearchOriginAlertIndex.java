@@ -19,7 +19,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.json.JsonData;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -130,7 +129,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
         }
 
         if (CollectionUtils.isNotEmpty(alertVo.getTimeRange())) {
-            /*es7*/
+            /*es7
             boolQuery.filter(f -> f.range(r -> {
                 r.field("time");
                 r.gte(JsonData.of(alertVo.getTimeRange().get(0)));
@@ -138,8 +137,8 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                     r.lte(JsonData.of(alertVo.getTimeRange().get(1)));
                 }
                 return r;
-            }));
-            /*es8
+            }));*/
+            /*es8*/
             boolQuery.filter(f -> f.range(r -> r
                     .date(d -> {
                         d.field("time")
@@ -150,7 +149,7 @@ public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<Origin
                         return d;
                     })
             ));
-             */
+
             hasCondition = true;
         }
         if (hasCondition) {
