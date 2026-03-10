@@ -27,7 +27,7 @@ import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentBase;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class ElasticsearchOriginAlertIndex extends ElasticsearchIndexBase<OriginalAlertVo> {
+public class ElasticsearchOriginAlertIndex extends ElasticsearchDocumentBase<OriginalAlertVo> {
     static Logger logger = LoggerFactory.getLogger(ElasticsearchOriginAlertIndex.class);
 
 

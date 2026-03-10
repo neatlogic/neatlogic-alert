@@ -34,7 +34,7 @@ import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentBase;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
@@ -52,7 +52,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class ElasticsearchAlertIndex extends ElasticsearchIndexBase<AlertVo> {
+public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> {
     static Logger logger = LoggerFactory.getLogger(ElasticsearchAlertIndex.class);
 
     @Resource

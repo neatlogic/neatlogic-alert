@@ -28,8 +28,8 @@ import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
 import neatlogic.framework.lock.dao.mapper.LockMapper;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
 import neatlogic.module.alert.dao.mapper.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -92,7 +92,7 @@ public class AlertServiceImpl implements IAlertService {
                 alertMarkMapper.insertAlertAlertMark(alertVo.getId(), markVo.getUuid());
             }
         }
-        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
         index.updateDocument(alertVo.getId(), new JSONObject() {{
             this.put("markList", alertVo.getMarkNameList());
         }}, false);
@@ -112,7 +112,7 @@ public class AlertServiceImpl implements IAlertService {
         }
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             alertMapper.updateAlertStatus(alertVo);
-            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("status", alertVo.getStatus());
             }}, false);
@@ -135,7 +135,7 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public boolean openAlert(AlertVo alertVo) {
         if (alertVo != null && !Objects.equals(alertVo.getIsClose(), 0)) {
-            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
             if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
                 List<AlertVo> childAlertList = alertMapper.getCloseAlertByParentId(alertVo.getId());
                 if (CollectionUtils.isNotEmpty(childAlertList)) {
@@ -168,7 +168,7 @@ public class AlertServiceImpl implements IAlertService {
             if (alertMapper.checkAlertIsExists(alertVo.getId()) == 0) {
                 return false;
             }
-            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
             if (Objects.equals(1, alertVo.getIsCloseChildAlert())) {
                 List<AlertVo> childAlertList = alertMapper.getOpenAlertByParentId(alertVo.getId());
                 if (CollectionUtils.isNotEmpty(childAlertList)) {
@@ -437,7 +437,7 @@ public class AlertServiceImpl implements IAlertService {
         }
 
         if (hasChange) {
-            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT");
             indexHandler.createDocument(alertVo.getId());
         }
     }
@@ -455,7 +455,7 @@ public class AlertServiceImpl implements IAlertService {
         alertMapper.insertAlertOrigin(originalAlertVo);
         //AfterTransactionJob<OriginalAlertVo> job = new AfterTransactionJob<>("ORIGINAL_ALERT_INDEX");
         //job.execute(originalAlertVo, _originalAlertVo -> {
-        IElasticsearchIndex<OriginalAlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        IElasticsearchDocument<OriginalAlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT_ORIGINAL");
         indexHandler.createDocument(originalAlertVo);
         //});
     }
@@ -463,7 +463,7 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void saveAlertTrash(AlertTrashVo alertVo) {
         alertVo.setDeleteUser(UserContext.get().getUserUuid(true));
-        IElasticsearchIndex<AlertTrashVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT_TRASH");
+        IElasticsearchDocument<AlertTrashVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT_TRASH");
         alertTrashMapper.insertAlertTrash(alertVo);
         if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
             alertTrashMapper.saveAlertTrashAttr(alertVo);
@@ -477,7 +477,7 @@ public class AlertServiceImpl implements IAlertService {
         /*if (isSerial && StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             lockMapper.getMysqlLock(alertVo.getUniqueKey(), 30);
         }*/
-        IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+        IElasticsearchDocument<AlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT");
         AlertVo parentAlertVo = null;
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
             int inserted = alertMapper.insertAlertParentUniqueKey(alertVo.getId(), alertVo.getUniqueKey());
@@ -593,13 +593,13 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public long searchAlertCount(AlertVo alertVo) {
-        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
         return index.searchDocumentCount(alertVo);
     }
 
     @Override
     public List<AlertTrashVo> searchAlertTrash(AlertTrashVo alertTrashVo) {
-        IElasticsearchIndex<AlertTrashVo> index = ElasticsearchIndexFactory.getIndex("ALERT_TRASH");
+        IElasticsearchDocument<AlertTrashVo> index = ElasticsearchDocumentFactory.getIndex("ALERT_TRASH");
         IndexResultVo indexResultVo = index.searchDocument(alertTrashVo, alertTrashVo.getCurrentPage(), alertTrashVo.getPageSize());
         if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
             alertTrashVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
@@ -616,7 +616,7 @@ public class AlertServiceImpl implements IAlertService {
         if (CollectionUtils.isNotEmpty(alertVo.getIdList())) {
             return alertMapper.getAlertByIdList(alertVo);
         } else {
-            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
             IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
             if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
                 alertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
@@ -635,7 +635,7 @@ public class AlertServiceImpl implements IAlertService {
 
     @Override
     public List<OriginalAlertVo> searchOriginAlert(OriginalAlertVo originalAlertVo) {
-        IElasticsearchIndex<OriginalAlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        IElasticsearchDocument<OriginalAlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT_ORIGINAL");
         IndexResultVo indexResultVo = index.searchDocument(originalAlertVo, originalAlertVo.getCurrentPage(), originalAlertVo.getPageSize());
         if (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
             originalAlertVo.setIdList(indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList()));
