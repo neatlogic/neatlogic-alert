@@ -18,8 +18,8 @@ import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMarkMapper;
@@ -130,7 +130,7 @@ public class AlertUnMarkEventHandler extends AlertEventHandlerBase {
             alertAuditVo.setNewValueList(newMarkObjList);
             alertAuditMapper.insertAlertAudit(alertAuditVo);
 
-            IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("markList", newMarkObjList);
             }}, false);

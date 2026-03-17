@@ -30,7 +30,7 @@ import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexBase;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentBase;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertTrashMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @Component
-public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTrashVo> {
+public class ElasticsearchAlertTrashIndex extends ElasticsearchDocumentBase<AlertTrashVo> {
     static Logger logger = LoggerFactory.getLogger(ElasticsearchAlertTrashIndex.class);
 
 
@@ -151,12 +151,12 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
         //告警时间
         if (alertVo.getUpdateTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            /*es7*/
+            /*es7
             Query query = Query.of(q -> q.range(r -> r
                     .field("updateTime")
                     .gte(JsonData.of(now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000)) // 开始时间
-            ));
-            /*es8
+            ));*/
+            /*es8*/
             long gte = now - (long) alertVo.getUpdateTimeHour() * 60 * 60 * 1000;
             Query query = Query.of(q -> q.range(r -> r
                     .untyped(u -> u
@@ -164,26 +164,26 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchIndexBase<AlertTr
                             .gte(JsonData.of(gte))
                     )
             ));
-             */
+
 
             boolQueryBuilder.must(query);
         }
         //删除时间
         if (alertVo.getDeleteTimeHour() > 0) {
             long now = System.currentTimeMillis();
-            /*es7*/
+            /*es7
             Query query = Query.of(q -> q.range(r -> r
                     .field("deleteTime")
                     .gte(JsonData.of(now - (long) alertVo.getDeleteTimeHour() * 60 * 60 * 1000)) // 开始时间
-            ));
-            /*es8
+            ));*/
+
+            /*es8 */
             Query query = Query.of(q -> q.range(r -> r
                     .untyped(u -> u
                             .field("updateTime")
                             .gte(JsonData.of(now - (long) alertVo.getDeleteTimeHour() * 60 * 60 * 1000))
                     )
             ));
-             */
             boolQueryBuilder.must(query);
         }
         //删除用户

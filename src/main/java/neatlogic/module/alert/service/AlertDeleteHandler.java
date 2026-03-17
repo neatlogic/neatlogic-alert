@@ -13,7 +13,6 @@
 package neatlogic.module.alert.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.InlineScript;
 import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
@@ -28,8 +27,8 @@ import neatlogic.framework.asynchronization.taskmanager.AsyncTaskManager;
 import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteFieldException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -72,18 +71,19 @@ public class AlertDeleteHandler {
 
 
     private void deleteAlertByIdList(Long alertId) throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
-        IElasticsearchIndex<OriginalAlertVo> index_origin = ElasticsearchIndexFactory.getIndex("ALERT_ORIGINAL");
+        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
+        IElasticsearchDocument<OriginalAlertVo> index_origin = ElasticsearchDocumentFactory.getIndex("ALERT_ORIGINAL");
         //修改formAlertId等于当前id的文档
         List<Long> toAlertIdList = alertMapper.listToAlertIdByFromAlertId(alertId);
         if (CollectionUtils.isNotEmpty(toAlertIdList)) {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (Long toAlertId : toAlertIdList) {
-                /*es7*/
+                /*es7
                 bulkRequestBuilder.operations(op -> op.update(u -> u.index(index.getIndexName()).id(toAlertId.toString())
                         .action(a -> a.script(Script.of(s -> s.inline(InlineScript.of(i -> i.source("ctx._source.remove('fromAlertId')"))))))));
-                /*es8
+                */
+                /*es8*/
                 bulkRequestBuilder.operations(op -> op.update(u -> u
                         .index(index.getIndexName())
                         .id(toAlertId.toString())
@@ -91,7 +91,7 @@ public class AlertDeleteHandler {
                                 .lang("painless")
                                 .source("ctx._source.remove('fromAlertId')")
                         )))
-                ));*/
+                ));
             }
             // 执行批量请求
             BulkRequest bulkRequest = bulkRequestBuilder.build();

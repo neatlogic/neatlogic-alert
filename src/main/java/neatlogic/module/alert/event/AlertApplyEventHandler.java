@@ -21,8 +21,8 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -99,7 +99,7 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                     alertAuditMapper.insertAlertAudit(alertAuditVo);
                 }
             }
-            IElasticsearchIndex<AlertVo> indexHandler = ElasticsearchIndexFactory.getIndex("ALERT");
+            IElasticsearchDocument<AlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT");
             indexHandler.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("userList", userIdList);
                 this.put("teamList", teamIdList);

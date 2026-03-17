@@ -30,8 +30,8 @@ import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.AlertDeleteHandler;
 import neatlogic.module.alert.service.IAlertService;
@@ -109,7 +109,7 @@ public class DeleteAlertApi extends PrivateApiComponentBase {
                     alertVo.setCurrentPage(1);
                     alertVo.setPageSize(limit);
                     alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
-                    IElasticsearchIndex<AlertVo> index = ElasticsearchIndexFactory.getIndex("ALERT");
+                    IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
                     IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
                     while (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
                         List<Long> alertIdList = indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList());

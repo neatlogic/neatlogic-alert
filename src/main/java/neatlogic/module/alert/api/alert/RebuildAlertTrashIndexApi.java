@@ -23,8 +23,8 @@ import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.framework.store.elasticsearch.ElasticsearchIndexFactory;
-import neatlogic.framework.store.elasticsearch.IElasticsearchIndex;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -55,7 +55,7 @@ public class RebuildAlertTrashIndexApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         Long id = jsonObj.getLong("id");
-        IElasticsearchIndex<AlertTrashVo> index = ElasticsearchIndexFactory.getIndex("ALERT_TRASH");
+        IElasticsearchDocument<AlertTrashVo> index = ElasticsearchDocumentFactory.getIndex("ALERT_TRASH");
         index.deleteDocument(id);
         index.createDocument(id);
         return null;
