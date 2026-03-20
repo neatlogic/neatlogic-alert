@@ -517,7 +517,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         try {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             ExistsRequest existsRequest = new ExistsRequest.Builder()
-                    .index(this.getIndexName())
+                    .index(this.getCurrentIndexName())
                     .id(alertVo.getId().toString())
                     .build();
             BooleanResponse response = client.exists(existsRequest);
@@ -556,7 +556,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         try {
             ElasticsearchClient client = ElasticsearchClientFactory.getClient();
             GetRequest existsRequest = new GetRequest.Builder()
-                    .index(this.getIndexName())
+                    .index(this.getCurrentIndexName())
                     .id(alertVo.getId().toString())
                     .build();
             GetResponse<JSONObject> response = client.get(existsRequest, JSONObject.class);
@@ -571,7 +571,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
     @Override
     protected void myCreateIndex(ElasticsearchVo elasticsearchVo) {
         CreateIndexRequest.Builder esBuilder = new CreateIndexRequest.Builder()
-                .index(this.getIndexName())
+                .index(this.getCurrentIndexName())
                 .settings(s -> s
                         .analysis(a -> a
                                 .normalizer("lowercase_normalizer", n -> n
@@ -619,7 +619,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
     @Override
     protected void myDeleteDocument(Long targetId) {
         DeleteRequest deleteRequest = new DeleteRequest.Builder()
-                .index(getIndexName())
+                .index(this.getCurrentIndexName())
                 .id(targetId.toString())
                 .build();
 

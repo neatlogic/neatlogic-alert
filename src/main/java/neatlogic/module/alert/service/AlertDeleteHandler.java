@@ -85,7 +85,7 @@ public class AlertDeleteHandler {
                 */
                 /*es8*/
                 bulkRequestBuilder.operations(op -> op.update(u -> u
-                        .index(index.getIndexName())
+                        .index(index.getIndexName(index.getName()))
                         .id(toAlertId.toString())
                         .action(a -> a.script(Script.of(s -> s
                                 .lang("painless")
