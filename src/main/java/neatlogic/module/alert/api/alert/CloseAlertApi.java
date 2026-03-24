@@ -33,6 +33,8 @@ import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
+import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
+import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -148,6 +150,9 @@ public class CloseAlertApi extends PrivateApiComponentBase {
                 }
             }
         }
+        //刷新一次索引
+        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
+        index.refresh();
         return null;
     }
 
