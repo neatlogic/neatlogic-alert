@@ -41,7 +41,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -50,7 +49,6 @@ import java.util.Objects;
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.UPDATE)
-@Transactional
 public class CloseAlertApi extends PrivateApiComponentBase {
     private final Logger logger = LoggerFactory.getLogger(CloseAlertApi.class);
     @Resource
