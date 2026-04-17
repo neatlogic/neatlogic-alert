@@ -90,6 +90,7 @@ public class DownloadAlertAttrCsvApi extends PrivateBinaryStreamApiComponentBase
         response.setContentType("text/csv;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment; filename=\"data.csv\"");
         response.getOutputStream().write(("\uFEFF" + csvContent).getBytes(StandardCharsets.UTF_8));
+        response.flushBuffer();
         return null;
     }
 }
