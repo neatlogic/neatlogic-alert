@@ -13,6 +13,7 @@
 package neatlogic.module.alert.api.alert;
 
 import com.alibaba.fastjson.JSONObject;
+import neatlogic.framework.alert.attr.freemarker.AlertAttrFreemarkerSnippetFactory;
 import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertAttrDefineVo;
 import neatlogic.framework.alert.dto.AlertAttrTypeVo;
@@ -113,6 +114,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                         .setType(attrTypeVo.getType())
                         .setExpressionList(attrTypeVo.getExpressionList())
                         .setConfig(attrTypeVo.getConfig())
+                        .setFreemarkerSnippet(AlertAttrFreemarkerSnippetFactory.getFreemarkerSnippet(attrTypeVo))
                         .setWholeRow(Objects.equals(1, attrTypeVo.getIsRow()))
                         .setIsTab(Objects.equals(1, attrTypeVo.getIsTab()))
                         .setIsTop(attrTypeVo.getIsTop()));
