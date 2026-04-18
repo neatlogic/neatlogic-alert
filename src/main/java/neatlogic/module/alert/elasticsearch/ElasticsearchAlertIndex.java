@@ -188,28 +188,34 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
             boolQueryBuilder.must(query);
         }
         //告警状态
-        if (StringUtils.isNotBlank(alertVo.getStatus())) {
-            Query query = Query.of(q -> q.term(r -> r
+        if (CollectionUtils.isNotEmpty(alertVo.getStatusList())) {
+            List<FieldValue> values = alertVo.getStatusList().stream()
+                    .map(FieldValue::of)
+                    .collect(Collectors.toList());
+            boolQueryBuilder.must(Query.of(q -> q.terms(t -> t
                     .field("status")
-                    .value(alertVo.getStatus()) // 开始时间
-            ));
-            boolQueryBuilder.must(query);
+                    .terms(v -> v.value(values))
+            )));
         }
         //告警级别
-        if (alertVo.getLevel() != null) {
-            Query query = Query.of(q -> q.term(r -> r
+        if (CollectionUtils.isNotEmpty(alertVo.getLevelList())) {
+            List<FieldValue> values = alertVo.getLevelList().stream()
+                    .map(FieldValue::of)
+                    .collect(Collectors.toList());
+            boolQueryBuilder.must(Query.of(q -> q.terms(t -> t
                     .field("level")
-                    .value(alertVo.getLevel()) // 开始时间
-            ));
-            boolQueryBuilder.must(query);
+                    .terms(v -> v.value(values))
+            )));
         }
         //告警来源
-        if (StringUtils.isNotBlank(alertVo.getSource())) {
-            Query query = Query.of(q -> q.term(r -> r
+        if (CollectionUtils.isNotEmpty(alertVo.getSourceList())) {
+            List<FieldValue> values = alertVo.getSourceList().stream()
+                    .map(FieldValue::of)
+                    .collect(Collectors.toList());
+            boolQueryBuilder.must(Query.of(q -> q.terms(t -> t
                     .field("source")
-                    .value(alertVo.getSource()) // 开始时间
-            ));
-            boolQueryBuilder.must(query);
+                    .terms(v -> v.value(values))
+            )));
         }
         //告警标签
         if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
