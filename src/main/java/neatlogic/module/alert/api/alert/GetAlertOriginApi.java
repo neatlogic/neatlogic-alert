@@ -35,11 +35,6 @@ public class GetAlertOriginApi extends PrivateApiComponentBase {
     private AlertMapper alertMapper;
 
     @Override
-    public boolean isMcp() {
-        return true;
-    }
-
-    @Override
     public String getToken() {
         return "/alert/alertorigin/get";
     }

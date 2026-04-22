@@ -50,10 +50,6 @@ public class GetAlertApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Override
-    public boolean isMcp() {
-        return true;
-    }
 
     @Input({@Param(name = "id", desc = "告警id", isRequired = true, type = ApiParamType.LONG)})
     @Output({@Param(explode = AlertVo.class)})
