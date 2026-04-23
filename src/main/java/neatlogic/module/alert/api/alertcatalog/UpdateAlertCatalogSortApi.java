@@ -18,6 +18,7 @@ import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
 import neatlogic.framework.alert.dto.AlertCatalogVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
+import neatlogic.framework.exception.type.ParamIrregularException;
 import neatlogic.framework.restful.annotation.Description;
 import neatlogic.framework.restful.annotation.Input;
 import neatlogic.framework.restful.annotation.OperationType;
@@ -30,6 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @AuthAction(action = ALERT_VIEW_MODIFY.class)
@@ -57,22 +61,58 @@ public class UpdateAlertCatalogSortApi extends PrivateApiComponentBase {
     }
 
     @Input({
+            @Param(name = "parentId", desc = "父目录id", type = ApiParamType.LONG),
             @Param(name = "idList", desc = "id", type = ApiParamType.JSONARRAY, isRequired = true)
     })
     @Description(desc = "更新告警目录排序")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         JSONArray idList = jsonObj.getJSONArray("idList");
+        Long parentId = jsonObj.getLong("parentId");
         if (CollectionUtils.isNotEmpty(idList)) {
+            validateParent(parentId, idList);
             for (int i = 0; i < idList.size(); i++) {
                 Long id = idList.getLong(i);
                 AlertCatalogVo catalogVo = new AlertCatalogVo();
                 catalogVo.setId(id);
+                catalogVo.setParentId(parentId);
                 catalogVo.setSort(i + 1);
                 alertCatalogMapper.updateAlertCatalogSort(catalogVo);
             }
         }
         return null;
+    }
+
+    private void validateParent(Long parentId, JSONArray idList) {
+        if (parentId == null || CollectionUtils.isEmpty(idList)) {
+            return;
+        }
+        AlertCatalogVo queryVo = new AlertCatalogVo();
+        queryVo.setAdmin(true);
+        List<AlertCatalogVo> catalogList = alertCatalogMapper.listAlertCatalog(queryVo);
+        Map<Long, AlertCatalogVo> catalogMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(catalogList)) {
+            for (AlertCatalogVo catalogVo : catalogList) {
+                catalogMap.put(catalogVo.getId(), catalogVo);
+            }
+        }
+        for (int i = 0; i < idList.size(); i++) {
+            Long id = idList.getLong(i);
+            if (parentId.equals(id)) {
+                throw new ParamIrregularException("parentId");
+            }
+            Long currentParentId = parentId;
+            while (currentParentId != null) {
+                if (currentParentId.equals(id)) {
+                    throw new ParamIrregularException("parentId");
+                }
+                AlertCatalogVo parentCatalog = catalogMap.get(currentParentId);
+                if (parentCatalog == null) {
+                    break;
+                }
+                currentParentId = parentCatalog.getParentId();
+            }
+        }
     }
 
 

@@ -192,6 +192,9 @@
     <update id="updateAlertViewSort" parameterType="neatlogic.framework.alert.dto.AlertViewVo">
         update alert_view
         set sort = #{sort}
+        <if test="catalogId != null">
+            , catalog_id = #{catalogId}
+        </if>
         where id = #{id}
     </update>
 

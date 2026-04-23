@@ -12,6 +12,8 @@ public interface AlertCatalogMapper {
 
     int checkAlertCatalogIsInUsed(Long catalogId);
 
+    int checkChildAlertCatalogCount(Long parentId);
+
     void saveAlertCatalog(AlertCatalogVo alertCatalogVo);
 
     void insertAlertCatalogAuth(AlertCatalogAuthVo alertCatalogAuthVo);

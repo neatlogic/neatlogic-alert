@@ -57,17 +57,20 @@ public class UpdateAlertViewSortApi extends PrivateApiComponentBase {
     }
 
     @Input({
+            @Param(name = "catalogId", desc = "目录id", type = ApiParamType.LONG),
             @Param(name = "idList", desc = "id", type = ApiParamType.JSONARRAY, isRequired = true)
     })
     @Description(desc = "更新告警视图排序")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         JSONArray idList = jsonObj.getJSONArray("idList");
+        Long catalogId = jsonObj.getLong("catalogId");
         if (CollectionUtils.isNotEmpty(idList)) {
             for (int i = 0; i < idList.size(); i++) {
                 Long id = idList.getLong(i);
                 AlertViewVo viewVo = new AlertViewVo();
                 viewVo.setId(id);
+                viewVo.setCatalogId(catalogId);
                 viewVo.setSort(i + 1);
                 alertViewMapper.updateAlertViewSort(viewVo);
             }

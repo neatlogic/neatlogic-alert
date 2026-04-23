@@ -15,6 +15,7 @@ package neatlogic.module.alert.api.alertcatalog;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_VIEW_MODIFY;
 import neatlogic.framework.alert.dto.AlertViewVo;
+import neatlogic.framework.alert.exception.alertcatalog.AlertCatalogHasChildException;
 import neatlogic.framework.alert.exception.alertcatalog.AlertCatalogIsInUsedException;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
@@ -58,6 +59,9 @@ public class DeleteAlertCatalogApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long id = jsonObj.getLong("id");
+        if (alertCatalogMapper.checkChildAlertCatalogCount(id) > 0) {
+            throw new AlertCatalogHasChildException();
+        }
         if (alertCatalogMapper.checkAlertCatalogIsInUsed(id) > 0) {
             throw new AlertCatalogIsInUsedException();
         }
