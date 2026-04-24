@@ -125,4 +125,25 @@
                 #{isClose},
                 #{uniqueKey})
     </insert>
+
+    <select id="getAlertTrashIdListByDayBefore" parameterType="int" resultType="java.lang.Long">
+        select id
+        from alert_trash
+        where delete_time &lt; DATE_SUB(CURRENT_DATE, INTERVAL #{value} DAY)
+        limit 1000
+    </select>
+
+    <delete id="deleteAlertTrashAttrByIdList">
+        delete from alert_trash_attr where alert_id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteAlertTrashByIdList">
+        delete from alert_trash where id in
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>
