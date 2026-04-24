@@ -12,7 +12,6 @@ public interface AlertViewMapper {
 
     AlertViewVo getAlertViewByName(String name);
 
-
     List<AlertViewVo> searchAlertView(AlertViewVo alertViewVo);
 
     List<AlertViewVo> listAlertView(AlertViewVo alertViewVo);

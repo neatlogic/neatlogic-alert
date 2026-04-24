@@ -16,10 +16,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
-import neatlogic.framework.alert.dto.AlertAttrDefineVo;
-import neatlogic.framework.alert.dto.AlertAttrTypeVo;
-import neatlogic.framework.alert.dto.AlertViewVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.alert.exception.alertview.AlertViewNotFoundException;
 import neatlogic.framework.auth.core.AuthAction;
@@ -31,6 +28,7 @@ import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
 import neatlogic.framework.util.TableResultUtil;
+import neatlogic.module.alert.dao.mapper.AlertAllAlertConfigMapper;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import neatlogic.module.alert.service.IAlertService;
@@ -59,6 +57,8 @@ public class SearchAlertApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
+    @Resource
+    private AlertAllAlertConfigMapper alertAllAlertConfigMapper;
 
     @Override
     public String getToken() {
@@ -98,10 +98,17 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
+        JSONObject alertViewConfig = null;
         if (StringUtils.isNotBlank(alertVo.getViewName())) {
             AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
             if (alertViewVo == null) {
                 throw new AlertViewNotFoundException(alertVo.getViewName());
+            }
+            alertViewConfig = alertViewVo.getConfig();
+        } else {
+            AlertAllAlertConfigVo configVo = alertAllAlertConfigMapper.getAlertAllAlertConfigByName("all");
+            if (configVo != null) {
+                alertViewConfig = configVo.getConfig();
             }
         }
         List<AlertVo> alertList = alertService.searchAlert(alertVo);
@@ -110,36 +117,33 @@ public class SearchAlertApi extends PrivateApiComponentBase {
         List<AlertAttrTypeVo> alertAttrTypeList = alertAttrTypeMapper.listAttrType();
         boolean hasExtend = false;
         List<String> extendAttrKeyList = new ArrayList<>();
-        if (StringUtils.isNotBlank(alertVo.getViewName())) {
-            AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());
-            if (MapUtils.isNotEmpty(alertViewVo.getConfig()) && alertViewVo.getConfig().containsKey("attrList")) {
-                for (int i = 0; i < alertViewVo.getConfig().getJSONArray("attrList").size(); i++) {
-                    String attr = alertViewVo.getConfig().getJSONArray("attrList").getString(i);
-                    if (attr.startsWith("const_")) {
-                        Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();
-                        op.ifPresent(valueTextVo -> theadList.add(new JSONObject() {{
-                            this.put("key", valueTextVo.getName());
-                            this.put("title", valueTextVo.getLabel());
-                            this.put("sort", valueTextVo.getIsSort());
-                        }}));
-                    } else if (attr.startsWith("attr_")) {
-                        Optional<AlertAttrTypeVo> op = alertAttrTypeList.stream().filter(d -> d.getName().equals(attr.replace("attr_", ""))).findAny();
-                        if (op.isPresent()) {
-                            if (Objects.equals(1, op.get().getIsNormal())) {
+        if (MapUtils.isNotEmpty(alertViewConfig) && alertViewConfig.containsKey("attrList")) {
+            for (int i = 0; i < alertViewConfig.getJSONArray("attrList").size(); i++) {
+                String attr = alertViewConfig.getJSONArray("attrList").getString(i);
+                if (attr.startsWith("const_")) {
+                    Optional<AlertAttrDefineVo> op = attrList.stream().filter(d -> d.getName().equals(attr)).findAny();
+                    op.ifPresent(valueTextVo -> theadList.add(new JSONObject() {{
+                        this.put("key", valueTextVo.getName());
+                        this.put("title", valueTextVo.getLabel());
+                        this.put("sort", valueTextVo.getIsSort());
+                    }}));
+                } else if (attr.startsWith("attr_")) {
+                    Optional<AlertAttrTypeVo> op = alertAttrTypeList.stream().filter(d -> d.getName().equals(attr.replace("attr_", ""))).findAny();
+                    if (op.isPresent()) {
+                        if (Objects.equals(1, op.get().getIsNormal())) {
+                            theadList.add(new JSONObject() {{
+                                this.put("key", "attr_" + op.get().getName());
+                                this.put("title", op.get().getLabel());
+                            }});
+                        } else {
+                            extendAttrKeyList.add("attr_" + op.get().getName());
+                            if (!hasExtend) {
                                 theadList.add(new JSONObject() {{
-                                    this.put("key", "attr_" + op.get().getName());
-                                    this.put("title", op.get().getLabel());
+                                    this.put("key", "const_attrObj");
+                                    this.put("title", "扩展属性");
+                                    this.put("attrList", extendAttrKeyList);
                                 }});
-                            } else {
-                                extendAttrKeyList.add("attr_" + op.get().getName());
-                                if (!hasExtend) {
-                                    theadList.add(new JSONObject() {{
-                                        this.put("key", "const_attrObj");
-                                        this.put("title", "扩展属性");
-                                        this.put("attrList", extendAttrKeyList);
-                                    }});
-                                    hasExtend = true;
-                                }
+                                hasExtend = true;
                             }
                         }
                     }

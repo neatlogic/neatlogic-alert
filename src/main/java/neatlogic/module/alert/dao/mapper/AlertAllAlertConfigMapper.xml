@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="neatlogic.module.alert.dao.mapper.AlertAllAlertConfigMapper">
+    <resultMap id="alertAllAlertConfigResultMap" type="neatlogic.framework.alert.dto.AlertAllAlertConfigVo">
+        <id column="name" property="name"/>
+        <result column="configStr" property="configStr" typeHandler="neatlogic.framework.dao.plugin.CompressHandler"/>
+        <result column="fcu" property="fcu"/>
+        <result column="fcd" property="fcd"/>
+        <result column="lcu" property="lcu"/>
+        <result column="lcd" property="lcd"/>
+    </resultMap>
+
+    <select id="getAlertAllAlertConfigByName" parameterType="java.lang.String" resultMap="alertAllAlertConfigResultMap">
+        select name,
+               config as configStr,
+               fcu,
+               fcd,
+               lcu,
+               lcd
+        from alert_allalert_config
+        where name = #{value}
+    </select>
+
+    <insert id="saveAlertAllAlertConfig" parameterType="neatlogic.framework.alert.dto.AlertAllAlertConfigVo">
+        insert into alert_allalert_config
+        (name,
+         config,
+         fcd,
+         fcu)
+        values (#{name},
+                #{configStr, typeHandler=CompressHandler},
+                now(),
+                #{fcu})
+        ON DUPLICATE KEY UPDATE config = #{configStr, typeHandler=CompressHandler},
+                                lcu    = #{lcu},
+                                lcd    = now()
+    </insert>
+</mapper>
