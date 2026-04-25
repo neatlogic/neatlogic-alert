@@ -118,6 +118,8 @@ public class AlertCancelIntervalEventHandler extends AlertEventHandlerBase {
             this.add(AlertEventType.ALERT_CONVERGE.getName());
             this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
             this.add(AlertEventType.ALERT_SUPPRESS.getName());
+            this.add(AlertEventType.ALERT_CLOSE.getName());
+            this.add(AlertEventType.ALERT_DELETE.getName());
         }};
     }
 
