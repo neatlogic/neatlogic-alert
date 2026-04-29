@@ -16,8 +16,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_ADMIN;
+import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
+import neatlogic.framework.alert.dto.breaker.AlertEventHandlerBreakerPolicyVo;
 import neatlogic.framework.alert.enums.AlertAttrType;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
@@ -69,6 +71,8 @@ public class AlertServiceImpl implements IAlertService {
     private AlertAuditMapper alertAuditMapper;
     @Resource
     private AlertEventMapper alertEventMapper;
+    @Resource
+    private AlertBreakerMapper alertBreakerMapper;
 
     @Resource
     private AlertAttrTypeMapper alertAttrTypeMapper;
@@ -658,6 +662,18 @@ public class AlertServiceImpl implements IAlertService {
     public List<AlertEventHandlerVo> listAlertEventHandler(AlertEventHandlerVo alertEventHandlerVo) {
         // 获取平铺的结果
         List<AlertEventHandlerVo> handlerList = alertEventMapper.listEventHandler(alertEventHandlerVo);
+        if (CollectionUtils.isEmpty(handlerList)) {
+            return new ArrayList<>();
+        }
+        List<Long> handlerIdList = handlerList.stream().map(AlertEventHandlerVo::getId).collect(Collectors.toList());
+        List<AlertEventHandlerBreakerPolicyVo> breakerPolicyList = alertBreakerMapper.getBreakerPolicyListByEventHandlerIdList(handlerIdList);
+        if (CollectionUtils.isNotEmpty(breakerPolicyList)) {
+            Map<Long, List<AlertEventHandlerBreakerPolicyVo>> breakerPolicyMap = breakerPolicyList.stream()
+                    .collect(Collectors.groupingBy(AlertEventHandlerBreakerPolicyVo::getEventHandlerId));
+            for (AlertEventHandlerVo handler : handlerList) {
+                handler.setBreakerPolicyList(breakerPolicyMap.get(handler.getId()));
+            }
+        }
 
         // 按 ID 映射
         Map<Long, AlertEventHandlerVo> handlerMap = handlerList.stream()

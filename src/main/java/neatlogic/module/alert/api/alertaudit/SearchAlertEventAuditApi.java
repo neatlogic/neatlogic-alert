@@ -15,7 +15,9 @@ package neatlogic.module.alert.api.alertaudit;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
+import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
+import neatlogic.framework.alert.dto.breaker.AlertBreakerAuditVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +40,8 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertAuditMapper alertAuditMapper;
+    @Resource
+    private AlertBreakerMapper alertBreakerMapper;
 
 
     @Override
@@ -65,9 +70,25 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
     public Object myDoService(JSONObject jsonObj) throws IOException {
         AlertEventHandlerAuditVo alertEventHandlerAuditVo = JSON.toJavaObject(jsonObj, AlertEventHandlerAuditVo.class);
         List<AlertEventHandlerAuditVo> auditList = alertAuditMapper.searchAlertEventAudit(alertEventHandlerAuditVo);
+        makeupBreakerAudit(auditList);
         List<AlertEventHandlerAuditVo> rootAuditList = auditList.stream().filter(d -> d.getParentId() == null).collect(Collectors.toList());
         makeupChildAudit(rootAuditList, auditList);
         return rootAuditList;
+    }
+
+    private void makeupBreakerAudit(List<AlertEventHandlerAuditVo> auditList) {
+        if (CollectionUtils.isEmpty(auditList)) {
+            return;
+        }
+        List<Long> auditIdList = auditList.stream().map(AlertEventHandlerAuditVo::getId).collect(Collectors.toList());
+        List<AlertBreakerAuditVo> breakerAuditList = alertBreakerMapper.getAlertBreakerAuditListByEventHandlerAuditIdList(auditIdList);
+        if (CollectionUtils.isEmpty(breakerAuditList)) {
+            return;
+        }
+        Map<Long, List<AlertBreakerAuditVo>> breakerAuditMap = breakerAuditList.stream().collect(Collectors.groupingBy(AlertBreakerAuditVo::getEventHandlerAuditId));
+        for (AlertEventHandlerAuditVo auditVo : auditList) {
+            auditVo.setBreakerAuditList(breakerAuditMap.get(auditVo.getId()));
+        }
     }
 
     private void makeupChildAudit(List<AlertEventHandlerAuditVo> parentAuditList, List<AlertEventHandlerAuditVo> allAuditList) {

@@ -14,6 +14,7 @@ package neatlogic.module.alert.api.alertevent;
 
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
+import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.auth.core.AuthAction;
@@ -33,6 +34,8 @@ public class GetAlertEventHandlerApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertEventMapper alertEventMapper;
+    @Resource
+    private AlertBreakerMapper alertBreakerMapper;
 
     @Override
     public String getToken() {
@@ -56,6 +59,11 @@ public class GetAlertEventHandlerApi extends PrivateApiComponentBase {
     @Description(desc = "获取告警事件插件配置")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
-        return alertEventMapper.getAlertEventHandlerById(jsonObj.getLong("id"));
+        Long id = jsonObj.getLong("id");
+        AlertEventHandlerVo alertEventHandlerVo = alertEventMapper.getAlertEventHandlerById(id);
+        if (alertEventHandlerVo != null) {
+            alertEventHandlerVo.setBreakerPolicyList(alertBreakerMapper.getBreakerPolicyListByEventHandlerId(id));
+        }
+        return alertEventHandlerVo;
     }
 }

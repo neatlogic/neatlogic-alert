@@ -111,7 +111,6 @@ public class AlertCancelIntervalEventHandler extends AlertEventHandlerBase {
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<String>() {{
-            this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_SAVE.getName());
             this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
             this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());

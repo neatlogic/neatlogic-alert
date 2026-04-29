@@ -159,13 +159,15 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
     @Override
     public Set<String> supportEventTypes() {
         return new HashSet<>() {{
-            this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
             this.add(AlertEventType.ALERT_INPUT.getName());
             this.add(AlertEventType.ALERT_SAVE.getName());
             this.add(AlertEventType.ALERT_OPEN.getName());
             this.add(AlertEventType.ALERT_CLOSE.getName());
-            this.add(AlertEventType.ALERT_DELETE.getName());
             this.add(AlertEventType.ALERT_SUPPRESS.getName());
+            this.add(AlertEventType.ALERT_STATUE_CHANGE.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_IN.getName());
+            this.add(AlertEventType.ALERT_CONVERGE_OUT.getName());
+            this.add(AlertEventType.ALERT_CONVERGE.getName());
         }};
     }
 

@@ -14,6 +14,7 @@ package neatlogic.module.alert.api.alertevent;
 
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
+import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.auth.core.AuthAction;
@@ -39,6 +40,8 @@ import java.util.List;
 public class DeleteAlertEventHandlerApi extends PrivateApiComponentBase {
     @Resource
     private AlertEventMapper alertEventMapper;
+    @Resource
+    private AlertBreakerMapper alertBreakerMapper;
 
     @Override
     public String getToken() {
@@ -66,9 +69,11 @@ public class DeleteAlertEventHandlerApi extends PrivateApiComponentBase {
         getAllChildren(id, handlerList);
         if (CollectionUtils.isNotEmpty(handlerList)) {
             for (AlertEventHandlerVo handler : handlerList) {
+                alertBreakerMapper.deleteEventHandlerBreakerPolicyByEventHandlerId(handler.getId());
                 alertEventMapper.deleteAlertEventHandlerById(handler.getId());
             }
         }
+        alertBreakerMapper.deleteEventHandlerBreakerPolicyByEventHandlerId(id);
         alertEventMapper.deleteAlertEventHandlerById(id);
         return null;
     }

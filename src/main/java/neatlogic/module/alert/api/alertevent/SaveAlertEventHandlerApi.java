@@ -15,8 +15,10 @@ package neatlogic.module.alert.api.alertevent;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
+import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
+import neatlogic.framework.alert.dto.breaker.AlertEventHandlerBreakerPolicyVo;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.event.IAlertEventHandler;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerNotFoundException;
@@ -42,6 +44,8 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
 
     @Resource
     private AlertEventMapper alertEventMapper;
+    @Resource
+    private AlertBreakerMapper alertBreakerMapper;
 
     @Override
     public String getToken() {
@@ -69,6 +73,7 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
             @Param(name = "event", desc = "事件", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "handler", desc = "插件", isRequired = true, type = ApiParamType.STRING),
             @Param(name = "config", desc = "配置", type = ApiParamType.JSONOBJECT),
+            @Param(name = "breakerPolicyList", desc = "熔断策略列表", type = ApiParamType.JSONARRAY),
     })
     @Output({@Param(explode = AlertEventHandlerVo[].class)})
     @Description(desc = "保存告警事件插件配置")
@@ -92,8 +97,22 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
         alertEventHandlerVo.setSort(sort);
         handler.makeupChildHandler(alertEventHandlerVo);
         alertEventMapper.saveAlertEventHandler(alertEventHandlerVo);
+        saveBreakerPolicy(alertEventHandlerVo);
         saveSubHandler(alertEventHandlerVo.getId(), alertEventHandlerVo);
         return alertEventHandlerVo.getId();
+    }
+
+    private void saveBreakerPolicy(AlertEventHandlerVo alertEventHandlerVo) {
+        alertBreakerMapper.deleteEventHandlerBreakerPolicyByEventHandlerId(alertEventHandlerVo.getId());
+        if (CollectionUtils.isNotEmpty(alertEventHandlerVo.getBreakerPolicyList())) {
+            int sort = 1;
+            for (AlertEventHandlerBreakerPolicyVo policyVo : alertEventHandlerVo.getBreakerPolicyList()) {
+                policyVo.setEventHandlerId(alertEventHandlerVo.getId());
+                policyVo.setSort(sort);
+                alertBreakerMapper.insertEventHandlerBreakerPolicy(policyVo);
+                sort += 1;
+            }
+        }
     }
 
     private void saveSubHandler(Long parentId, AlertEventHandlerVo alertEventHandlerVo) {
@@ -114,6 +133,7 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
                 handlerVo.setParentId(parentId);
                 handlerVo.setSort(sort);
                 alertEventMapper.saveAlertEventHandler(handlerVo);
+                saveBreakerPolicy(handlerVo);
                 saveSubHandler(handlerVo.getId(), handlerVo);
                 sort += 1;
             }
@@ -128,9 +148,11 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
                 List<AlertEventHandlerVo> subSubHandlerList = alertEventMapper.listEventHandler(param);
                 if (CollectionUtils.isNotEmpty(subSubHandlerList)) {
                     for (AlertEventHandlerVo subSubHandler : subSubHandlerList) {
+                        alertBreakerMapper.deleteEventHandlerBreakerPolicyByEventHandlerId(subSubHandler.getId());
                         alertEventMapper.deleteAlertEventHandlerById(subSubHandler.getId());
                     }
                 }
+                alertBreakerMapper.deleteEventHandlerBreakerPolicyByEventHandlerId(subHandler.getId());
                 alertEventMapper.deleteAlertEventHandlerById(subHandler.getId());
             }
         }
