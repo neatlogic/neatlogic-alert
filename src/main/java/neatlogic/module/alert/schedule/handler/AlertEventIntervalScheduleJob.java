@@ -44,6 +44,11 @@ import java.util.List;
 @Component
 @DisallowConcurrentExecution
 public class AlertEventIntervalScheduleJob extends JobBase {
+    @Override
+    public String getName() {
+        return "告警事件间隔处理";
+    }
+
     static Logger logger = LoggerFactory.getLogger(AlertEventIntervalScheduleJob.class);
 
     @Resource
