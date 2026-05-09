@@ -5,11 +5,9 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.breaker.AlertBreakerHandlerBase;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.breaker.AlertBreakerCheckResultVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerPolicyVo;
-import neatlogic.framework.alert.dto.breaker.AlertBreakerResultVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerStateVo;
-import neatlogic.framework.alert.enums.AlertBreakerState;
-import neatlogic.framework.alert.enums.AlertBreakerStatus;
 import neatlogic.framework.util.Md5Util;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +25,7 @@ public class CountWindowAlertBreakerHandler extends AlertBreakerHandlerBase {
 
     @Override
     public String getLabel() {
-        return "触发量窗口熔断";
+        return "触发量窗口熔断策略";
     }
 
     @Override
@@ -36,29 +34,15 @@ public class CountWindowAlertBreakerHandler extends AlertBreakerHandlerBase {
     }
 
     @Override
-    protected AlertBreakerResultVo myCheck(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId) {
-        JSONObject config = policyVo.getConfig();
-        String uniqueKey = buildUniqueKey(config, alertVo, eventHandlerVo);
-        AlertBreakerStateVo stateVo = new AlertBreakerStateVo();
-        stateVo.setPolicyId(policyVo.getId());
-        stateVo.setUniqueKey(uniqueKey);
-        stateVo.setState(AlertBreakerState.CLOSED.getValue());
-        alertBreakerMapper.insertAlertBreakerStateIfNotExists(stateVo);
-        stateVo = alertBreakerMapper.getAlertBreakerStateForUpdate(policyVo.getId(), uniqueKey);
+    protected String myMakeUniqueKey(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId) {
+        return buildUniqueKey(policyVo.getConfig(), alertVo, eventHandlerVo);
+    }
 
-        AlertBreakerResultVo resultVo = new AlertBreakerResultVo();
-        resultVo.setStateId(stateVo.getId());
+    @Override
+    protected AlertBreakerCheckResultVo myCheck(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId, AlertBreakerStateVo stateVo, JSONObject data) {
+        JSONObject config = policyVo.getConfig();
         long nowTime = System.currentTimeMillis();
         Date now = new Date(nowTime);
-        if (Objects.equals(stateVo.getState(), AlertBreakerState.OPEN.getValue()) && stateVo.getOpenUntil() != null && stateVo.getOpenUntil().getTime() > nowTime) {
-            stateVo.setSkipCount((stateVo.getSkipCount() == null ? 0 : stateVo.getSkipCount()) + 1);
-            stateVo.setLastTriggerTime(now);
-            alertBreakerMapper.updateAlertBreakerState(stateVo);
-            resultVo.setBreaked(true);
-            resultVo.setStatus(AlertBreakerStatus.OPEN.getValue());
-            return resultVo;
-        }
-
         long windowMillis = getDurationMillis(config, "windowSize", "windowUnit", 1, "minute");
         int threshold = config == null ? 100 : config.getIntValue("threshold");
         if (threshold <= 0) {
@@ -71,31 +55,19 @@ public class CountWindowAlertBreakerHandler extends AlertBreakerHandlerBase {
             windowStart = now;
             windowEnd = new Date(nowTime + windowMillis);
             triggerCount = 1;
-            stateVo.setOpenTime(null);
-            stateVo.setOpenUntil(null);
-            stateVo.setSkipCount(0);
         } else {
             triggerCount = (stateVo.getTriggerCount() == null ? 0 : stateVo.getTriggerCount()) + 1;
         }
 
-        stateVo.setWindowStart(windowStart);
-        stateVo.setWindowEnd(windowEnd);
-        stateVo.setTriggerCount(triggerCount);
-        stateVo.setLastTriggerTime(now);
+        AlertBreakerCheckResultVo checkResultVo = new AlertBreakerCheckResultVo();
+        checkResultVo.setWindowStart(windowStart);
+        checkResultVo.setWindowEnd(windowEnd);
+        checkResultVo.setTriggerCount(triggerCount);
         if (triggerCount > threshold) {
-            stateVo.setState(AlertBreakerState.OPEN.getValue());
-            stateVo.setOpenTime(now);
-            stateVo.setOpenUntil(new Date(nowTime + getDurationMillis(config, "openDuration", "openDurationUnit", 10, "minute")));
-            alertBreakerMapper.updateAlertBreakerState(stateVo);
-            resultVo.setBreaked(true);
-            resultVo.setStatus(AlertBreakerStatus.OPEN.getValue());
-            return resultVo;
+            checkResultVo.setBreaked(true);
+            checkResultVo.setOpenUntil(new Date(nowTime + getDurationMillis(config, "openDuration", "openDurationUnit", 10, "minute")));
         }
-        stateVo.setState(AlertBreakerState.CLOSED.getValue());
-        alertBreakerMapper.updateAlertBreakerState(stateVo);
-        resultVo.setBreaked(false);
-        resultVo.setStatus(AlertBreakerStatus.PASS.getValue());
-        return resultVo;
+        return checkResultVo;
     }
 
     private String buildUniqueKey(JSONObject config, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo) {

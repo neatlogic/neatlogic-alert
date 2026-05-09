@@ -18,23 +18,19 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertAttr;
 import neatlogic.framework.alert.enums.AlertEventStatus;
-import neatlogic.framework.alert.enums.AlertUserType;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateIsUnActiveException;
 import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateNameIsNotFoundException;
-import neatlogic.framework.common.constvalue.AuthType;
-import neatlogic.framework.dao.mapper.TeamMapper;
-import neatlogic.framework.dao.mapper.UserMapper;
-import neatlogic.framework.dto.TeamVo;
-import neatlogic.framework.dto.UserVo;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.exception.type.ParamNotExistsException;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.alert.dao.mapper.AlertNotifyTemplateMapper;
+import neatlogic.module.alert.dto.AlertMailReceiverVo;
+import neatlogic.module.alert.service.AlertMailReceiverService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,10 +49,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
     private AlertNotifyTemplateMapper alertNotifyTemplateMapper;
 
     @Resource
-    private UserMapper userMapper;
-
-    @Resource
-    private TeamMapper teamMapper;
+    private AlertMailReceiverService alertMailReceiverService;
 
 
     @Override
@@ -138,9 +131,9 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             content = FreemarkerUtil.transform(paramObj, content);
 
 
-            Set<String> to = makeupMailList(alertVo, toUserList);
-
-            Set<String> cc = makeupMailList(alertVo, ccUserList);
+            AlertMailReceiverVo receiverVo = alertMailReceiverService.getReceiver(alertVo, toUserList, ccUserList);
+            Set<String> to = receiverVo.getToList();
+            Set<String> cc = receiverVo.getCcList();
 
             if (CollectionUtils.isNotEmpty(to) || CollectionUtils.isNotEmpty(cc)) {
                 try {
@@ -151,97 +144,6 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
         }
         return alertVo;
-    }
-
-    private Set<String> makeupMailList(AlertVo alertVo, JSONArray userList) {
-        Set<String> mailSet = new HashSet<>();
-        if (CollectionUtils.isNotEmpty(userList)) {
-            for (int i = 0; i < userList.size(); i++) {
-                String userUuid = userList.getString(i);
-                if (("alertUserType#" + AlertUserType.WORKER.getValue()).equals(userUuid)) {
-                    //发送给处理人
-                    if (CollectionUtils.isEmpty(alertVo.getUserList())) {
-                        //告警处理人id为空时尝试查找处理人信息，但如果告警没保存就查不到
-                        List<AlertUserVo> alertUserList = alertEventMapper.getAlertUserByAlertId(alertVo.getId());
-                        if (CollectionUtils.isNotEmpty(alertUserList)) {
-                            for (AlertUserVo user : alertUserList) {
-                                if (StringUtils.isNotBlank(user.getUserEmail())) {
-                                    mailSet.add(user.getUserEmail());
-                                }
-                            }
-                        }
-                    } else {
-                        for (AlertUserVo user : alertVo.getUserList()) {
-                            if (StringUtils.isNotBlank(user.getUserEmail())) {
-                                mailSet.add(user.getUserEmail());
-                            }
-                        }
-                    }
-                } else if (("alertUserType#" + AlertUserType.WORKER_TEAM.getValue()).equals(userUuid)) {
-                    //发送给处理组
-                    if (CollectionUtils.isEmpty(alertVo.getTeamList())) {
-                        //告警处理人id为空时尝试查找处理组信息，但如果告警没保存就查不到
-                        List<AlertTeamVo> alertTeamList = alertEventMapper.getAlertTeamByAlertId(alertVo.getId());
-                        if (CollectionUtils.isNotEmpty(alertTeamList)) {
-                            for (AlertTeamVo team : alertTeamList) {
-                                if (StringUtils.isNotBlank(team.getTeamEmail())) {
-                                    mailSet.add(team.getTeamEmail());
-                                }
-                            }
-                        }
-                    } else {
-                        for (AlertTeamVo team : alertVo.getTeamList()) {
-                            if (StringUtils.isNotBlank(team.getTeamEmail())) {
-                                mailSet.add(team.getTeamEmail());
-                            }
-                        }
-                    }
-                } else if (("alertUserType#" + AlertUserType.WORKER_TEAM_USER.getValue()).equals(userUuid)) {
-                    //发送给处理组的成员
-                    if (CollectionUtils.isEmpty(alertVo.getTeamList())) {
-                        //告警处理人id为空时尝试查找处理组信息，但如果告警没保存就查不到
-                        List<AlertTeamVo> alertTeamList = alertEventMapper.getAlertTeamByAlertId(alertVo.getId());
-                        if (CollectionUtils.isNotEmpty(alertTeamList)) {
-                            for (AlertTeamVo team : alertTeamList) {
-                                List<UserVo> teamUserList = userMapper.getUserListByTeamUuid(team.getTeamUuid());
-                                if (CollectionUtils.isNotEmpty(teamUserList)) {
-                                    for (UserVo user : teamUserList) {
-                                        if (StringUtils.isNotBlank(user.getEmail())) {
-                                            mailSet.add(user.getEmail());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        for (AlertTeamVo team : alertVo.getTeamList()) {
-                            List<UserVo> teamUserList = userMapper.getUserListByTeamUuid(team.getTeamUuid());
-                            if (CollectionUtils.isNotEmpty(teamUserList)) {
-                                for (UserVo user : teamUserList) {
-                                    if (StringUtils.isNotBlank(user.getEmail())) {
-                                        mailSet.add(user.getEmail());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (userUuid.startsWith("user#")) {
-                    userUuid = AuthType.removePrefix(userUuid);
-                    UserVo userVo = userMapper.getUserByUuid(userUuid);
-                    if (userVo != null && StringUtils.isNotBlank(userVo.getEmail())) {
-                        mailSet.add(userVo.getEmail());
-                    }
-                } else if (userUuid.startsWith("team#")) {
-                    //如果分组有邮件地址，直接使用
-                    userUuid = AuthType.removePrefix(userUuid);
-                    TeamVo teamVo = teamMapper.getTeamByUuid(userUuid);
-                    if (teamVo != null && StringUtils.isNotBlank(teamVo.getEmail())) {
-                        mailSet.add(teamVo.getEmail());
-                    }
-                }
-            }
-        }
-        return mailSet;
     }
 
     @Override

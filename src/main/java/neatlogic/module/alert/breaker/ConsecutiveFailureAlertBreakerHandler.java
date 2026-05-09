@@ -5,11 +5,11 @@ import neatlogic.framework.alert.breaker.AlertBreakerHandlerBase;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.breaker.AlertBreakerAfterResultVo;
+import neatlogic.framework.alert.dto.breaker.AlertBreakerCheckResultVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerPolicyVo;
-import neatlogic.framework.alert.dto.breaker.AlertBreakerResultVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerStateVo;
 import neatlogic.framework.alert.enums.AlertBreakerState;
-import neatlogic.framework.alert.enums.AlertBreakerStatus;
 import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.util.Md5Util;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
 
     @Override
     public String getLabel() {
-        return "连续失败熔断";
+        return "连续失败熔断策略";
     }
 
     @Override
@@ -35,50 +35,36 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
     }
 
     @Override
-    protected AlertBreakerResultVo myCheck(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId) {
+    protected String myMakeUniqueKey(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId) {
         JSONObject config = policyVo.getConfig();
         String scope = getScope(config);
-        AlertBreakerStateVo stateVo = getStateForUpdate(policyVo, scope, eventHandlerVo);
-
-        AlertBreakerResultVo resultVo = new AlertBreakerResultVo();
-        resultVo.setStateId(stateVo.getId());
-        long nowTime = System.currentTimeMillis();
-        Date now = new Date(nowTime);
-        if (Objects.equals(stateVo.getState(), AlertBreakerState.OPEN.getValue()) && stateVo.getOpenUntil() != null && stateVo.getOpenUntil().getTime() > nowTime) {
-            stateVo.setSkipCount((stateVo.getSkipCount() == null ? 0 : stateVo.getSkipCount()) + 1);
-            stateVo.setLastTriggerTime(now);
-            alertBreakerMapper.updateAlertBreakerState(stateVo);
-            resultVo.setBreaked(true);
-            resultVo.setStatus(AlertBreakerStatus.OPEN.getValue());
-            return resultVo;
-        }
-
-        if (Objects.equals(stateVo.getState(), AlertBreakerState.OPEN.getValue())) {
-            stateVo.setState(AlertBreakerState.CLOSED.getValue());
-            stateVo.setTriggerCount(0);
-            stateVo.setOpenTime(null);
-            stateVo.setOpenUntil(null);
-            stateVo.setLastTriggerTime(now);
-            stateVo.setData(buildData(scope, getIntValue(config, "failureThreshold", 3), 0, eventHandlerAuditId));
-            alertBreakerMapper.updateAlertBreakerState(stateVo);
-        }
-        resultVo.setBreaked(false);
-        resultVo.setStatus(AlertBreakerStatus.PASS.getValue());
-        return resultVo;
+        return buildUniqueKey(scope, eventHandlerVo);
     }
 
     @Override
-    protected void myAfter(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, AlertEventHandlerAuditVo eventHandlerAuditVo) {
+    protected AlertBreakerCheckResultVo myCheck(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, Long eventHandlerAuditId, AlertBreakerStateVo stateVo, JSONObject data) {
+        if (Objects.equals(stateVo.getState(), AlertBreakerState.OPEN.getValue())) {
+            JSONObject config = policyVo.getConfig();
+            String scope = getScope(config);
+            AlertBreakerCheckResultVo checkResultVo = new AlertBreakerCheckResultVo();
+            checkResultVo.setTriggerCount(0);
+            checkResultVo.setData(buildData(scope, getIntValue(config, "failureThreshold", 3), 0, eventHandlerAuditId));
+            return checkResultVo;
+        }
+        return null;
+    }
+
+    @Override
+    protected AlertBreakerAfterResultVo myAfter(AlertBreakerPolicyVo policyVo, AlertVo alertVo, AlertEventHandlerVo eventHandlerVo, AlertEventHandlerAuditVo eventHandlerAuditVo, AlertBreakerStateVo stateVo, JSONObject data) {
         if (eventHandlerAuditVo == null || eventHandlerAuditVo.getStatus() == null) {
-            return;
+            return null;
         }
         if (!Objects.equals(eventHandlerAuditVo.getStatus(), AlertEventStatus.FAILED.getValue()) && !Objects.equals(eventHandlerAuditVo.getStatus(), AlertEventStatus.SUCCEED.getValue())) {
-            return;
+            return null;
         }
         JSONObject config = policyVo.getConfig();
         String scope = getScope(config);
         int threshold = getIntValue(config, "failureThreshold", 3);
-        AlertBreakerStateVo stateVo = getStateForUpdate(policyVo, scope, eventHandlerVo);
         int failureCount = getFailureCount(stateVo);
         if (Objects.equals(eventHandlerAuditVo.getStatus(), AlertEventStatus.FAILED.getValue())) {
             failureCount++;
@@ -86,24 +72,14 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
             failureCount = 0;
         }
         long nowTime = System.currentTimeMillis();
-        Date now = new Date(nowTime);
-        stateVo.setTriggerCount(failureCount);
-        stateVo.setLastTriggerTime(now);
-        stateVo.setWindowStart(null);
-        stateVo.setWindowEnd(null);
-        stateVo.setData(buildData(scope, threshold, failureCount, eventHandlerAuditVo.getId()));
+        AlertBreakerAfterResultVo afterResultVo = new AlertBreakerAfterResultVo();
+        afterResultVo.setTriggerCount(failureCount);
+        afterResultVo.setData(buildData(scope, threshold, failureCount, eventHandlerAuditVo.getId()));
         if (failureCount >= threshold) {
-            stateVo.setState(AlertBreakerState.OPEN.getValue());
-            stateVo.setOpenTime(now);
-            stateVo.setOpenUntil(new Date(nowTime + getDurationMillis(config, "openDuration", "openDurationUnit", 10, "minute")));
-            alertBreakerMapper.updateAlertBreakerState(stateVo);
-            return;
+            afterResultVo.setBreaked(true);
+            afterResultVo.setOpenUntil(new Date(nowTime + getDurationMillis(config, "openDuration", "openDurationUnit", 10, "minute")));
         }
-        stateVo.setState(AlertBreakerState.CLOSED.getValue());
-        stateVo.setOpenTime(null);
-        stateVo.setOpenUntil(null);
-        stateVo.setSkipCount(0);
-        alertBreakerMapper.updateAlertBreakerState(stateVo);
+        return afterResultVo;
     }
 
     private String getScope(JSONObject config) {
@@ -119,16 +95,6 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
             return Md5Util.encryptMD5("handler=" + eventHandlerVo.getHandler());
         }
         return Md5Util.encryptMD5("handlerInstance=" + eventHandlerVo.getId());
-    }
-
-    private AlertBreakerStateVo getStateForUpdate(AlertBreakerPolicyVo policyVo, String scope, AlertEventHandlerVo eventHandlerVo) {
-        String uniqueKey = buildUniqueKey(scope, eventHandlerVo);
-        AlertBreakerStateVo stateVo = new AlertBreakerStateVo();
-        stateVo.setPolicyId(policyVo.getId());
-        stateVo.setUniqueKey(uniqueKey);
-        stateVo.setState(AlertBreakerState.CLOSED.getValue());
-        alertBreakerMapper.insertAlertBreakerStateIfNotExists(stateVo);
-        return alertBreakerMapper.getAlertBreakerStateForUpdate(policyVo.getId(), uniqueKey);
     }
 
     private int getFailureCount(AlertBreakerStateVo stateVo) {
@@ -151,13 +117,13 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
         }
     }
 
-    private String buildData(String scope, int threshold, int failureCount, Long lastAuditId) {
+    private JSONObject buildData(String scope, int threshold, int failureCount, Long lastAuditId) {
         JSONObject data = new JSONObject();
         data.put("scope", scope);
         data.put("failureThreshold", threshold);
         data.put("failureCount", failureCount);
         data.put("lastAuditId", lastAuditId);
-        return data.toJSONString();
+        return data;
     }
 
     private int getIntValue(JSONObject config, String name, int defaultValue) {

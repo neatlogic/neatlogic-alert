@@ -661,7 +661,12 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public List<AlertEventHandlerVo> listAlertEventHandler(AlertEventHandlerVo alertEventHandlerVo) {
         // 获取平铺的结果
-        List<AlertEventHandlerVo> handlerList = alertEventMapper.listEventHandler(alertEventHandlerVo);
+        List<AlertEventHandlerVo> handlerList;
+        if (StringUtils.isNotBlank(alertEventHandlerVo.getHandler())) {
+            handlerList = alertEventMapper.searchEventHandler(alertEventHandlerVo);
+        } else {
+            handlerList = alertEventMapper.listEventHandler(alertEventHandlerVo);
+        }
         if (CollectionUtils.isEmpty(handlerList)) {
             return new ArrayList<>();
         }
@@ -673,6 +678,9 @@ public class AlertServiceImpl implements IAlertService {
             for (AlertEventHandlerVo handler : handlerList) {
                 handler.setBreakerPolicyList(breakerPolicyMap.get(handler.getId()));
             }
+        }
+        if (StringUtils.isNotBlank(alertEventHandlerVo.getHandler())) {
+            return handlerList;
         }
 
         // 按 ID 映射

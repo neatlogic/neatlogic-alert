@@ -52,7 +52,7 @@ public class ListAlertEventHandlerApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "alertType", desc = "告警类型", isRequired = true, type = ApiParamType.LONG),
-            @Param(name = "event", desc = "事件唯一标识", isRequired = true, type = ApiParamType.STRING),
+            @Param(name = "event", desc = "事件唯一标识", type = ApiParamType.STRING),
             @Param(name = "parentId", desc = "父处理器id", type = ApiParamType.LONG),
             @Param(name = "handler", desc = "处理器唯一标识", type = ApiParamType.STRING)
     })
