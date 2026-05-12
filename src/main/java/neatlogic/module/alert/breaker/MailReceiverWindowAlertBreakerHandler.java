@@ -4,15 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.breaker.AlertBreakerHandlerBase;
+import neatlogic.framework.alert.breaker.AlertBreakerManager;
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.breaker.*;
-import neatlogic.framework.asynchronization.threadlocal.TenantContext;
-import neatlogic.framework.common.config.Config;
 import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
-import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dto.AlertMailReceiverVo;
@@ -24,14 +22,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBase {
-    private static final Pattern TITLE_VARIABLE_PATTERN = Pattern.compile("\\$\\{([A-Za-z0-9_]+)}");
-    private static final String DEFAULT_AGGREGATE_TITLE_TEMPLATE = "[告警中心][聚合通知]触发告警通知次数限流条件：${windowSize}${windowUnitText}告警数量大于${threshold}次";
-
     @Resource
     private AlertMailReceiverService alertMailReceiverService;
 
@@ -139,33 +132,19 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
 
     @Override
     protected AlertBreakerFlushResultVo myFlush(AlertBreakerPolicyVo policyVo, AlertBreakerStateVo stateVo, JSONObject data) throws Exception {
-        if (data.getBooleanValue("aggregateSent")) {
-            return buildFlushResult(data);
-        }
         Long baselineAlertId = data.getLong("baselineAlertId");
         List<Long> alertIdList = baselineAlertId == null
                 ? alertBreakerMapper.getAlertBreakerCollectAlertIdListByStateId(stateVo.getId())
                 : alertBreakerMapper.getAlertBreakerCollectAlertIdListByStateIdAndBaselineAlertId(stateVo.getId(), baselineAlertId);
         if (CollectionUtils.isEmpty(alertIdList)) {
-            data.put("aggregateSent", true);
-            return buildFlushResult(data);
-        }
-        List<String> toList = toStringList(data.getJSONArray("to"));
-        List<String> ccList = toStringList(data.getJSONArray("cc"));
-        if (CollectionUtils.isEmpty(toList) && CollectionUtils.isEmpty(ccList)) {
-            data.put("aggregateSent", true);
             return buildFlushResult(data);
         }
         AlertVo paramVo = new AlertVo();
         paramVo.setIdList(alertIdList);
         List<AlertVo> alertList = alertMapper.getAlertByIdList(paramVo);
-        String groupName = StringUtils.defaultIfBlank(data.getString("groupName"), "未知处理组");
-        String title = buildAggregateTitle(policyVo.getConfig(), data, groupName);
-        String content = buildAggregateContent(alertList, data);
-        Long mailServerId = data.getLong("mailServerId");
-        EmailUtil.sendHtmlEmail(mailServerId, title, content, toList, ccList);
-        data.put("aggregateSent", true);
-        return buildFlushResult(data);
+        AlertBreakerFlushResultVo resultVo = buildFlushResult(data);
+        resultVo.setAlertList(alertList);
+        return resultVo;
     }
 
     public void loadFlushJob(AlertBreakerStateVo stateVo) {
@@ -181,7 +160,7 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
         if (jobHandler == null) {
             return;
         }
-        JobObject jobObject = new JobObject.Builder(buildFlushJobName(stateVo.getId()), jobHandler.getGroupName(), jobHandler.getClassName())
+        JobObject jobObject = new JobObject.Builder(AlertBreakerManager.buildExpireJobName(stateVo.getId()), jobHandler.getGroupName(), jobHandler.getClassName())
                 .addData("stateId", stateVo.getId())
                 .addData("policyId", stateVo.getPolicyId())
                 .addData("baselineAlertId", baselineAlertId)
@@ -191,7 +170,7 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
     }
 
     public static String buildFlushJobName(Long stateId) {
-        return "ALERT-BREAKER-FLUSH-" + stateId;
+        return AlertBreakerManager.buildExpireJobName(stateId);
     }
 
     private AlertMailReceiverVo getReceiver(AlertVo alertVo, AlertEventHandlerVo eventHandlerVo) {
@@ -215,7 +194,6 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
         }
         data.put("collectCount", 0);
         data.put("collectDropCount", 0);
-        data.put("aggregateSent", false);
         return data;
     }
 
@@ -249,19 +227,6 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
         JSONArray array = new JSONArray();
         array.addAll(sort(valueSet));
         return array;
-    }
-
-    private List<String> toStringList(JSONArray array) {
-        List<String> valueList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(array)) {
-            for (int i = 0; i < array.size(); i++) {
-                String value = array.getString(i);
-                if (StringUtils.isNotBlank(value)) {
-                    valueList.add(value);
-                }
-            }
-        }
-        return valueList;
     }
 
     private JSONObject getData(AlertBreakerStateVo stateVo) {
@@ -298,98 +263,4 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
         return getDurationMillis(config, "windowSize", "windowUnit", 1, "minute");
     }
 
-    private String buildAggregateTitle(JSONObject config, JSONObject data, String groupName) {
-        String template = config == null ? null : config.getString("aggregateTitleTemplate");
-        if (StringUtils.isBlank(template)) {
-            template = DEFAULT_AGGREGATE_TITLE_TEMPLATE;
-        }
-        String title = replaceTitleVariables(template, buildTitleVariableMap(config, data, groupName));
-        if (StringUtils.isBlank(title)) {
-            title = replaceTitleVariables(DEFAULT_AGGREGATE_TITLE_TEMPLATE, buildTitleVariableMap(config, data, groupName));
-        }
-        return title;
-    }
-
-    private Map<String, String> buildTitleVariableMap(JSONObject config, JSONObject data, String groupName) {
-        int windowSize = config != null && !config.containsKey("windowSize") && config.containsKey("openDuration")
-                ? getIntValue(config, "openDuration", 1)
-                : getIntValue(config, "windowSize", 1);
-        String windowUnit = config != null && !config.containsKey("windowUnit") && config.containsKey("openDurationUnit")
-                ? config.getString("openDurationUnit")
-                : (config == null ? null : config.getString("windowUnit"));
-        int threshold = getIntValue(config, "threshold", 10);
-        Map<String, String> variableMap = new HashMap<>();
-        variableMap.put("groupName", StringUtils.defaultString(groupName));
-        variableMap.put("windowSize", String.valueOf(windowSize));
-        variableMap.put("windowUnitText", getUnitText(windowUnit));
-        variableMap.put("threshold", String.valueOf(threshold));
-        variableMap.put("collectCount", String.valueOf(data == null ? 0 : data.getIntValue("collectCount")));
-        variableMap.put("collectDropCount", String.valueOf(data == null ? 0 : data.getIntValue("collectDropCount")));
-        return variableMap;
-    }
-
-    private String replaceTitleVariables(String template, Map<String, String> variableMap) {
-        Matcher matcher = TITLE_VARIABLE_PATTERN.matcher(template);
-        StringBuilder titleBuffer = new StringBuilder();
-        while (matcher.find()) {
-            String value = variableMap.get(matcher.group(1));
-            matcher.appendReplacement(titleBuffer, Matcher.quoteReplacement(StringUtils.defaultString(value)));
-        }
-        matcher.appendTail(titleBuffer);
-        return titleBuffer.toString();
-    }
-
-    private String getUnitText(String unit) {
-        if (Objects.equals(unit, "second")) {
-            return "秒内";
-        } else if (Objects.equals(unit, "hour")) {
-            return "小时内";
-        }
-        return "分钟内";
-    }
-
-    private String buildAggregateContent(List<AlertVo> alertList, JSONObject data) {
-        StringBuilder html = new StringBuilder();
-        html.append("<div>以下告警在通知限流期间被聚合，请及时登录告警中心检查处理。</div>");
-        int collectDropCount = data == null ? 0 : data.getIntValue("collectDropCount");
-        if (collectDropCount > 0) {
-            html.append("<div style=\"margin-top:8px;\">另有").append(collectDropCount).append("条告警因超过收集上限未进入本邮件清单。</div>");
-        }
-        html.append("<table border=\"1\" cellspacing=\"0\" cellpadding=\"6\" style=\"border-collapse:collapse;margin-top:12px;width:100%;\">");
-        html.append("<thead><tr><th>ID</th><th>标题</th><th>级别</th><th>来源</th><th>状态</th><th>告警时间</th><th>详情</th></tr></thead><tbody>");
-        if (CollectionUtils.isNotEmpty(alertList)) {
-            for (AlertVo alertVo : alertList) {
-                html.append("<tr>");
-                html.append("<td>").append(alertVo.getId()).append("</td>");
-                html.append("<td>").append(escape(alertVo.getTitle())).append("</td>");
-                html.append("<td>").append(escape(StringUtils.defaultIfBlank(alertVo.getLevelLabel(), String.valueOf(alertVo.getLevel())))).append("</td>");
-                html.append("<td>").append(escape(StringUtils.defaultIfBlank(alertVo.getSourceName(), alertVo.getSource()))).append("</td>");
-                html.append("<td>").append(escape(StringUtils.defaultIfBlank(alertVo.getStatusName(), alertVo.getStatus()))).append("</td>");
-                html.append("<td>").append(escape(alertVo.getAlertTimeStr())).append("</td>");
-                html.append("<td>").append(buildAlertLink(alertVo.getId())).append("</td>");
-                html.append("</tr>");
-            }
-        }
-        html.append("</tbody></table>");
-        return html.toString();
-    }
-
-    private String buildAlertLink(Long alertId) {
-        String homeUrl = Config.HOME_URL();
-        if (StringUtils.isBlank(homeUrl)) {
-            return "-";
-        }
-        return "<a href=\"" + escape(homeUrl + "/" + TenantContext.get().getTenantUuid() + "/alert.html#/alert-detail/" + alertId) + "\">查看</a>";
-    }
-
-    private String escape(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
-    }
 }

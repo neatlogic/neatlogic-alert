@@ -71,63 +71,13 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
         String integrationUuid = config.getString("integrationUuid");
         JSONArray paramMapping = config.getJSONArray("paramMapping");
         if (StringUtils.isNotBlank(integrationUuid)) {
-            IntegrationVo integrationVo = integrationMapper.getIntegrationByUuid(integrationUuid);
-            if (integrationVo == null) {
-                throw new IntegrationNotFoundException(integrationUuid);
-            }
-            if (integrationVo.getIsActive() != 1) {
-                throw new IntegrationUnActiveException(integrationUuid);
-            }
-            IIntegrationHandler handler = IntegrationHandlerFactory.getHandler(integrationVo.getHandler());
-            if (handler == null) {
-                throw new IntegrationHandlerNotFoundException(integrationVo.getHandler());
-            }
-            List<AlertAttrDefineVo> attrList = AlertAttr.getTemplateConstAttrList();
-            JSONObject integrationParam = new JSONObject();
-            //获取集成的所有入参
-            Map<String, String> paramTypeMap = new HashMap<>();
-            if (integrationVo.getConfig().getJSONObject("param") != null) {
-                if (integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList") != null) {
-                    for (int i = 0; i < integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").size(); i++) {
-                        JSONObject paramObj = integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").getJSONObject(i);
-                        if (paramObj.getString("mode").equals("input")) {
-                            paramTypeMap.put(paramObj.getString("name"), paramObj.getString("type"));
-                        }
-                    }
-                }
-            }
-            if (CollectionUtils.isNotEmpty(paramMapping)) {
-                JSONObject paramObj = new JSONObject();
-                JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
-                for (AlertAttrDefineVo attr : attrList) {
-                    paramObj.put(attr.getName(), alertObj.get(attr.getName().replace("const_", "")));
-                }
-                if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
-                    List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
-                    for (AlertAttrTypeVo alertAttr : attrTypeList) {
-                        paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
-                    }
-                }
-                resultObj.put("sourceParam", paramObj);
-                for (int i = 0; i < paramMapping.size(); i++) {
-                    JSONObject mapping = paramMapping.getJSONObject(i);
-                    //尝试把转换好的数据转换成对象或数组，不行才当字符串处理
-                    String transferred = FreemarkerUtil.transform(paramObj, mapping.getString("expression"));
-                    if (paramTypeMap.containsKey(mapping.getString("name")) && paramTypeMap.get(mapping.getString("name")).equalsIgnoreCase("array")) {
-                        try {
-                            JSONArray list = JSON.parseArray(transferred);
-                            integrationParam.put(mapping.getString("name"), list);
-                        } catch (Exception e2) {
-                            integrationParam.put(mapping.getString("name"), transferred);
-                        }
-                    } else {
-                        integrationParam.put(mapping.getString("name"), transferred);
-                    }
-                }
-            }
+            IntegrationVo integrationVo = getIntegrationVo(integrationUuid);
+            IIntegrationHandler handler = getIntegrationHandler(integrationVo);
+            JSONObject paramObj = buildTemplateParamObj(alertVo);
+            JSONObject integrationParam = buildIntegrationParam(integrationVo, paramMapping, paramObj);
+            resultObj.put("sourceParam", paramObj);
             resultObj.put("param", integrationParam);
-            integrationVo.setParamObj(integrationParam);
-            IntegrationResultVo resultVo = handler.sendRequest(integrationVo, FrameworkRequestFrom.API);
+            IntegrationResultVo resultVo = sendRequest(handler, integrationVo, integrationParam);
             String resultJson = resultVo.getTransformedResult();
             if (StringUtils.isBlank(resultJson)) {
                 resultJson = resultVo.getRawResult();
@@ -166,6 +116,83 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
         return alertVo;
     }
 
+    private IntegrationVo getIntegrationVo(String integrationUuid) {
+        IntegrationVo integrationVo = integrationMapper.getIntegrationByUuid(integrationUuid);
+        if (integrationVo == null) {
+            throw new IntegrationNotFoundException(integrationUuid);
+        }
+        if (integrationVo.getIsActive() != 1) {
+            throw new IntegrationUnActiveException(integrationUuid);
+        }
+        return integrationVo;
+    }
+
+    private IIntegrationHandler getIntegrationHandler(IntegrationVo integrationVo) {
+        IIntegrationHandler handler = IntegrationHandlerFactory.getHandler(integrationVo.getHandler());
+        if (handler == null) {
+            throw new IntegrationHandlerNotFoundException(integrationVo.getHandler());
+        }
+        return handler;
+    }
+
+    private IntegrationResultVo sendRequest(IIntegrationHandler handler, IntegrationVo integrationVo, JSONObject integrationParam) {
+        integrationVo.setParamObj(integrationParam);
+        return handler.sendRequest(integrationVo, FrameworkRequestFrom.API);
+    }
+
+    private JSONObject buildTemplateParamObj(AlertVo alertVo) {
+        JSONObject paramObj = new JSONObject();
+        JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
+        for (AlertAttrDefineVo attr : AlertAttr.getTemplateConstAttrList()) {
+            paramObj.put(attr.getName(), alertObj.get(attr.getName().replace("const_", "")));
+        }
+        if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
+            List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
+            for (AlertAttrTypeVo alertAttr : attrTypeList) {
+                paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
+            }
+        }
+        return paramObj;
+    }
+
+    private JSONObject buildIntegrationParam(IntegrationVo integrationVo, JSONArray paramMapping, JSONObject paramObj) {
+        JSONObject integrationParam = new JSONObject();
+        Map<String, String> paramTypeMap = getParamTypeMap(integrationVo);
+        if (CollectionUtils.isNotEmpty(paramMapping)) {
+            for (int i = 0; i < paramMapping.size(); i++) {
+                JSONObject mapping = paramMapping.getJSONObject(i);
+                String transferred = FreemarkerUtil.transform(paramObj, mapping.getString("expression"));
+                integrationParam.put(mapping.getString("name"), transferParamValue(paramTypeMap.get(mapping.getString("name")), transferred));
+            }
+        }
+        return integrationParam;
+    }
+
+    private Map<String, String> getParamTypeMap(IntegrationVo integrationVo) {
+        Map<String, String> paramTypeMap = new HashMap<>();
+        if (integrationVo.getConfig().getJSONObject("param") != null) {
+            if (integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList") != null) {
+                for (int i = 0; i < integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").size(); i++) {
+                    JSONObject paramObj = integrationVo.getConfig().getJSONObject("param").getJSONArray("paramList").getJSONObject(i);
+                    if (paramObj.getString("mode").equals("input")) {
+                        paramTypeMap.put(paramObj.getString("name"), paramObj.getString("type"));
+                    }
+                }
+            }
+        }
+        return paramTypeMap;
+    }
+
+    private Object transferParamValue(String type, String transferred) {
+        if (type != null && type.equalsIgnoreCase("array")) {
+            try {
+                return JSON.parseArray(transferred);
+            } catch (Exception ignored) {
+                return transferred;
+            }
+        }
+        return transferred;
+    }
 
     @Override
     public String getName() {

@@ -98,17 +98,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             String type = config.getString("type");
             String title;
             String content;
-            JSONObject paramObj = new JSONObject();
-            JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
-            for (AlertAttrDefineVo attr : attrList) {
-                paramObj.put(attr.getName(), alertObj.get(attr.getName().replace("const_", "")));
-            }
-            if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
-                List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
-                for (AlertAttrTypeVo alertAttr : attrTypeList) {
-                    paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
-                }
-            }
+            JSONObject paramObj = buildTemplateParamObj(alertVo);
             if (StringUtils.isBlank(type) || !type.equalsIgnoreCase("template")) {
                 title = config.getString("title");
                 content = config.getString("content");
@@ -144,6 +134,21 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
             }
         }
         return alertVo;
+    }
+
+    private JSONObject buildTemplateParamObj(AlertVo alertVo) {
+        JSONObject paramObj = new JSONObject();
+        JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
+        for (AlertAttrDefineVo attr : AlertAttr.getTemplateConstAttrList()) {
+            paramObj.put(attr.getName(), alertObj.get(attr.getName().replace("const_", "")));
+        }
+        if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
+            List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
+            for (AlertAttrTypeVo alertAttr : attrTypeList) {
+                paramObj.put("attr_" + alertAttr.getName(), alertVo.getAttrObj().get(alertAttr.getName()));
+            }
+        }
+        return paramObj;
     }
 
     @Override

@@ -5,10 +5,10 @@ import neatlogic.framework.alert.breaker.AlertBreakerManager;
 import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerPolicyVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerStateVo;
+import neatlogic.framework.alert.enums.AlertBreakerState;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.scheduler.core.JobBase;
 import neatlogic.framework.scheduler.dto.JobObject;
-import neatlogic.module.alert.breaker.MailReceiverWindowAlertBreakerHandler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
@@ -48,7 +48,7 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
     @Override
     public void initJob(String tenantUuid) {
         Long lastId = 0L;
-        List<AlertBreakerStateVo> stateList = alertBreakerMapper.getCollectingAlertBreakerStateList("mailreceiverwindow", lastId, PAGE_SIZE);
+        List<AlertBreakerStateVo> stateList = alertBreakerMapper.getCollectingAlertBreakerStateList(null, lastId, PAGE_SIZE);
         while (CollectionUtils.isNotEmpty(stateList)) {
             for (AlertBreakerStateVo stateVo : stateList) {
                 loadFlushJob(stateVo, tenantUuid);
@@ -57,7 +57,7 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
             if (stateList.size() < PAGE_SIZE) {
                 break;
             }
-            stateList = alertBreakerMapper.getCollectingAlertBreakerStateList("mailreceiverwindow", lastId, PAGE_SIZE);
+            stateList = alertBreakerMapper.getCollectingAlertBreakerStateList(null, lastId, PAGE_SIZE);
         }
     }
 
@@ -78,7 +78,15 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
                     policyVo = alertBreakerMapper.getAlertBreakerPolicyById(currentStateVo.getPolicyId());
                 }
             }
-            AlertBreakerManager.flush(policyVo, stateVo);
+            AlertBreakerStateVo currentStateVo = alertBreakerMapper.getAlertBreakerStateById(stateId);
+            if (currentStateVo == null) {
+                return;
+            }
+            if (AlertBreakerState.COLLECTING.getValue().equals(currentStateVo.getState())) {
+                AlertBreakerManager.flush(policyVo, stateVo);
+            } else if (AlertBreakerState.OPEN.getValue().equals(currentStateVo.getState())) {
+                AlertBreakerManager.recover(policyVo, stateVo);
+            }
         } finally {
             schedulerManager.unloadJob(jobObject);
         }
@@ -88,13 +96,17 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
         if (stateVo == null || stateVo.getId() == null || stateVo.getOpenUntil() == null) {
             return;
         }
-        JobObject jobObject = new JobObject.Builder(MailReceiverWindowAlertBreakerHandler.buildFlushJobName(stateVo.getId()), this.getGroupName(), this.getClassName(), tenantUuid)
+        JobObject jobObject = new JobObject.Builder(AlertBreakerManager.buildExpireJobName(stateVo.getId()), this.getGroupName(), this.getClassName(), tenantUuid)
                 .addData("stateId", stateVo.getId())
                 .addData("policyId", stateVo.getPolicyId())
                 .addData("baselineAlertId", getBaselineAlertId(stateVo))
                 .withBeginTime(stateVo.getOpenUntil())
                 .build();
         schedulerManager.loadJob(jobObject);
+    }
+
+    public static String buildFlushJobName(Long stateId) {
+        return AlertBreakerManager.buildExpireJobName(stateId);
     }
 
     private Long getBaselineAlertId(AlertBreakerStateVo stateVo) {

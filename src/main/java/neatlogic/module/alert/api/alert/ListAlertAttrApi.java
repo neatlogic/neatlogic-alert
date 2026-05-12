@@ -70,6 +70,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
             @Param(name = "kind", desc = "属性大类", rule = "const,attr", type = ApiParamType.STRING),
             @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isCondition", desc = "是否用于条件判断", rule = "0,1", type = ApiParamType.INTEGER),
+            @Param(name = "isAggregate", desc = "是否用于聚合模板", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isColumn", desc = "是否用于展示", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Output({@Param(explode = AlertAttrDefineVo[].class)})
@@ -81,12 +82,15 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         String kind = jsonObj.getString("kind");
         int isExpand = jsonObj.getIntValue("isExpand");
         int isCondition = jsonObj.getIntValue("isCondition");
+        int isAggregate = jsonObj.getIntValue("isAggregate");
         int isColumn = jsonObj.getIntValue("isColumn");
         int isSearch = 0;
         List<AlertAttrDefineVo> attrList = new ArrayList<>();
         if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
             //TODO 逻辑是对的，后面再修改一下写法
-            if (isCondition == 1) {
+            if (isAggregate == 1) {
+                attrList.addAll(AlertAttr.getAggregateConstAttrList());
+            } else if (isCondition == 1) {
                 attrList.addAll(AlertAttr.getConditionConstAttrList());
             } else if (isExpand == 1) {
                 attrList.addAll(AlertAttr.getTemplateConstAttrList());
@@ -97,7 +101,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                 isSearch = 1;
             }
         }
-        if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr")) {
+        if (isAggregate != 1 && (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr"))) {
             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
             for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
                 if (isSearch == 1 && !Objects.equals(attrTypeVo.getIsIndex(), 1)) {
