@@ -27,6 +27,7 @@ import neatlogic.framework.restful.annotation.OperationType;
 import neatlogic.framework.restful.annotation.Param;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.TableResultUtil;
 import neatlogic.module.alert.dao.mapper.AlertAllAlertConfigMapper;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
@@ -140,7 +141,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
                             if (!hasExtend) {
                                 theadList.add(new JSONObject() {{
                                     this.put("key", "const_attrObj");
-                                    this.put("title", "扩展属性");
+                                    this.put("title", $.t("term.alert.extendattr"));
                                     this.put("attrList", extendAttrKeyList);
                                 }});
                                 hasExtend = true;
@@ -176,7 +177,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
             if (CollectionUtils.isNotEmpty(extendAttrKeyList)) {
                 theadList.add(new JSONObject() {{
                     this.put("key", "const_attrObj");
-                    this.put("title", "扩展属性");
+                    this.put("title", $.t("term.alert.extendattr"));
                     this.put("attrList", extendAttrKeyList);
                 }});
             }

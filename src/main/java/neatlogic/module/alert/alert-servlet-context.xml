@@ -20,8 +20,9 @@
 		http://neatlogic.com/schema/neatlogic
 		http://neatlogic.com/schema/neatlogic.xsd">
 
-    <neatlogic:module id="alert" name="告警中心" groupName="告警中心" group="alert" groupSort="10"
-                      groupDescription="集中告警中心"/>
+    <neatlogic:module id="alert" name="term.alert.alertcenter" groupName="term.alert.alertcenter" group="alert"
+                      groupSort="10"
+                      groupDescription="term.alert.alertcenter"/>
 
     <context:component-scan base-package="neatlogic.framework" use-default-filters="false">
         <context:include-filter type="annotation" expression="org.springframework.context.annotation.Configuration"/>
