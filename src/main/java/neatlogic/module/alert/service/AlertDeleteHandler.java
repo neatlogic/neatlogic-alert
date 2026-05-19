@@ -18,6 +18,7 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import neatlogic.framework.alert.crossover.IAlertEmbeddingCrossoverService;
+import neatlogic.framework.alert.crossover.IAlertSuppressionCrossoverService;
 import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.dto.OriginalAlertVo;
@@ -128,6 +129,11 @@ public class AlertDeleteHandler {
         IAlertEmbeddingCrossoverService alertEmbeddingService = CrossoverServiceFactory.tryToGetApi(IAlertEmbeddingCrossoverService.class);
         if (alertEmbeddingService != null) {
             alertEmbeddingService.deleteEmbedding(alertId);
+        }
+
+        IAlertSuppressionCrossoverService alertSuppressionService = CrossoverServiceFactory.tryToGetApi(IAlertSuppressionCrossoverService.class);
+        if (alertSuppressionService != null) {
+            alertSuppressionService.deleteSuppressionAuditByAlertId(alertId);
         }
     }
 }

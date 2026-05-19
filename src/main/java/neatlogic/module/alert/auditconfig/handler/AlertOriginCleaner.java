@@ -12,8 +12,10 @@
 
 package neatlogic.module.alert.auditconfig.handler;
 
+import neatlogic.framework.alert.crossover.IAlertSuppressionCrossoverService;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.auditconfig.core.AuditCleanerBase;
+import neatlogic.framework.crossover.CrossoverServiceFactory;
 import neatlogic.framework.healthcheck.dao.mapper.DatabaseFragmentMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,8 +41,12 @@ public class AlertOriginCleaner extends AuditCleanerBase {
         boolean hasDelete = false;
         List<Long> idList = alertMapper.getNotUsedAlertOriginIdByDayBefore(dayBefore);
         int batch = 0;
+        IAlertSuppressionCrossoverService alertSuppressionService = CrossoverServiceFactory.tryToGetApi(IAlertSuppressionCrossoverService.class);
         while (CollectionUtils.isNotEmpty(idList)) {
             alertMapper.deleteAlertOriginByIdList(idList);
+            if (alertSuppressionService != null) {
+                alertSuppressionService.deleteSuppressionAuditByAlertIdList(idList);
+            }
             idList = alertMapper.getNotUsedAlertOriginIdByDayBefore(dayBefore);
             hasDelete = true;
             batch += 1;
