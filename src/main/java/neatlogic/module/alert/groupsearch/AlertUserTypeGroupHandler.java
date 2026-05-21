@@ -50,6 +50,8 @@ public class AlertUserTypeGroupHandler implements IGroupSearchHandler {
             this.setValue(getHeader() + "workerteamuser");
             this.setText("处理组成员");
         }});
+        groupSearchVo.setPageSize(groupSearchOptionList.size());
+        groupSearchVo.setRowNum(groupSearchOptionList.size());
         return groupSearchOptionList;
     }
 
@@ -78,7 +80,7 @@ public class AlertUserTypeGroupHandler implements IGroupSearchHandler {
 
     @Override
     public int getSort() {
-        return 0;
+        return 7;
     }
 
     @Override
