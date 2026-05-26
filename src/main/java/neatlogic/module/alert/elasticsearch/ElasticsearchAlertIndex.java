@@ -187,6 +187,13 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
 
             boolQueryBuilder.must(query);
         }
+        //关闭状态。AlertVo.isClose 默认值是 0，只在显式查询关闭告警时追加过滤，避免影响现有默认搜索。
+        if (alertVo.getIsClose() == 1) {
+            boolQueryBuilder.must(Query.of(q -> q.term(t -> t
+                    .field("isClose")
+                    .value(1)
+            )));
+        }
         //告警状态
         if (CollectionUtils.isNotEmpty(alertVo.getStatusList())) {
             List<FieldValue> values = alertVo.getStatusList().stream()
