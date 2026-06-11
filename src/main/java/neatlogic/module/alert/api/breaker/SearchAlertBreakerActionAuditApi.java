@@ -41,6 +41,7 @@ public class SearchAlertBreakerActionAuditApi extends PrivateApiComponentBase {
     }
 
     @Input({
+            @Param(name = "breakerAuditId", desc = "熔断审计id", type = ApiParamType.LONG),
             @Param(name = "policyId", desc = "策略id", type = ApiParamType.LONG),
             @Param(name = "stateId", desc = "状态id", type = ApiParamType.LONG),
             @Param(name = "trigger", desc = "触发点", type = ApiParamType.STRING),

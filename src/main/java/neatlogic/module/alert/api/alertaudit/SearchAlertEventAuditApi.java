@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dao.mapper.AlertBreakerMapper;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
+import neatlogic.framework.alert.dto.breaker.AlertBreakerActionAuditVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerAuditVo;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
@@ -85,9 +86,23 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
         if (CollectionUtils.isEmpty(breakerAuditList)) {
             return;
         }
+        makeupBreakerActionAudit(breakerAuditList);
         Map<Long, List<AlertBreakerAuditVo>> breakerAuditMap = breakerAuditList.stream().collect(Collectors.groupingBy(AlertBreakerAuditVo::getEventHandlerAuditId));
         for (AlertEventHandlerAuditVo auditVo : auditList) {
             auditVo.setBreakerAuditList(breakerAuditMap.get(auditVo.getId()));
+        }
+    }
+
+    private void makeupBreakerActionAudit(List<AlertBreakerAuditVo> breakerAuditList) {
+        // 动作审计必须绑定到本次熔断审计，不能按可复用的 stateId 反查，否则会混入历史动作失败。
+        List<Long> breakerAuditIdList = breakerAuditList.stream().map(AlertBreakerAuditVo::getId).collect(Collectors.toList());
+        List<AlertBreakerActionAuditVo> actionAuditList = alertBreakerMapper.getAlertBreakerActionAuditListByBreakerAuditIdList(breakerAuditIdList);
+        if (CollectionUtils.isEmpty(actionAuditList)) {
+            return;
+        }
+        Map<Long, List<AlertBreakerActionAuditVo>> actionAuditMap = actionAuditList.stream().collect(Collectors.groupingBy(AlertBreakerActionAuditVo::getBreakerAuditId));
+        for (AlertBreakerAuditVo breakerAuditVo : breakerAuditList) {
+            breakerAuditVo.setActionAuditList(actionAuditMap.get(breakerAuditVo.getId()));
         }
     }
 
