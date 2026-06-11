@@ -102,20 +102,8 @@ public class AlertEventIntervalScheduleJob extends JobBase {
         AlertIntervalJobVo jobVo = alertMapper.getAlertIntervalJob(alertId, alertEventHandlerId);
         if (jobVo != null) {
             String tenantUuid = TenantContext.get().getTenantUuid();
-            if (jobVo.getRepeatCount() > 0) {
-                JobObject.Builder builder = new JobObject.Builder(alertId + "#" + alertEventHandlerId, this.getGroupName(), this.getClassName(), tenantUuid);
-                builder.withRepeatCount(jobVo.getRepeatCount() - 1);
-                Date now = new Date();
-                if (now.before(jobVo.getStartTime())) {
-                    builder.withBeginTime(jobVo.getStartTime());
-                }
-                if (jobVo.getRepeatCount() > 0 && jobVo.getIntervalMinute() > 0) {
-                    builder.withRepeatCount(jobVo.getRepeatCount());
-                    builder.withIntervalInSeconds(jobVo.getIntervalMinute() * 60);
-                }
-                builder.addData("alertId", alertId);
-                builder.addData("alertEventHandlerId", alertEventHandlerId);
-                schedulerManager.loadJob(builder.build());
+            if (getLeftExecuteCount(jobVo) > 0) {
+                schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid));
             } else {
                 schedulerManager.unloadJob(jobObject);
             }
@@ -131,25 +119,33 @@ public class AlertEventIntervalScheduleJob extends JobBase {
         List<AlertIntervalJobVo> jobList = alertMapper.searchAlertIntervalJob(paramJobVo);
         while (CollectionUtils.isNotEmpty(jobList)) {
             for (AlertIntervalJobVo jobVo : jobList) {
-                Long alertId = jobVo.getAlertId();
-                Long alertEventHandlerId = jobVo.getAlertEventHandlerId();
-                JobObject.Builder builder = new JobObject.Builder(alertId + "#" + alertEventHandlerId, this.getGroupName(), this.getClassName(), tenantUuid);
-                builder.withRepeatCount(jobVo.getRepeatCount() - 1);
-                Date now = new Date();
-                if (now.before(jobVo.getStartTime())) {
-                    builder.withBeginTime(jobVo.getStartTime());
+                if (getLeftExecuteCount(jobVo) > 0) {
+                    schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid));
                 }
-                if (jobVo.getRepeatCount() > 0 && jobVo.getIntervalMinute() > 0) {
-                    builder.withRepeatCount(jobVo.getRepeatCount());
-                    builder.withIntervalInSeconds(jobVo.getIntervalMinute() * 60);
-                }
-                builder.addData("alertId", alertId);
-                builder.addData("alertEventHandlerId", alertEventHandlerId);
-                schedulerManager.loadJob(builder.build());
             }
             paramJobVo.setCurrentPage(paramJobVo.getCurrentPage() + 1);
             jobList = alertMapper.searchAlertIntervalJob(paramJobVo);
         }
+    }
+
+    private JobObject buildIntervalJobObject(AlertIntervalJobVo jobVo, String tenantUuid) {
+        JobObject.Builder builder = new JobObject.Builder(jobVo.getAlertId() + "#" + jobVo.getAlertEventHandlerId(), this.getGroupName(), this.getClassName(), tenantUuid);
+        Date now = new Date();
+        if (jobVo.getStartTime() != null && now.before(jobVo.getStartTime())) {
+            builder.withBeginTime(jobVo.getStartTime());
+        }
+        int leftExecuteCount = getLeftExecuteCount(jobVo);
+        if (jobVo.getIntervalMinute() != null && jobVo.getIntervalMinute() > 0) {
+            builder.withRepeatCount(Math.max(leftExecuteCount - 1, 0));
+            builder.withIntervalInSeconds(jobVo.getIntervalMinute() * 60);
+        }
+        builder.addData("alertId", jobVo.getAlertId());
+        builder.addData("alertEventHandlerId", jobVo.getAlertEventHandlerId());
+        return builder.build();
+    }
+
+    private int getLeftExecuteCount(AlertIntervalJobVo jobVo) {
+        return jobVo == null || jobVo.getRepeatCount() == null ? 0 : Math.max(jobVo.getRepeatCount(), 0);
     }
 
     @Override
@@ -172,16 +168,18 @@ public class AlertEventIntervalScheduleJob extends JobBase {
             }
             JSONObject oldResultObj = auditVo.getResult();
             JSONObject resultObj = new JSONObject();
+            int oldLeftExecuteCount = oldResultObj == null ? getLeftExecuteCount(jobVo) : oldResultObj.getIntValue("leftExecuteCount");
+            int leftExecuteCount = Math.max(oldLeftExecuteCount - 1, 0);
             //System.out.println("next fire time:" + context.getNextFireTime());
             resultObj.put("nextStartTime", context.getNextFireTime());
-            resultObj.put("leftExecuteCount", oldResultObj.getIntValue("leftExecuteCount") - 1);
-            resultObj.put("intervalMinute", oldResultObj.get("intervalMinute"));
+            resultObj.put("leftExecuteCount", leftExecuteCount);
+            resultObj.put("intervalMinute", oldResultObj == null ? jobVo.getIntervalMinute() : oldResultObj.get("intervalMinute"));
             auditVo.setResult(resultObj);
             alertEventMapper.updateAlertEventAuditResult(auditVo);
             if (context.getNextFireTime() != null) {
                 AlertIntervalJobVo alertIntervalJobVo = new AlertIntervalJobVo();
                 alertIntervalJobVo.setStartTime(context.getNextFireTime());
-                alertIntervalJobVo.setRepeatCount(oldResultObj.getIntValue("leftExecuteCount") - 1);
+                alertIntervalJobVo.setRepeatCount(leftExecuteCount);
                 alertIntervalJobVo.setAlertId(alertId);
                 alertIntervalJobVo.setAlertEventHandlerId(alertEventHandlerId);
                 alertMapper.updateAlertIntervalJob(alertIntervalJobVo);

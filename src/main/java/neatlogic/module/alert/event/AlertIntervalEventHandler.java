@@ -27,15 +27,20 @@ import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.schedule.handler.AlertEventIntervalScheduleJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Component
 public class AlertIntervalEventHandler extends AlertEventHandlerBase {
+    private static final Logger logger = LoggerFactory.getLogger(AlertIntervalEventHandler.class);
+
     @Resource
     private AlertMapper alertMapper;
 
@@ -93,42 +98,80 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
                     if (intervalMinute == null) {
                         intervalMinute = 0;
                     }
-                    calendar.add(Calendar.MINUTE, delayMinute);
-                    IJob jobHandler = SchedulerManager.getHandler(AlertEventIntervalScheduleJob.class.getName());
-                    JobObject.Builder builder = new JobObject.Builder(alertVo.getId().toString() + "#" + alertEventHandlerVo.getId(), jobHandler.getGroupName(), jobHandler.getClassName())
-                            .addData("alertId", alertVo.getId())
-                            .addData("alertEventHandlerId", alertEventHandlerVo.getId())
-                            .withBeginTime(calendar.getTime());
-                    if (repeatCount > 0 && intervalMinute > 0) {
-                        builder.withRepeatCount(repeatCount);
-                        builder.withIntervalInSeconds(intervalMinute * 60);
+                    AlertIntervalJobVo alertIntervalJobVo = null;
+                    int leftExecuteCount = 0;
+                    if (delayMinute == 0) {
+                        alertVo = triggerIntervalHandler(config, alertVo, alertEventHandlerAuditVo.getId());
+                        if (repeatCount > 0 && intervalMinute > 0) {
+                            leftExecuteCount = repeatCount;
+                            calendar.add(Calendar.MINUTE, intervalMinute);
+                            alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, config);
+                            loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalMinute, leftExecuteCount);
+                        }
+                    } else {
+                        calendar.add(Calendar.MINUTE, delayMinute);
+                        leftExecuteCount = intervalMinute > 0 ? repeatCount + 1 : 1;
+                        alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, config);
+                        loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalMinute, leftExecuteCount);
                     }
-
-                    AlertIntervalJobVo alertIntervalJobVo = new AlertIntervalJobVo();
-                    alertIntervalJobVo.setAlertId(alertVo.getId());
-                    alertIntervalJobVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
-                    alertIntervalJobVo.setParentAuditId(alertEventHandlerAuditVo.getId());
-                    //下一次执行的时间，用来判断次作业是否已经执行过
-                    alertIntervalJobVo.setStartTime(calendar.getTime());
-                    //这里需要记录还需要执行的次数，每次执行完都会-1，变成0后下次load job就不再加载了
-                    alertIntervalJobVo.setRepeatCount(repeatCount + 1);
-                    alertIntervalJobVo.setIntervalMinute(intervalMinute);
-                    alertIntervalJobVo.setConfig(config);
-                    alertMapper.insertAlertIntervalJob(alertIntervalJobVo);
-
-                    schedulerManager.loadJob(builder.build());
-
-                    JSONObject resultObj = new JSONObject();
-                    resultObj.put("nextStartTime", alertIntervalJobVo.getStartTime());
-                    resultObj.put("leftExecuteCount", alertIntervalJobVo.getRepeatCount());
-                    resultObj.put("intervalMinute", alertIntervalJobVo.getIntervalMinute());
-                    alertEventHandlerAuditVo.setResult(resultObj);
+                    updateAuditResult(alertEventHandlerAuditVo, alertIntervalJobVo, intervalMinute, leftExecuteCount);
                 }
 
             }
 
         }
         return alertVo;
+    }
+
+    private AlertVo triggerIntervalHandler(JSONObject config, AlertVo alertVo, Long parentAuditId) {
+        JSONObject handlerObj = config.getJSONObject("handler");
+        IAlertEventHandler eventHandler = AlertEventHandlerFactory.getHandler(handlerObj.getString("handler"));
+        AlertEventHandlerVo subHandler = alertEventMapper.getAlertEventHandlerByUuid(handlerObj.getString("uuid"));
+        if (eventHandler != null && subHandler != null) {
+            try {
+                return eventHandler.trigger(subHandler, alertVo, parentAuditId);
+            } catch (Exception e) {
+                logger.warn("Trigger interval child handler failed, parentAuditId: {}, handlerUuid: {}, handler: {}, error: {}",
+                        parentAuditId, handlerObj.getString("uuid"), handlerObj.getString("handler"), e.getMessage(), e);
+            }
+        }
+        return alertVo;
+    }
+
+    private AlertIntervalJobVo createIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, Date startTime, Integer repeatCount, Integer intervalMinute, JSONObject config) {
+        AlertIntervalJobVo alertIntervalJobVo = new AlertIntervalJobVo();
+        alertIntervalJobVo.setAlertId(alertVo.getId());
+        alertIntervalJobVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
+        alertIntervalJobVo.setParentAuditId(alertEventHandlerAuditVo.getId());
+        //下一次执行的时间，用来判断次作业是否已经执行过
+        alertIntervalJobVo.setStartTime(startTime);
+        //这里需要记录还需要执行的次数，每次执行完都会-1，变成0后下次load job就不再加载了
+        alertIntervalJobVo.setRepeatCount(repeatCount);
+        alertIntervalJobVo.setIntervalMinute(intervalMinute);
+        alertIntervalJobVo.setConfig(config);
+        alertMapper.insertAlertIntervalJob(alertIntervalJobVo);
+        return alertIntervalJobVo;
+    }
+
+    private void loadIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, Date startTime, Integer intervalMinute, Integer leftExecuteCount) {
+        IJob jobHandler = SchedulerManager.getHandler(AlertEventIntervalScheduleJob.class.getName());
+        JobObject.Builder builder = new JobObject.Builder(alertVo.getId().toString() + "#" + alertEventHandlerVo.getId(), jobHandler.getGroupName(), jobHandler.getClassName())
+                .addData("alertId", alertVo.getId())
+                .addData("alertEventHandlerId", alertEventHandlerVo.getId())
+                .withBeginTime(startTime);
+        if (leftExecuteCount > 0 && intervalMinute > 0) {
+            builder.withRepeatCount(Math.max(leftExecuteCount - 1, 0));
+            builder.withIntervalInSeconds(intervalMinute * 60);
+        }
+        schedulerManager.loadJob(builder.build());
+    }
+
+    private void updateAuditResult(AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertIntervalJobVo alertIntervalJobVo, Integer intervalMinute, Integer leftExecuteCount) {
+        JSONObject resultObj = new JSONObject();
+        resultObj.put("nextStartTime", alertIntervalJobVo == null ? null : alertIntervalJobVo.getStartTime());
+        resultObj.put("leftExecuteCount", leftExecuteCount == null ? 0 : leftExecuteCount);
+        resultObj.put("intervalMinute", intervalMinute);
+        alertEventHandlerAuditVo.setResult(resultObj);
     }
 
     @Override
