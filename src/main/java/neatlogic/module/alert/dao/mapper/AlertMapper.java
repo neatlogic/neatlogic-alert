@@ -70,7 +70,7 @@ public interface AlertMapper {
 
     void updateAlertUpdateTime(AlertVo alertVo);
 
-    int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose);
+    int updateAlertIsClose(@Param("alertId") Long alertId, @Param("isClose") Integer isClose, @Param("closeTime") java.util.Date closeTime);
 
     void updateAlertIntervalJob(AlertIntervalJobVo alertIntervalJobVo);
 

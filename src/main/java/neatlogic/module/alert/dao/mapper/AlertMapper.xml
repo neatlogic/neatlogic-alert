@@ -174,6 +174,7 @@
         <result column="title" property="title"/>
         <result column="updateTime" property="updateTime"/>
         <result column="alertTime" property="alertTime"/>
+        <result column="closeTime" property="closeTime"/>
         <result column="type" property="type"/>
         <result column="alertTypeLabel" property="typeName"/>
         <result column="status" property="status"/>
@@ -305,6 +306,7 @@
         a.title,
         a.update_time as updateTime,
         a.alert_time as alertTime,
+        a.close_time as closeTime,
         a.type,
         a.is_close as isClose,
         a.similar_count as similarCount,
@@ -359,6 +361,7 @@
                a.title,
                a.update_time                                                                         as updateTime,
                a.alert_time                                                                          as alertTime,
+               a.close_time                                                                          as closeTime,
                a.type,
                a.is_close                                                                            as isClose,
                a.is_delete                                                                           as isDelete,
@@ -519,7 +522,8 @@
 
     <update id="updateAlertIsClose">
         update alert
-        set is_close = #{isClose}
+        set is_close = #{isClose},
+            close_time = #{closeTime}
         where id = #{alertId}
     </update>
 
@@ -578,6 +582,7 @@
          title,
          update_time,
          alert_time,
+         close_time,
          type,
          status,
          source,
@@ -588,6 +593,7 @@
                 #{title},
                 #{updateTime},
                 #{alertTime},
+                null,
                 #{type},
                 #{status},
                 #{source},

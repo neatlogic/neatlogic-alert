@@ -148,10 +148,12 @@ public class AlertServiceImpl implements IAlertService {
                     }
                 }
             }
+            alertVo.setCloseTime(null);
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 0);
+                this.put("closeTime", null);
             }}, false);
-            alertMapper.updateAlertIsClose(alertVo.getId(), 0);
+            alertMapper.updateAlertIsClose(alertVo.getId(), 0, null);
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());
             alertAuditVo.setAttrName("const_isClose");
@@ -181,10 +183,13 @@ public class AlertServiceImpl implements IAlertService {
                     }
                 }
             }
+            Date closeTime = new Date();
+            alertVo.setCloseTime(closeTime);
             index.updateDocument(alertVo.getId(), new JSONObject() {{
                 this.put("isClose", 1);
+                this.put("closeTime", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(closeTime));
             }}, false);
-            alertMapper.updateAlertIsClose(alertVo.getId(), 1);
+            alertMapper.updateAlertIsClose(alertVo.getId(), 1, closeTime);
             alertMapper.deleteAlertParentUniqueKeyByAlertId(alertVo.getId());
             AlertAuditVo alertAuditVo = new AlertAuditVo(true);
             alertAuditVo.setAlertId(alertVo.getId());

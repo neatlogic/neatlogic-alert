@@ -15,6 +15,8 @@ package neatlogic.module.alert.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
 @Component
 public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> {
     static Logger logger = LoggerFactory.getLogger(ElasticsearchAlertIndex.class);
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm||epoch_millis";
 
     @Resource
     private AlertViewMapper alertViewMapper;
@@ -593,24 +596,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
                                         )
                                 )
                         ))
-                .mappings(m -> m
-                        .properties("id", p -> p.long_(l -> l))                        // bigint -> long
-                        .properties("fromAlertId", p -> p.long_(l -> l))
-                        .properties("level", p -> p.integer(i -> i))                  // int -> integer
-                        .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
-                        .properties("updateTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm||epoch_millis")))// varchar -> text
-                        .properties("alertTime", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm||epoch_millis"))) // datetime -> date
-                        .properties("isClose", p -> p.integer(i -> i))
-                        .properties("type", p -> p.long_(l -> l))                     // bigint -> long
-                        .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
-                        .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
-                        .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
-                        .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
-                        .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
-                        .properties("markList", p -> p.keyword(k -> k)) // 字符串数组，不分词
-                        //.properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
-                        .properties("attrObj", p -> p.flattened(f -> f))
-                );
+                .mappings(buildCreateIndexMapping(elasticsearchVo));
         if (MapUtils.isNotEmpty(elasticsearchVo.getConfig())) {
             if (elasticsearchVo.getConfig().containsKey("numberOfShards")) {
                 esBuilder.settings(s -> s.numberOfShards(elasticsearchVo.getConfig().getString("numberOfShards")));
@@ -627,6 +613,33 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+    }
+
+    private TypeMapping buildCreateIndexMapping(ElasticsearchVo elasticsearchVo) {
+        return TypeMapping.of(m -> m
+                .properties("id", p -> p.long_(l -> l))                        // bigint -> long
+                .properties("fromAlertId", p -> p.long_(l -> l))
+                .properties("level", p -> p.integer(i -> i))                  // int -> integer
+                .properties("title", p -> p.text(t -> elasticsearchVo.getConfig().containsKey("analyser") ? t.analyzer(elasticsearchVo.getConfig().getString("analyser")) : t))
+                .properties("updateTime", p -> p.date(d -> d.format(DATE_FORMAT)))// varchar -> text
+                .properties("alertTime", p -> p.date(d -> d.format(DATE_FORMAT))) // datetime -> date
+                .properties("closeTime", p -> p.date(d -> d.format(DATE_FORMAT))) // datetime -> date
+                .properties("isClose", p -> p.integer(i -> i))
+                .properties("type", p -> p.long_(l -> l))                     // bigint -> long
+                .properties("status", p -> p.keyword(k -> k))                 // enum -> keyword
+                .properties("source", p -> p.keyword(k -> k.normalizer("lowercase_normalizer")))                 // varchar -> keyword
+                .properties("uniqueKey", p -> p.keyword(k -> k))             // char -> keyword
+                .properties("userList", p -> p.keyword(k -> k))              // 字符串数组，不分词
+                .properties("teamList", p -> p.keyword(k -> k))              // 字符串数组，不分词
+                .properties("markList", p -> p.keyword(k -> k)) // 字符串数组，不分词
+                //.properties("attrObj", p -> p.object(o -> o.dynamic(DynamicMapping.True)))
+                .properties("attrObj", p -> p.flattened(f -> f))
+        );
+    }
+
+    @Override
+    protected Map<String, Property> getCreateIndexMappingPropertyMap(ElasticsearchVo elasticsearchVo) {
+        return buildCreateIndexMapping(elasticsearchVo).properties();
     }
 
     @Override
@@ -657,6 +670,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         document.put("title", alertVo.getTitle());
         document.put("updateTime", alertVo.getUpdateTime() != null ? sdf.format(alertVo.getUpdateTime()) : null);
         document.put("alertTime", alertVo.getAlertTime() != null ? sdf.format(alertVo.getAlertTime()) : null);
+        document.put("closeTime", alertVo.getCloseTime() != null ? sdf.format(alertVo.getCloseTime()) : null);
         document.put("type", alertVo.getType());
         document.put("isClose", alertVo.getIsClose());
         document.put("status", alertVo.getStatus());
