@@ -9,7 +9,8 @@
         select
         uuid,
         name,
-        style from alert_mark
+        style,
+        is_show as isShow from alert_mark
         <where>
             <if test="nameList != null and nameList.size() > 0">
                 name in
@@ -23,7 +24,7 @@
 
     <select id="searchAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo"
             resultType="neatlogic.framework.alert.dto.AlertMarkVo">
-        select uuid,name,style from alert_mark
+        select uuid,name,style,is_show as isShow from alert_mark
         <where>
             <if test="keyword != null and keyword != ''">
                 name like concat(#{keyword}, '%')
@@ -41,7 +42,7 @@
 
     <select id="getAlertMarkByAlertId" parameterType="java.lang.Long"
             resultType="neatlogic.framework.alert.dto.AlertMarkVo">
-        select distinct b.uuid, b.name, b.style
+        select distinct b.uuid, b.name, b.style, b.is_show as isShow
         from alert_alert_mark a
                  join alert_mark b on a.mark_uuid = b.uuid
         where a.alert_id = #{value}
@@ -56,7 +57,14 @@
 
     <update id="updateAlertMark" parameterType="neatlogic.framework.alert.dto.AlertMarkVo">
         update alert_mark
-        set style = #{style}
+        <set>
+            <if test="style != null">
+                style = #{style},
+            </if>
+            <if test="isShow != null">
+                is_show = #{isShow},
+            </if>
+        </set>
         where uuid = #{uuid}
     </update>
 

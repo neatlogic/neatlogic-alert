@@ -212,6 +212,7 @@
             <id column="alertMarkUuid" property="uuid"/>
             <result column="alertMarkName" property="name"/>
             <result column="alertMarkStyle" property="style"/>
+            <result column="alertMarkIsShow" property="isShow"/>
         </collection>
         <collection property="actionList" ofType="neatlogic.framework.alert.dto.AlertActionVo">
             <id column="actionId" property="id"/>
@@ -334,6 +335,7 @@
         am.name as alertMarkName,
         am.uuid as alertMarkUuid,
         am.style as alertMarkStyle,
+        am.is_show as alertMarkIsShow,
         aa.id as actionId,
         aa.name as actionName,
         aa.label as actionLabel,
@@ -387,6 +389,7 @@
                am.name                                                                               as alertMarkName,
                am.uuid                                                                               as alertMarkUuid,
                am.style                                                                              as alertMarkStyle,
+               am.is_show                                                                            as alertMarkIsShow,
                aa.id                                                                                 as actionId,
                aa.name                                                                               as actionName,
                aa.label                                                                              as actionLabel,

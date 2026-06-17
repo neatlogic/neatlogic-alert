@@ -56,7 +56,8 @@ public class SaveAlertMarkApi extends PrivateApiComponentBase {
 
     @Input({
             @Param(name = "uuid", desc = "uuid", type = ApiParamType.STRING, isRequired = true),
-            @Param(name = "style", desc = "样式", type = ApiParamType.STRING)
+            @Param(name = "style", desc = "样式", type = ApiParamType.STRING),
+            @Param(name = "isShow", desc = "是否显示", rule = "0,1", type = ApiParamType.INTEGER)
     })
     @Description(desc = "保存标签")
     @Override
