@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_mark",
+  "label": "告警mark表",
+  "description": "告警mark表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。",
+  "fields": [
+    {
+      "name": "uuid",
+      "type": "char(32)",
+      "description": "md5，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "名称，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "style",
+      "type": "varchar(255)",
+      "description": "风格。"
+    },
+    {
+      "name": "is_show",
+      "type": "tinyint",
+      "description": "是否显示。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "uuid"
+      ],
+      "description": "主键索引，覆盖 uuid 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_name",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "name"
+      ],
+      "description": "普通索引，覆盖 name 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "moduleId": "alert",
+  "name": "alert_type_attrtype",
+  "label": "告警type_attrtype表",
+  "description": "告警type_attrtype表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "alerttype_id",
+      "type": "bigint",
+      "description": "alerttype关联ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "attrtype_id",
+      "type": "bigint",
+      "description": "attrtype关联ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "sort",
+      "type": "int",
+      "description": "排序。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alerttype_id",
+        "attrtype_id"
+      ],
+      "description": "主键索引，覆盖 alerttype_id、attrtype_id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

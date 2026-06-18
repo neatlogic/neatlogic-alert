@@ -1,0 +1,105 @@
+{
+  "moduleId": "alert",
+  "name": "alert_subscribe_audit",
+  "label": "告警subscribe_audit表",
+  "description": "告警subscribe_audit表，属于告警模块的数据表。 可用于告警相关的状态跟踪、关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "主键ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "告警id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "subscribe_id",
+      "type": "bigint",
+      "description": "订阅id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp(3)",
+      "description": "开始时间，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "action_id",
+      "type": "bigint",
+      "description": "动作id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "状态。"
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp(3)",
+      "description": "结束时间。"
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "description": "异常。"
+    },
+    {
+      "name": "result",
+      "type": "text",
+      "description": "结果。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_action_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "action_id"
+      ],
+      "description": "普通索引，覆盖 action_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "普通索引，覆盖 alert_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_starttime",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "普通索引，覆盖 start_time 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_subscribe_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "subscribe_id"
+      ],
+      "description": "普通索引，覆盖 subscribe_id 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "moduleId": "alert",
+  "name": "alert_subscribe",
+  "label": "告警subscribe表",
+  "description": "告警subscribe表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(100)",
+      "description": "名称。"
+    },
+    {
+      "name": "condition",
+      "type": "longtext",
+      "description": "条件。"
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "是否激活。"
+    },
+    {
+      "name": "config",
+      "type": "longtext",
+      "description": "配置。"
+    },
+    {
+      "name": "type",
+      "type": "enum('private','public')",
+      "description": "类型。"
+    },
+    {
+      "name": "owner",
+      "type": "char(32)",
+      "description": "所有人。"
+    },
+    {
+      "name": "action_type",
+      "type": "bigint",
+      "description": "事件动作类型。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

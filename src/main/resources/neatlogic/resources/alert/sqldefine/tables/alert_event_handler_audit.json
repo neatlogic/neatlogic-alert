@@ -1,0 +1,131 @@
+{
+  "moduleId": "alert",
+  "name": "alert_event_handler_audit",
+  "label": "告警event_handler_audit表",
+  "description": "告警event_handler_audit表，属于告警模块的数据表。 可用于告警相关的状态跟踪、关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "parent_id",
+      "type": "bigint",
+      "description": "父Id。"
+    },
+    {
+      "name": "unique_key",
+      "type": "char(32)",
+      "description": "唯一键。"
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "告警id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "event",
+      "type": "varchar(50)",
+      "description": "事件。"
+    },
+    {
+      "name": "handler",
+      "type": "varchar(50)",
+      "description": "事件处理器唯一标识。"
+    },
+    {
+      "name": "handler_name",
+      "type": "varchar(100)",
+      "description": "事件处理器名称。"
+    },
+    {
+      "name": "event_handler_id",
+      "type": "bigint",
+      "description": "事件处理器id。"
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp(3)",
+      "description": "开始时间，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp(3)",
+      "description": "结束时间。"
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "状态。"
+    },
+    {
+      "name": "error",
+      "type": "longtext",
+      "description": "异常。"
+    },
+    {
+      "name": "config",
+      "type": "longtext",
+      "description": "事件配置。"
+    },
+    {
+      "name": "result",
+      "type": "longtext",
+      "description": "结果。"
+    },
+    {
+      "name": "server_id",
+      "type": "int",
+      "description": "服务器id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "is_async",
+      "type": "tinyint",
+      "description": "是否异步。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "普通索引，覆盖 alert_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_server_id_status",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "server_id",
+        "status"
+      ],
+      "description": "普通索引，覆盖 server_id、status 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_start_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "普通索引，覆盖 start_time 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

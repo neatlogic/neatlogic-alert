@@ -1,0 +1,100 @@
+{
+  "moduleId": "alert",
+  "name": "alert_trash",
+  "label": "告警内容",
+  "description": "告警内容 可用于告警相关的状态跟踪、时间维度统计等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "level",
+      "type": "int",
+      "description": "级别。"
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "description": "标题。"
+    },
+    {
+      "name": "update_time",
+      "type": "datetime",
+      "description": "更新时间。"
+    },
+    {
+      "name": "delete_time",
+      "type": "datetime",
+      "description": "删除时间，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "alert_time",
+      "type": "datetime",
+      "description": "告警时间。"
+    },
+    {
+      "name": "delete_user",
+      "type": "char(32)",
+      "description": "删除用户。"
+    },
+    {
+      "name": "type",
+      "type": "bigint",
+      "description": "类型。"
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "状态。"
+    },
+    {
+      "name": "source",
+      "type": "varchar(100)",
+      "description": "来源。"
+    },
+    {
+      "name": "is_close",
+      "type": "tinyint",
+      "description": "是否关闭。"
+    },
+    {
+      "name": "unique_key",
+      "type": "char(32)",
+      "description": "唯一键，已建立普通索引，适合用于过滤、关联或排序查询。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_delete_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "delete_time"
+      ],
+      "description": "普通索引，覆盖 delete_time 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_unique_key",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "unique_key"
+      ],
+      "description": "普通索引，覆盖 unique_key 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

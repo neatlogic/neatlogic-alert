@@ -1,0 +1,75 @@
+{
+  "moduleId": "alert",
+  "name": "alert_origin",
+  "label": "告警origin表",
+  "description": "告警origin表，属于告警模块的数据表。 可用于告警相关的状态跟踪等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "主键ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "content",
+      "type": "longtext",
+      "description": "告警origin表的content字段。"
+    },
+    {
+      "name": "adaptor",
+      "type": "varchar(100)",
+      "description": "适配器。"
+    },
+    {
+      "name": "type",
+      "type": "varchar(100)",
+      "description": "类型。"
+    },
+    {
+      "name": "time",
+      "type": "timestamp",
+      "description": "告警origin表的time字段，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "error",
+      "type": "longtext",
+      "description": "告警origin表的error字段。"
+    },
+    {
+      "name": "source",
+      "type": "varchar(100)",
+      "description": "来源。"
+    },
+    {
+      "name": "status",
+      "type": "enum('succeed','failed','ignored')",
+      "description": "是否上报成功。"
+    },
+    {
+      "name": "alert_data",
+      "type": "longtext",
+      "description": "转换后的告警数据。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "time"
+      ],
+      "description": "普通索引，覆盖 time 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

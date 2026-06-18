@@ -1,0 +1,55 @@
+{
+  "moduleId": "alert",
+  "name": "alert_suppression_eventhandler",
+  "label": "告警suppression_eventhandler表",
+  "description": "告警suppression_eventhandler表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "主键ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "suppression_id",
+      "type": "bigint",
+      "description": "suppression关联ID，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "event_handler",
+      "type": "varchar(100)",
+      "description": "告警suppression_eventhandler表的event_handler字段，已建立普通索引，适合用于过滤、关联或排序查询。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_handler",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "event_handler"
+      ],
+      "description": "普通索引，覆盖 event_handler 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_suppression_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "suppression_id"
+      ],
+      "description": "普通索引，覆盖 suppression_id 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

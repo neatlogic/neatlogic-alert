@@ -1,0 +1,45 @@
+{
+  "moduleId": "alert",
+  "name": "alert_adaptor",
+  "label": "告警adaptor表",
+  "description": "告警adaptor表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "alerttype_id",
+      "type": "bigint",
+      "description": "告警类型id。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "唯一标识。"
+    },
+    {
+      "name": "label",
+      "type": "varchar(100)",
+      "description": "名称。"
+    },
+    {
+      "name": "file_id",
+      "type": "bigint",
+      "description": "附件id。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "moduleId": "alert",
+  "name": "alert_topo_widget",
+  "label": "告警topo_widget表",
+  "description": "告警topo_widget表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(255)",
+      "description": "唯一标识，x6注册时用，数据库中要求唯一，适合用于精确查询和去重判断。"
+    },
+    {
+      "name": "type",
+      "type": "varchar(50)",
+      "description": "图元类型。"
+    },
+    {
+      "name": "icon",
+      "type": "varchar(50)",
+      "description": "图标。"
+    },
+    {
+      "name": "label",
+      "type": "varchar(255)",
+      "description": "名称。"
+    },
+    {
+      "name": "shape",
+      "type": "varchar(50)",
+      "description": "形状，和前端对应，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "是否激活。"
+    },
+    {
+      "name": "config",
+      "type": "longtext",
+      "description": "配置。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_type_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "shape"
+      ],
+      "description": "普通索引，覆盖 shape 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "uk_name",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "name"
+      ],
+      "description": "唯一索引，覆盖 name 字段，适合用于精确检索、唯一性判断和去重查询。"
+    }
+  ]
+}

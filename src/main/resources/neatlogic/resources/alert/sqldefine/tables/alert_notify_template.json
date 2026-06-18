@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_notify_template",
+  "label": "告警notify_template表",
+  "description": "告警notify_template表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(255)",
+      "description": "唯一标识。"
+    },
+    {
+      "name": "label",
+      "type": "varbinary(255)",
+      "description": "名称。"
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "是否激活。"
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "description": "标题。"
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "description": "内容。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

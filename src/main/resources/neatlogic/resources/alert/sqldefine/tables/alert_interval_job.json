@@ -1,0 +1,56 @@
+{
+  "moduleId": "alert",
+  "name": "alert_interval_job",
+  "label": "告警interval_job表",
+  "description": "告警interval_job表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "告警id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "alert_event_handler_id",
+      "type": "bigint",
+      "description": "事件组件id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "parent_audit_id",
+      "type": "bigint",
+      "description": "父组件执行记录id。"
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "description": "下次开始时间。"
+    },
+    {
+      "name": "interval_minute",
+      "type": "int",
+      "description": "间隔分钟。"
+    },
+    {
+      "name": "repeat_count",
+      "type": "int",
+      "description": "剩余需要重复次数。"
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "配置。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "alert_event_handler_id"
+      ],
+      "description": "主键索引，覆盖 alert_id、alert_event_handler_id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "moduleId": "alert",
+  "name": "alert_breaker_collect_item",
+  "label": "告警熔断收集明细",
+  "description": "告警熔断收集明细 可用于告警相关的时间维度统计、关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "state_id",
+      "type": "bigint",
+      "description": "熔断状态id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "policy_id",
+      "type": "bigint",
+      "description": "策略id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "告警id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "fcd",
+      "type": "timestamp",
+      "description": "创建时间，已建立普通索引，适合用于过滤、关联或排序查询。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "普通索引，覆盖 alert_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_fcd",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "fcd"
+      ],
+      "description": "普通索引，覆盖 fcd 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_policy_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "policy_id"
+      ],
+      "description": "普通索引，覆盖 policy_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_state_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "state_id"
+      ],
+      "description": "普通索引，覆盖 state_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "uk_state_alert",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "state_id",
+        "alert_id"
+      ],
+      "description": "唯一索引，覆盖 state_id、alert_id 字段，适合用于精确检索、唯一性判断和去重查询。"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "moduleId": "alert",
+  "name": "alert_suppression",
+  "label": "告警suppression表",
+  "description": "告警suppression表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "主键ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "名称。"
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "是否激活。"
+    },
+    {
+      "name": "condition",
+      "type": "longtext",
+      "description": "条件。"
+    },
+    {
+      "name": "worktime_uuid",
+      "type": "char(32)",
+      "description": "服务时间id。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

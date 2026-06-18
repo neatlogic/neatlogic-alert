@@ -1,0 +1,30 @@
+{
+  "moduleId": "alert",
+  "name": "alert_attr",
+  "label": "告警额外属性",
+  "description": "告警额外属性 可用于告警相关的关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "alert关联ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "content",
+      "type": "longtext",
+      "description": "告警额外属性的content字段。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "主键索引，覆盖 alert_id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}

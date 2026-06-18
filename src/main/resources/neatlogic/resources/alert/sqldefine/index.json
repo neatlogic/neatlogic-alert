@@ -1,0 +1,285 @@
+{
+  "moduleId": "alert",
+  "tables": [
+    {
+      "name": "alert",
+      "label": "告警内容",
+      "description": "告警内容 可用于告警相关的状态跟踪、时间维度统计等报表查询场景。"
+    },
+    {
+      "name": "alert_action",
+      "label": "告警自定义动作",
+      "description": "告警自定义动作 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_action_rel",
+      "label": "告警action_rel表",
+      "description": "告警action_rel表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_adaptor",
+      "label": "告警adaptor表",
+      "description": "告警adaptor表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_alert_mark",
+      "label": "告警mark表",
+      "description": "告警mark表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_allalert_config",
+      "label": "告警allalert_config表",
+      "description": "告警allalert_config表，属于告警模块的数据表。 可用于告警相关的时间维度统计等报表查询场景。"
+    },
+    {
+      "name": "alert_attr",
+      "label": "告警额外属性",
+      "description": "告警额外属性 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_attrtype",
+      "label": "告警自定义属性类型",
+      "description": "告警自定义属性类型 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_audit",
+      "label": "告警操作审计",
+      "description": "告警操作审计 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_breaker_action_audit",
+      "label": "告警熔断动作执行审计",
+      "description": "告警熔断动作执行审计 可用于告警相关的状态跟踪、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_breaker_audit",
+      "label": "告警熔断执行审计",
+      "description": "告警熔断执行审计 可用于告警相关的状态跟踪、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_breaker_collect_item",
+      "label": "告警熔断收集明细",
+      "description": "告警熔断收集明细 可用于告警相关的时间维度统计、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_breaker_policy",
+      "label": "告警熔断策略",
+      "description": "告警熔断策略 可用于告警相关的启用状态筛选、时间维度统计等报表查询场景。"
+    },
+    {
+      "name": "alert_breaker_state",
+      "label": "告警熔断状态",
+      "description": "告警熔断状态 可用于告警相关的时间维度统计、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_catalog",
+      "label": "告警catalog表",
+      "description": "告警catalog表，属于告警模块的数据表。 可用于告警相关的启用状态筛选、时间维度统计、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_catalog_auth",
+      "label": "告警catalog_auth表",
+      "description": "告警catalog_auth表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_comment",
+      "label": "告警comment表",
+      "description": "告警comment表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_enum",
+      "label": "告警enum表",
+      "description": "告警enum表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_event_handler",
+      "label": "告警event_handler表",
+      "description": "告警event_handler表，属于告警模块的数据表。 可用于告警相关的启用状态筛选、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_event_handler_audit",
+      "label": "告警event_handler_audit表",
+      "description": "告警event_handler_audit表，属于告警模块的数据表。 可用于告警相关的状态跟踪、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_event_handler_breaker_policy_rel",
+      "label": "事件插件熔断策略关联",
+      "description": "事件插件熔断策略关联 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_event_handler_data",
+      "label": "告警event_handler_data表",
+      "description": "告警event_handler_data表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_event_handler_type",
+      "label": "告警event_handler_type表",
+      "description": "告警event_handler_type表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_event_plugin",
+      "label": "告警event_plugin表",
+      "description": "告警event_plugin表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_interval_job",
+      "label": "告警interval_job表",
+      "description": "告警interval_job表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_level",
+      "label": "告警level表",
+      "description": "告警level表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_mark",
+      "label": "告警mark表",
+      "description": "告警mark表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_notify_template",
+      "label": "告警notify_template表",
+      "description": "告警notify_template表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_origin",
+      "label": "告警origin表",
+      "description": "告警origin表，属于告警模块的数据表。 可用于告警相关的状态跟踪等报表查询场景。"
+    },
+    {
+      "name": "alert_parent_uniquekey",
+      "label": "告警parent_uniquekey表",
+      "description": "告警parent_uniquekey表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_rel",
+      "label": "告警rel表",
+      "description": "告警rel表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_rule",
+      "label": "告警rule表",
+      "description": "告警rule表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_similar",
+      "label": "告警similar表",
+      "description": "告警similar表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_source",
+      "label": "告警类型",
+      "description": "告警类型 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_status",
+      "label": "告警status表",
+      "description": "告警status表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_subscribe",
+      "label": "告警subscribe表",
+      "description": "告警subscribe表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_subscribe_action",
+      "label": "告警subscribe_action表",
+      "description": "告警subscribe_action表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_subscribe_audit",
+      "label": "告警subscribe_audit表",
+      "description": "告警subscribe_audit表，属于告警模块的数据表。 可用于告警相关的状态跟踪、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_subscribe_trigger_audit",
+      "label": "告警subscribe_trigger_audit表",
+      "description": "告警subscribe_trigger_audit表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_suppression",
+      "label": "告警suppression表",
+      "description": "告警suppression表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_suppression_audit",
+      "label": "告警suppression_audit表",
+      "description": "告警suppression_audit表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_suppression_eventhandler",
+      "label": "告警suppression_eventhandler表",
+      "description": "告警suppression_eventhandler表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_suppression_eventhandlertype",
+      "label": "告警suppression_eventhandlertype表",
+      "description": "告警suppression_eventhandlertype表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_suppression_time",
+      "label": "告警suppression_time表",
+      "description": "告警suppression_time表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_tag",
+      "label": "告警tag表",
+      "description": "告警tag表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。"
+    },
+    {
+      "name": "alert_tagrel",
+      "label": "告警tagrel表",
+      "description": "告警tagrel表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_team",
+      "label": "告警team表",
+      "description": "告警team表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_topo",
+      "label": "告警topo表",
+      "description": "告警topo表，属于告警模块的数据表。 可用于告警相关的启用状态筛选、时间维度统计等报表查询场景。"
+    },
+    {
+      "name": "alert_topo_widget",
+      "label": "告警topo_widget表",
+      "description": "告警topo_widget表，属于告警模块的数据表。 可用于告警相关的启用状态筛选等报表查询场景。"
+    },
+    {
+      "name": "alert_trash",
+      "label": "告警内容",
+      "description": "告警内容 可用于告警相关的状态跟踪、时间维度统计等报表查询场景。"
+    },
+    {
+      "name": "alert_trash_attr",
+      "label": "告警额外属性",
+      "description": "告警额外属性 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_type",
+      "label": "告警类型",
+      "description": "告警类型 可用于告警相关的启用状态筛选、时间维度统计、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_type_attrtype",
+      "label": "告警type_attrtype表",
+      "description": "告警type_attrtype表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_user",
+      "label": "告警user表",
+      "description": "告警user表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_view",
+      "label": "告警view表",
+      "description": "告警view表，属于告警模块的数据表。 可用于告警相关的启用状态筛选、时间维度统计、关联查询等报表查询场景。"
+    },
+    {
+      "name": "alert_view_auth",
+      "label": "告警view_auth表",
+      "description": "告警view_auth表，属于告警模块的数据表。 可用于告警相关的关联查询等报表查询场景。"
+    }
+  ]
+}

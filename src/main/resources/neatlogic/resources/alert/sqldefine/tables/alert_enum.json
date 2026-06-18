@@ -1,0 +1,51 @@
+{
+  "moduleId": "alert",
+  "name": "alert_enum",
+  "label": "告警enum表",
+  "description": "告警enum表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "attr_type",
+      "type": "bigint",
+      "description": "属性类型，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "value",
+      "type": "varchar(255)",
+      "description": "值。"
+    },
+    {
+      "name": "text",
+      "type": "varchar(255)",
+      "description": "显示名。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "uk",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "attr_type",
+        "value"
+      ],
+      "description": "唯一索引，覆盖 attr_type、value 字段，适合用于精确检索、唯一性判断和去重查询。"
+    }
+  ]
+}

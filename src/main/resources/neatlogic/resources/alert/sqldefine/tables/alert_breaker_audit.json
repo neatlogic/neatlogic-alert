@@ -1,0 +1,115 @@
+{
+  "moduleId": "alert",
+  "name": "alert_breaker_audit",
+  "label": "告警熔断执行审计",
+  "description": "告警熔断执行审计 可用于告警相关的状态跟踪、关联查询等报表查询场景。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "id，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "policy_id",
+      "type": "bigint",
+      "description": "策略id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "state_id",
+      "type": "bigint",
+      "description": "熔断状态id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "触发审计的告警id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "event_handler_audit_id",
+      "type": "bigint",
+      "description": "事件插件审计id，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "description": "开始时间，已建立普通索引，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp",
+      "description": "结束时间。"
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "结果：PASS/OPEN/FAILED。"
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "description": "异常。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "普通索引，覆盖 alert_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_event_handler_audit_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "event_handler_audit_id"
+      ],
+      "description": "普通索引，覆盖 event_handler_audit_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_policy_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "policy_id"
+      ],
+      "description": "普通索引，覆盖 policy_id 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_start_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "普通索引，覆盖 start_time 字段，适合用于过滤、关联或排序查询。"
+    },
+    {
+      "name": "idx_state_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "state_id"
+      ],
+      "description": "普通索引，覆盖 state_id 字段，适合用于过滤、关联或排序查询。"
+    }
+  ]
+}

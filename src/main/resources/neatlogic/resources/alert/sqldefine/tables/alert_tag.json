@@ -1,0 +1,35 @@
+{
+  "moduleId": "alert",
+  "name": "alert_tag",
+  "label": "告警tag表",
+  "description": "告警tag表，属于告警模块的数据表。 可用于告警相关数据的查询、筛选和报表展示。",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "主键ID，作为当前表记录的主键或唯一定位字段。"
+    },
+    {
+      "name": "tag",
+      "type": "varchar(50)",
+      "description": "标签值。"
+    },
+    {
+      "name": "color",
+      "type": "varchar(50)",
+      "description": "告警tag表的color字段。"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "主键索引，覆盖 id 字段，适合用于唯一定位记录和主表关联查询。"
+    }
+  ]
+}
