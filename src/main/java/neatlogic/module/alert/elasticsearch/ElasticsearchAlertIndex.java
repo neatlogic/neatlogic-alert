@@ -27,10 +27,7 @@ import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import neatlogic.framework.alert.dto.AlertAttrFilterVo;
-import neatlogic.framework.alert.dto.AlertAttrTypeVo;
-import neatlogic.framework.alert.dto.AlertViewVo;
-import neatlogic.framework.alert.dto.AlertVo;
+import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertSearchMode;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
@@ -553,7 +550,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         while (CollectionUtils.isNotEmpty(alertList)) {
             for (AlertVo alert : alertList) {
                 if (isAll || !this.isDocumentExists(alert)) {
-                    alert.setCommentList(alertCommentMapper.getAlertCommentByAlertId(alertVo.getId()));
+                    alert.setCommentList(alertCommentMapper.getAlertCommentByAlertId(alert.getId()));
                     try {
                         this.createDocument(alert);
                     } catch (Exception ex) {
@@ -677,11 +674,33 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         document.put("source", alertVo.getSource());
         document.put("uniqueKey", alertVo.getUniqueKey());
         document.put("attrObj", alertVo.getAttrObj(attrTypeList));
-        document.put("commentList", alertVo.getCommentList());
+        document.put("commentList", getCommentList(alertVo));
         document.put("userList", alertVo.getUserIdList());
         document.put("teamList", alertVo.getTeamIdList());
         document.put("markList", alertVo.getMarkNameList());
         return document;
+    }
+
+    /**
+     * commentList 保持对象数组结构，只复制 AlertCommentVo 自身字段，避免继承的分页字段被动态 mapping 收进索引。
+     */
+    private List<Map<String, Object>> getCommentList(AlertVo alertVo) {
+        List<Map<String, Object>> commentList = new ArrayList<>();
+        if (alertVo == null || CollectionUtils.isEmpty(alertVo.getCommentList())) {
+            return commentList;
+        }
+        for (AlertCommentVo commentVo : alertVo.getCommentList()) {
+            if (commentVo != null) {
+                Map<String, Object> commentMap = new HashMap<>();
+                commentMap.put("id", commentVo.getId());
+                commentMap.put("alertId", commentVo.getAlertId());
+                commentMap.put("comment", commentVo.getComment());
+                commentMap.put("commentUser", commentVo.getCommentUser());
+                commentMap.put("commentTime", commentVo.getCommentTime());
+                commentList.add(commentMap);
+            }
+        }
+        return commentList;
     }
 
     @Override
