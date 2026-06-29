@@ -11,6 +11,7 @@ import neatlogic.framework.alert.dto.breaker.*;
 import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
+import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dto.AlertMailReceiverVo;
@@ -166,7 +167,7 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
                 .addData("baselineAlertId", baselineAlertId)
                 .withBeginTime(stateVo.getOpenUntil())
                 .build();
-        schedulerManager.loadJob(jobObject);
+        schedulerManager.loadJob(jobObject, JobLoadTriggerType.INITIAL_CREATE);
     }
 
     public static String buildFlushJobName(Long stateId) {
