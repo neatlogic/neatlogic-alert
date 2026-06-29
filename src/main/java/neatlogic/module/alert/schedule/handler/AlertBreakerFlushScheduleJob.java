@@ -9,6 +9,7 @@ import neatlogic.framework.alert.enums.AlertBreakerState;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.scheduler.core.JobBase;
 import neatlogic.framework.scheduler.dto.JobObject;
+import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
 import org.apache.commons.collections4.CollectionUtils;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
@@ -41,8 +42,8 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
     }
 
     @Override
-    public void reloadJob(JobObject jobObject) {
-        schedulerManager.loadJob(jobObject);
+    public void reloadJob(JobObject jobObject, JobLoadTriggerType triggerType) {
+        schedulerManager.loadJob(jobObject, triggerType);
     }
 
     @Override
@@ -102,7 +103,7 @@ public class AlertBreakerFlushScheduleJob extends JobBase {
                 .addData("baselineAlertId", getBaselineAlertId(stateVo))
                 .withBeginTime(stateVo.getOpenUntil())
                 .build();
-        schedulerManager.loadJob(jobObject);
+        schedulerManager.loadJob(jobObject, JobLoadTriggerType.SERVER_RESTART);
     }
 
     public static String buildFlushJobName(Long stateId) {

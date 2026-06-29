@@ -24,6 +24,7 @@ import neatlogic.framework.alert.event.IAlertEventHandler;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.scheduler.core.JobBase;
 import neatlogic.framework.scheduler.dto.JobObject;
+import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -96,14 +97,14 @@ public class AlertEventIntervalScheduleJob extends JobBase {
     }
 
     @Override
-    public void reloadJob(JobObject jobObject) {
+    public void reloadJob(JobObject jobObject, JobLoadTriggerType triggerType) {
         Long alertId = (Long) jobObject.getData("alertId");
         Long alertEventHandlerId = (Long) jobObject.getData("alertEventHandlerId");
         AlertIntervalJobVo jobVo = alertMapper.getAlertIntervalJob(alertId, alertEventHandlerId);
         if (jobVo != null) {
             String tenantUuid = TenantContext.get().getTenantUuid();
             if (getLeftExecuteCount(jobVo) > 0) {
-                schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid));
+                schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid), triggerType);
             } else {
                 schedulerManager.unloadJob(jobObject);
             }
@@ -120,7 +121,7 @@ public class AlertEventIntervalScheduleJob extends JobBase {
         while (CollectionUtils.isNotEmpty(jobList)) {
             for (AlertIntervalJobVo jobVo : jobList) {
                 if (getLeftExecuteCount(jobVo) > 0) {
-                    schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid));
+                    schedulerManager.loadJob(buildIntervalJobObject(jobVo, tenantUuid), JobLoadTriggerType.SERVER_RESTART);
                 }
             }
             paramJobVo.setCurrentPage(paramJobVo.getCurrentPage() + 1);

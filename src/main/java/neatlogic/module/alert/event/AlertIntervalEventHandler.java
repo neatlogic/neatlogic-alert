@@ -23,6 +23,7 @@ import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerEx
 import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
+import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.schedule.handler.AlertEventIntervalScheduleJob;
 import org.apache.commons.collections4.CollectionUtils;
@@ -163,7 +164,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
             builder.withRepeatCount(Math.max(leftExecuteCount - 1, 0));
             builder.withIntervalInSeconds(intervalMinute * 60);
         }
-        schedulerManager.loadJob(builder.build());
+        schedulerManager.loadJob(builder.build(), JobLoadTriggerType.INITIAL_CREATE);
     }
 
     private void updateAuditResult(AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertIntervalJobVo alertIntervalJobVo, Integer intervalMinute, Integer leftExecuteCount) {
