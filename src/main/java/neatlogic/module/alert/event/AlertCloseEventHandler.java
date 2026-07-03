@@ -19,6 +19,7 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.alert.utils.AlertRuleUtils;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
@@ -151,7 +152,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "关闭告警";
+        return $.t("term.alert.event.closehandlername");
     }
 
     @Override
@@ -161,7 +162,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "关闭的告警不能再做修改，新告警也不会再挂载到已关闭告警下。";
+        return $.t("term.alert.event.closehandlerdesc");
     }
 
     @Override

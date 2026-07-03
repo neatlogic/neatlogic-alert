@@ -19,6 +19,7 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.alert.utils.AlertRuleUtils;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.framework.util.UuidUtil;
 import neatlogic.module.alert.dao.mapper.AlertRuleMapper;
@@ -148,7 +149,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "创建告警";
+        return $.t("term.alert.event.savehandlername");
     }
 
     @Override
@@ -158,7 +159,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "保存告警到数据库，如果有唯一键相同的未关闭告警，将自动挂靠作为其子告警。";
+        return $.t("term.alert.event.savehandlerdesc");
     }
 
     @Override

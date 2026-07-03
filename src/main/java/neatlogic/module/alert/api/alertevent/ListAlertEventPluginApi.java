@@ -46,7 +46,7 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
 
     @Override
     public String getName() {
-        return "列出所有告警事件插件";
+        return "term.alert.event.listhandlerplugin";
     }
 
     @Override
@@ -54,10 +54,10 @@ public class ListAlertEventPluginApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({@Param(name = "eventName", desc = "事件唯一标识", type = ApiParamType.STRING),
-            @Param(name = "parentPlugin", desc = "父插件唯一标识", type = ApiParamType.STRING)})
+    @Input({@Param(name = "eventName", desc = "term.alert.event.eventname", type = ApiParamType.STRING),
+            @Param(name = "parentPlugin", desc = "term.alert.event.parentplugin", type = ApiParamType.STRING)})
     @Output({@Param(explode = AlertEventPluginVo[].class)})
-    @Description(desc = "列出所有告警事件插件")
+    @Description(desc = "term.alert.event.listhandlerplugin")
     @Override
     public Object myDoService(JSONObject jsonObj) throws Exception {
         String eventName = jsonObj.getString("eventName");

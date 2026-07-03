@@ -20,6 +20,7 @@ import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerEx
 import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.schedule.handler.AlertEventIntervalScheduleJob;
 import org.apache.commons.collections4.CollectionUtils;
@@ -95,7 +96,7 @@ public class AlertCancelIntervalEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "取消定时调度";
+        return $.t("term.alert.event.cancelintervalhandlername");
     }
 
     @Override
@@ -105,7 +106,7 @@ public class AlertCancelIntervalEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "取消当前告警类型中由定时调度插件创建的定时作业。";
+        return $.t("term.alert.event.cancelintervalhandlerdesc");
     }
 
     @Override

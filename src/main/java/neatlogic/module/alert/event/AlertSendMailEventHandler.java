@@ -25,6 +25,7 @@ import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateIsU
 import neatlogic.framework.alert.exception.alertnotifytemplate.NotifyTemplateNameIsNotFoundException;
 import neatlogic.framework.exception.core.ApiRuntimeException;
 import neatlogic.framework.exception.type.ParamNotExistsException;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
@@ -163,7 +164,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "发送邮件";
+        return $.t("term.alert.event.emailhandlername");
     }
 
     @Override
@@ -173,7 +174,7 @@ public class AlertSendMailEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "用smtp方式发送邮件，需要到系统管理中配置邮件服务器信息，收件用户邮箱地址不能为空。";
+        return $.t("term.alert.event.emailhandlerdesc");
     }
 
     @Override

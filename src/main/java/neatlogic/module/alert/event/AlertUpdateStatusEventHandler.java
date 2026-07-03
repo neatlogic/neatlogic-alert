@@ -20,6 +20,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -95,7 +96,7 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "修改状态";
+        return $.t("term.alert.event.updatehandlername");
     }
 
     @Override
@@ -105,7 +106,7 @@ public class AlertUpdateStatusEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "修改告警状态，如果告警状态没有变化，不会执行此事件。";
+        return $.t("term.alert.event.updatehandlerdesc");
     }
 
     @Override

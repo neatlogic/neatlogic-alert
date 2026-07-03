@@ -31,6 +31,7 @@ import neatlogic.framework.integration.core.IntegrationHandlerFactory;
 import neatlogic.framework.integration.dao.mapper.IntegrationMapper;
 import neatlogic.framework.integration.dto.IntegrationResultVo;
 import neatlogic.framework.integration.dto.IntegrationVo;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
 import neatlogic.module.framework.integration.handler.FrameworkRequestFrom;
@@ -201,7 +202,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "调用集成";
+        return $.t("term.alert.event.integrationhandlername");
     }
 
     @Override
@@ -211,7 +212,7 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "用于调用第三方系统的restful接口。";
+        return $.t("term.alert.event.integrationhandlerdesc");
     }
 
     @Override

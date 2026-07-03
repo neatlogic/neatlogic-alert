@@ -20,6 +20,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMarkMapper;
@@ -56,7 +57,7 @@ public class AlertUnMarkEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "移除标签";
+        return $.t("term.alert.event.unmarkhandlername");
     }
 
     @Override
@@ -66,7 +67,7 @@ public class AlertUnMarkEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "移除选中的标签";
+        return $.t("term.alert.event.unmarkhandlerdesc");
     }
 
     @Override

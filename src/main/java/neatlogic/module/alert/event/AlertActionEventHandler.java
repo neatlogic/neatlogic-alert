@@ -18,6 +18,7 @@ import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertActionMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -49,7 +50,7 @@ public class AlertActionEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "添加自定义操作";
+        return $.t("term.alert.event.actionhandlername");
     }
 
     @Override
@@ -59,7 +60,7 @@ public class AlertActionEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "为告警添加自定义操作";
+        return $.t("term.alert.event.actionhandlerdesc");
     }
 
     @Override

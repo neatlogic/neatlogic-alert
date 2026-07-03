@@ -18,6 +18,7 @@ import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.service.IAlertService;
@@ -126,7 +127,7 @@ public class AlertOpenEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "打开告警";
+        return $.t("term.alert.event.openhandlername");
     }
 
     @Override
@@ -136,7 +137,7 @@ public class AlertOpenEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "重新打开已经关闭的告警，如果告警已经处于打开状态不会触发。";
+        return $.t("term.alert.event.openhandlerdesc");
     }
 
     @Override

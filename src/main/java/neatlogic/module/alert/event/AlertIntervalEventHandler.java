@@ -24,6 +24,7 @@ import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
 import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.schedule.handler.AlertEventIntervalScheduleJob;
 import org.apache.commons.collections4.CollectionUtils;
@@ -187,7 +188,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "定时调度";
+        return $.t("term.alert.event.intervalhandlername");
     }
 
     @Override
@@ -197,7 +198,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "配置时间策略，延缓或周期性地调用其他事件插件，例如发通知、分配处理人等。";
+        return $.t("term.alert.event.intervalhandlerdesc");
     }
 
     @Override

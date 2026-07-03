@@ -16,6 +16,7 @@ import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.service.IAlertService;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +53,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "删除告警";
+        return $.t("term.alert.event.deletehandlername");
     }
 
     @Override
@@ -62,7 +63,7 @@ public class AlertDeleteEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "物理删除告警信息，告警删除后不能恢复，请慎重操作。";
+        return $.t("term.alert.event.deletehandlerdesc");
     }
 
     @Override

@@ -26,6 +26,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.event.IAlertEventHandler;
 import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.common.constvalue.InputFrom;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.javascript.JavascriptResult;
 import neatlogic.framework.util.javascript.JavascriptUtil;
 import neatlogic.module.alert.dao.mapper.AlertAttrTypeMapper;
@@ -179,7 +180,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "条件分支";
+        return $.t("term.alert.event.conditionhandlername");
     }
 
     @Override
@@ -189,7 +190,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "通过配置条件组合，让系统有条件的触发其他事件插件，例如发通知、分配处理人等。";
+        return $.t("term.alert.event.conditionhandlerdesc");
     }
 
     @Override

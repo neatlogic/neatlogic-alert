@@ -21,6 +21,7 @@ import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMarkMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -56,7 +57,7 @@ public class AlertMarkEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getLabel() {
-        return "添加标签";
+        return $.t("term.alert.event.markhandlername");
     }
 
     @Override
@@ -66,7 +67,7 @@ public class AlertMarkEventHandler extends AlertEventHandlerBase {
 
     @Override
     public String getDescription() {
-        return "给告警打上自定义标签，如果标签已存在则保持不变";
+        return $.t("term.alert.event.markhandlerdesc");
     }
 
     @Override
