@@ -45,7 +45,7 @@ public class DeleteAlertEventHandlerTypeApi extends PrivateApiComponentBase {
 
     @Override
     public String getName() {
-        return "删除告警事件插件类型";
+        return "term.alert.api.deletealerteventhandlertype";
     }
 
     @Override
@@ -54,9 +54,9 @@ public class DeleteAlertEventHandlerTypeApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", type = ApiParamType.LONG, isRequired = true)
+            @Param(name = "id", desc = "common.id", type = ApiParamType.LONG, isRequired = true)
     })
-    @Description(desc = "删除告警事件插件类型")
+    @Description(desc = "term.alert.api.deletealerteventhandlertype")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long id = jsonObj.getLong("id");

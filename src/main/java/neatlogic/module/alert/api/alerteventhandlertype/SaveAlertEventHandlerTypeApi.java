@@ -46,7 +46,7 @@ public class SaveAlertEventHandlerTypeApi extends PrivateApiComponentBase {
 
     @Override
     public String getName() {
-        return "保存告警事件插件类型";
+        return "term.alert.api.savealerteventhandlertype";
     }
 
     @Override
@@ -55,14 +55,14 @@ public class SaveAlertEventHandlerTypeApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "id", desc = "id", type = ApiParamType.LONG),
-            @Param(name = "name", desc = "唯一标识", type = ApiParamType.STRING, isRequired = true),
-            @Param(name = "label", desc = "名称", type = ApiParamType.STRING, isRequired = true)
+            @Param(name = "id", desc = "common.id", type = ApiParamType.LONG),
+            @Param(name = "name", desc = "term.alert.param.uniquekey", type = ApiParamType.STRING, isRequired = true),
+            @Param(name = "label", desc = "term.alert.param.name", type = ApiParamType.STRING, isRequired = true)
     })
     @Output({
-            @Param(name = "id", desc = "id", type = ApiParamType.LONG),
+            @Param(name = "id", desc = "common.id", type = ApiParamType.LONG),
     })
-    @Description(desc = "保存告警事件插件类型")
+    @Description(desc = "term.alert.api.savealerteventhandlertype")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         Long id = jsonObj.getLong("id");

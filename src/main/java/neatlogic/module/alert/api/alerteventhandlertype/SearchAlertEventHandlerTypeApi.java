@@ -46,7 +46,7 @@ public class SearchAlertEventHandlerTypeApi extends PrivateApiComponentBase {
 
     @Override
     public String getName() {
-        return "搜索告警事件插件类型";
+        return "term.alert.api.searchalerteventhandlertype";
     }
 
     @Override
@@ -55,9 +55,9 @@ public class SearchAlertEventHandlerTypeApi extends PrivateApiComponentBase {
     }
 
     @Input({
-            @Param(name = "keyword", desc = "关键字", type = ApiParamType.STRING)
+            @Param(name = "keyword", desc = "common.keyword", type = ApiParamType.STRING)
     })
-    @Description(desc = "搜索告警事件插件类型")
+    @Description(desc = "term.alert.api.searchalerteventhandlertype")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
         AlertEventHandlerTypeVo alertEventHandlerTypeVo = JSON.toJavaObject(jsonObj, AlertEventHandlerTypeVo.class);
