@@ -50,6 +50,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         if (config == null) {
             config = new JSONObject();
         }
+        String uniqueKeyOriginal = null;
         //根据唯一规则计算unique key
         if (CollectionUtils.isNotEmpty(config.getJSONArray("uniqueAttrList"))) {
             List<AlertRuleVo> ruleList = new ArrayList<>();
@@ -97,6 +98,7 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
             }
             //一定要判断，因为可能直接选唯一键作为唯一键，这时候就需要二次转换
             if (StringUtils.isNotBlank(key)) {
+                uniqueKeyOriginal = key;
                 if (!Md5Util.isMd5(key)) {
                     alertVo.setUniqueKey(Md5Util.encryptMD5(key));
                 } else {
@@ -106,17 +108,25 @@ public class AlertSaveEventHandler extends AlertEventHandlerBase {
         }
         //如果uniqueKey
         if (StringUtils.isNotBlank(alertVo.getUniqueKey())) {
+            if (StringUtils.isBlank(uniqueKeyOriginal)) {
+                uniqueKeyOriginal = alertVo.getUniqueKey();
+            }
             if (!Md5Util.isMd5(alertVo.getUniqueKey())) {
                 alertVo.setUniqueKey(Md5Util.encryptMD5(alertVo.getUniqueKey()));
             }
         } else {
             //如果没有uniquekey则随机生成一个
-            alertVo.setUniqueKey(UuidUtil.randomUuid());
+            uniqueKeyOriginal = UuidUtil.randomUuid();
+            alertVo.setUniqueKey(uniqueKeyOriginal);
         }
+        alertEventHandlerAuditVo.setUniqueKey(alertVo.getUniqueKey());
         if (StringUtils.isNotBlank(config.getString("defaultStatus"))) {
             alertVo.setStatus(config.getString("defaultStatus"));
         }
         JSONObject resultObj = new JSONObject();
+        resultObj.put("uniqueKeyOriginal", uniqueKeyOriginal);
+        resultObj.put("uniqueKey", alertVo.getUniqueKey());
+        alertEventHandlerAuditVo.setResult(resultObj);
         try {
             alertService.saveAlert(alertVo, config.getBooleanValue("serialSave"));
             resultObj.put("alertId", alertVo.getId());

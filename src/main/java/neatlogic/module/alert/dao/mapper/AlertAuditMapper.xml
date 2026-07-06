@@ -6,6 +6,7 @@
     <select id="getAlertEventAuditById" parameterType="java.lang.Long"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
         select id,
+               unique_key       AS uniqueKey,
                parent_id        AS parentId,
                alert_id         AS alertId,
                event,
@@ -26,6 +27,7 @@
     <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
         select a.id,
+               a.unique_key       AS uniqueKey,
                a.parent_id        AS parentId,
                a.alert_id         AS alertId,
                a.event,
