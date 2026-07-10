@@ -83,6 +83,7 @@ public class AlertActionEventHandler extends AlertEventHandlerBase {
             this.add("condition");
             this.add("interval");
             this.add("integration");
+            this.add("ai_agent");
         }};
     }
 

@@ -221,6 +221,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
         return new HashSet<>() {{
             this.add("condition");
             this.add("integration");
+            this.add("ai_agent");
         }};
     }
 }

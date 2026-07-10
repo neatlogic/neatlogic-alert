@@ -215,6 +215,7 @@ public class AlertConditionEventHandler extends AlertEventHandlerBase {
             this.add("interval");
             this.add("integration");
             this.add("similar");
+            this.add("ai_agent");
         }};
     }
 
