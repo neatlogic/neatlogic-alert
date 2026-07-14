@@ -133,6 +133,8 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
                 handlerVo.setParentId(parentId);
                 handlerVo.setSort(sort);
                 alertEventMapper.saveAlertEventHandler(handlerVo);
+                // 子插件复用旧uuid时需要同步拖拽后的顺序，避免回显或后续构树仍使用旧sort。
+                alertEventMapper.updateAlertEventHandlerSort(handlerVo.getId(), sort);
                 saveBreakerPolicy(handlerVo);
                 saveSubHandler(handlerVo.getId(), handlerVo);
                 sort += 1;

@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -108,7 +109,11 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
 
     private void makeupChildAudit(List<AlertEventHandlerAuditVo> parentAuditList, List<AlertEventHandlerAuditVo> allAuditList) {
         for (AlertEventHandlerAuditVo auditVo : parentAuditList) {
-            List<AlertEventHandlerAuditVo> childAuditList = allAuditList.stream().filter(d -> d.getParentId() != null && d.getParentId().equals(auditVo.getId())).collect(Collectors.toList());
+            List<AlertEventHandlerAuditVo> childAuditList = allAuditList.stream()
+                    .filter(d -> d.getParentId() != null && d.getParentId().equals(auditVo.getId()))
+                    // 子动作需要按实际触发顺序展示，避免全局倒序查询导致父插件下的成功/失败动作反向显示。
+                    .sorted(Comparator.comparing(AlertEventHandlerAuditVo::getId))
+                    .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(childAuditList)) {
                 auditVo.setChildAuditList(childAuditList);
                 makeupChildAudit(childAuditList, allAuditList);
