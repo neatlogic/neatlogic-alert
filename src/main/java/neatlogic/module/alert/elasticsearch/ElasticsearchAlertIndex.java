@@ -147,6 +147,65 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
 
     }
 
+    /**
+     * 按“AND 优先于 OR”的规则组合查询条件。
+     *
+     * @param queryList 查询条件列表
+     * @param relList   相邻条件之间的连接符列表
+     * @return 组合后的查询，条件为空时返回null
+     */
+    private Query combineLogicalQuery(List<Query> queryList, JSONArray relList) {
+        if (CollectionUtils.isEmpty(queryList)) {
+            return null;
+        }
+        if (queryList.size() == 1) {
+            return queryList.get(0);
+        }
+        // 兼容历史残缺配置：连接符缺失或数量不匹配时，剩余有效条件全部按AND处理。
+        if (CollectionUtils.isEmpty(relList) || relList.size() != queryList.size() - 1) {
+            return buildAndQuery(queryList);
+        }
+
+        List<Query> orQueryList = new ArrayList<>();
+        List<Query> andQueryList = new ArrayList<>();
+        andQueryList.add(queryList.get(0));
+        for (int i = 0; i < relList.size(); i++) {
+            String rel = relList.getString(i);
+            Query nextQuery = queryList.get(i + 1);
+            if ("and".equalsIgnoreCase(rel)) {
+                andQueryList.add(nextQuery);
+            } else if ("or".equalsIgnoreCase(rel)) {
+                orQueryList.add(buildAndQuery(andQueryList));
+                andQueryList = new ArrayList<>();
+                andQueryList.add(nextQuery);
+            } else {
+                throw new IllegalArgumentException("Unsupported conditionRel: " + rel);
+            }
+        }
+        orQueryList.add(buildAndQuery(andQueryList));
+        if (orQueryList.size() == 1) {
+            return orQueryList.get(0);
+        }
+        return new Query.Builder()
+                .bool(builder -> builder.should(orQueryList).minimumShouldMatch("1"))
+                .build();
+    }
+
+    /**
+     * 将一组连续的AND条件组合成查询。
+     *
+     * @param queryList 查询条件列表
+     * @return AND组合查询
+     */
+    private Query buildAndQuery(List<Query> queryList) {
+        if (queryList.size() == 1) {
+            return queryList.get(0);
+        }
+        return new Query.Builder()
+                .bool(builder -> builder.must(queryList))
+                .build();
+    }
+
 
     @Override
     public Query myBuildQuery(AlertVo alertVo) {
@@ -453,59 +512,16 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
                         }
                     }
 
-                    Query.Builder conditionFinalQueryBuilder = new Query.Builder();
-                    BoolQuery.Builder conditionBoolQueryBuilder = new BoolQuery.Builder();
-                    //增加conditionRelList和queryList的判断，确保queryList总是比conditionRelList多1
-                    if (CollectionUtils.isNotEmpty(conditionRelList) && conditionRelList.size() == queryList.size() - 1) {
-                        for (int j = 0; j < conditionRelList.size(); j++) {
-                            String rel = conditionRelList.getString(j);
-                            Query currentQuery = queryList.get(j);
-                            Query nextQuery = queryList.get(j + 1);
-                            // 根据逻辑关系选择 must 或 should
-                            if ("and".equalsIgnoreCase(rel)) {
-                                conditionBoolQueryBuilder.must(currentQuery);
-                                conditionBoolQueryBuilder.must(nextQuery);
-                            } else if ("or".equalsIgnoreCase(rel)) {
-                                conditionBoolQueryBuilder.should(currentQuery);
-                                conditionBoolQueryBuilder.should(nextQuery);
-                                conditionBoolQueryBuilder.minimumShouldMatch("1");
-                            } else {
-                                throw new IllegalArgumentException("Unsupported conditionRel: " + rel);
-                            }
-                        }
-                    } else {
-                        // 如果 conditionRelList 为空，直接将 queryList 的所有查询加入 must
-                        for (Query query : queryList) {
-                            conditionBoolQueryBuilder.must(query);
-                        }
+                    Query groupQuery = combineLogicalQuery(queryList, conditionRelList);
+                    if (groupQuery != null) {
+                        groupQueryList.add(groupQuery);
                     }
-                    conditionFinalQueryBuilder.bool(conditionBoolQueryBuilder.build());
-                    groupQueryList.add(conditionFinalQueryBuilder.build());
                 }
 
-                //增加conditionGroupRelList和groupQueryList的判断，确保groupQueryList总是比conditionGroupRelList多1
-                if (CollectionUtils.isNotEmpty(conditionGroupRelList) && conditionGroupRelList.size() == groupQueryList.size() - 1) {
-                    for (int j = 0; j < conditionGroupRelList.size(); j++) {
-                        String rel = conditionGroupRelList.getString(j);
-                        Query currentQuery = groupQueryList.get(j);
-                        Query nextQuery = groupQueryList.get(j + 1);
-                        // 根据逻辑关系选择 must 或 should
-                        if ("and".equalsIgnoreCase(rel)) {
-                            boolQueryBuilder.must(currentQuery);
-                            boolQueryBuilder.must(nextQuery);
-                        } else if ("or".equalsIgnoreCase(rel)) {
-                            boolQueryBuilder.should(currentQuery);
-                            boolQueryBuilder.should(nextQuery);
-                            boolQueryBuilder.minimumShouldMatch("1");
-                        } else {
-                            throw new IllegalArgumentException("Unsupported conditionRel: " + rel);
-                        }
-                    }
-                } else {
-                    // 如果 conditionRelList 为空，直接将 queryList 的所有查询加入 must
-                    for (Query query : groupQueryList) {
-                        boolQueryBuilder.must(query);
-                    }
+                Query ruleQuery = combineLogicalQuery(groupQueryList, conditionGroupRelList);
+                if (ruleQuery != null) {
+                    // 高级检索规则整体作为根查询必选条件，避免OR分支绕过其他普通筛选项。
+                    boolQueryBuilder.must(ruleQuery);
                 }
             }
         }
