@@ -49,6 +49,14 @@ public interface IAlertService {
 
     void saveAlertTrash(AlertTrashVo alertVo);
 
+    /**
+     * 在独立事务中保存告警垃圾箱数据并删除告警主数据。
+     *
+     * @param alertTrashVo 告警垃圾箱数据
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    void archiveAndDeleteAlert(AlertTrashVo alertTrashVo);
+
     List<AlertVo> searchAlert(AlertVo alertVo);
 
     List<OriginalAlertVo> searchOriginAlert(OriginalAlertVo originalAlertVo);

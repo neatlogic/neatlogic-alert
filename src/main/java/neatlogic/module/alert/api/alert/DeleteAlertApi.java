@@ -104,29 +104,32 @@ public class DeleteAlertApi extends PrivateApiComponentBase {
                 @Override
                 protected void execute() {
                     int limit = 1000;
-                    //由于数据量可能很大，需要分页删除，为了避免数据删除后导致分页异常，需要先对数据做标记，然后再查出标记好的数据来做真正的删除处理
-                    AlertVo alertVo = JSON.toJavaObject(searchParam, AlertVo.class);
-                    alertVo.setCurrentPage(1);
-                    alertVo.setPageSize(limit);
-                    alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
-                    IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
-                    IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
-                    while (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
-                        List<Long> alertIdList = indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList());
-                        AlertVo tmpAlertVo = new AlertVo();
-                        tmpAlertVo.setIdList(alertIdList);
-                        tmpAlertVo.setDeleteBatch(deleteBatch);
-                        alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
-                        alertVo.setCurrentPage(alertVo.getCurrentPage() + 1);
-                        indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
-                    }
-                    //开始删除标记好的数据
-                    Long currentId = 0L;
-                    List<Long> alertIdList = alertMapper.getIsDeleteAlertIdList(currentId, deleteBatch, limit);
-                    while (CollectionUtils.isNotEmpty(alertIdList)) {
-                        alertDeleteHandler.submitDeleteTask(alertIdList);
-                        currentId = alertIdList.get(alertIdList.size() - 1);
-                        alertIdList = alertMapper.getIsDeleteAlertIdList(currentId, deleteBatch, limit);
+                    try {
+                        // 数据量可能很大，先完成分页标记，避免边删除索引边翻页导致漏删。
+                        AlertVo alertVo = JSON.toJavaObject(searchParam, AlertVo.class);
+                        alertVo.setCurrentPage(1);
+                        alertVo.setPageSize(limit);
+                        alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
+                        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
+                        IndexResultVo indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
+                        while (CollectionUtils.isNotEmpty(indexResultVo.getIdList())) {
+                            List<Long> alertIdList = indexResultVo.getIdList().stream().map(Long::parseLong).collect(Collectors.toList());
+                            AlertVo tmpAlertVo = new AlertVo();
+                            tmpAlertVo.setIdList(alertIdList);
+                            tmpAlertVo.setDeleteBatch(deleteBatch);
+                            alertMapper.updateAlertIsDeleteByIdList(tmpAlertVo);
+                            alertVo.setCurrentPage(alertVo.getCurrentPage() + 1);
+                            indexResultVo = index.searchDocument(alertVo, alertVo.getCurrentPage(), alertVo.getPageSize());
+                        }
+                    } finally {
+                        // 即使分页搜索中途异常，也要提交本批次已经持久化标记的记录。
+                        Long currentId = 0L;
+                        List<Long> alertIdList = alertMapper.getIsDeleteAlertIdList(currentId, deleteBatch, limit);
+                        while (CollectionUtils.isNotEmpty(alertIdList)) {
+                            alertDeleteHandler.submitDeleteTask(alertIdList);
+                            currentId = alertIdList.get(alertIdList.size() - 1);
+                            alertIdList = alertMapper.getIsDeleteAlertIdList(currentId, deleteBatch, limit);
+                        }
                     }
                 }
             });

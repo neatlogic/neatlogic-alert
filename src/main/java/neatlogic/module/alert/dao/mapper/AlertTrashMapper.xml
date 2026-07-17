@@ -117,7 +117,7 @@
                 #{title},
                 #{updateTime},
                 #{alertTime},
-                NOW(),
+                #{deleteTime},
                 #{deleteUser},
                 #{type},
                 #{status},

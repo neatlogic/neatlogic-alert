@@ -472,12 +472,29 @@ public class AlertServiceImpl implements IAlertService {
     @Override
     public void saveAlertTrash(AlertTrashVo alertVo) {
         alertVo.setDeleteUser(UserContext.get().getUserUuid(true));
+        if (alertVo.getDeleteTime() == null) {
+            alertVo.setDeleteTime(new Date());
+        }
         IElasticsearchDocument<AlertTrashVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT_TRASH");
         alertTrashMapper.insertAlertTrash(alertVo);
         if (MapUtils.isNotEmpty(alertVo.getAttrObj())) {
             alertTrashMapper.saveAlertTrashAttr(alertVo);
         }
         indexHandler.createDocument(alertVo);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void archiveAndDeleteAlert(AlertTrashVo alertTrashVo) {
+        // 垃圾箱记录可能已由并发任务写入，存在时只补齐扩展属性，保证重试可重复执行。
+        AlertTrashVo oldAlertTrashVo = alertTrashMapper.getAlertTrashById(alertTrashVo.getId());
+        if (oldAlertTrashVo == null) {
+            alertTrashMapper.insertAlertTrash(alertTrashVo);
+        }
+        if (MapUtils.isNotEmpty(alertTrashVo.getAttrObj())) {
+            alertTrashMapper.saveAlertTrashAttr(alertTrashVo);
+        }
+        alertMapper.deleteAlertById(alertTrashVo.getId());
     }
 
 

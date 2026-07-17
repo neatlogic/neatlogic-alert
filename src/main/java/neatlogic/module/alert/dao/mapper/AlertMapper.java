@@ -10,6 +10,15 @@ public interface AlertMapper {
 
     List<Long> getIsDeleteAlertIdList(@Param("id") Long id, @Param("deleteBatch") Long deleteBatch, @Param("limit") Integer limit);
 
+    /**
+     * 分页查询所有已经标记但尚未完成物理删除的告警编号。
+     *
+     * @param id    上一页最后一个告警编号
+     * @param limit 单页数量
+     * @return 待删除告警编号列表
+     */
+    List<Long> getPendingDeleteAlertIdList(@Param("id") Long id, @Param("limit") Integer limit);
+
     List<AlertTeamVo> getAlertTeamByAlertId(Long alertId);
 
     List<AlertUserVo> getAlertUserByAlertId(Long alertId);

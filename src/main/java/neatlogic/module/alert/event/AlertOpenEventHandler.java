@@ -58,7 +58,7 @@ public class AlertOpenEventHandler extends AlertEventHandlerBase {
         if (Objects.equals(openType, "id")) {
             try {
                 alertVo.setIsCloseChildAlert(isCloseChildAlert);
-                alertService.closeAlert(alertVo);
+                alertService.openAlert(alertVo);
                 resultObj.put("openCount", 1);
             } catch (Exception e) {
                 throw new AlertEventHandlerTriggerException(e);

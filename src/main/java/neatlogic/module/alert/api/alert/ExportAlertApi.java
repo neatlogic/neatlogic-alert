@@ -148,11 +148,11 @@ public class ExportAlertApi extends PrivateBinaryStreamApiComponentBase {
         response.setHeader("Content-Disposition", " attachment; filename=\"" + fileNameEncode + "\"");
 
 
-        List<AlertVo> alertList = alertService.searchAlert(alertVo);
         //最多返回1000条数据
         int max = 1000;
         int count = 0;
         alertVo.setPageSize(100);
+        List<AlertVo> alertList = alertService.searchAlert(alertVo);
         try (OutputStream os = response.getOutputStream()) {
             while (CollectionUtils.isNotEmpty(alertList)) {
                 for (AlertVo alert : alertList) {

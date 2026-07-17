@@ -21,6 +21,15 @@
         limit #{limit}
     </select>
 
+    <select id="getPendingDeleteAlertIdList" resultType="java.lang.Long">
+        select id
+        from alert
+        where is_delete = 1
+          and id &gt; #{id}
+        order by id
+        limit #{limit}
+    </select>
+
     <select id="getAlertIntervalJob" resultType="neatlogic.framework.alert.dto.AlertIntervalJobVo">
         select alert_id               as alertId,
                alert_event_handler_id as alertEventHandlerId,
@@ -652,7 +661,7 @@
     </delete>
 
     <delete id="deleteAlertById" parameterType="java.lang.Long">
-        delete a,b,d,e,f,g,h,at,au,aeha,aij,apu,aar,aba
+        delete a,b,d,e,f,g,h,at,au,aeha,aij,apu,aar,aba,aam
         from alert a
                  left join alert_rel b on a.id = b.from_alert_id or a.id = b.to_alert_id
                  left join alert_origin d on a.id = d.id
@@ -690,7 +699,7 @@
 
     <delete id="deleteAlertOriginByIdList">
         delete from alert_origin where id in
-        <foreach collection="idList" index="item" open="(" close=")" separator=",">
+        <foreach collection="idList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
     </delete>
