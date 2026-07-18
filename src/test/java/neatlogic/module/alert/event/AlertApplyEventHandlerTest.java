@@ -13,6 +13,8 @@
 package neatlogic.module.alert.event;
 
 import com.alibaba.fastjson.JSONArray;
+import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,11 +64,62 @@ public class AlertApplyEventHandlerTest {
     }
 
     /**
+     * 验证ES失败时只尝试一次，并将事件审计标记为需要人工处理的失败状态。
+     */
+    @Test
+    public void indexRefreshFailureMarksAuditFailedWithoutRetry() {
+        AlertEventHandlerAuditVo auditVo = new AlertEventHandlerAuditVo();
+        TestAlertApplyEventHandler handler = new TestAlertApplyEventHandler(true);
+
+        handler.submitIndexRefreshAfterCommit(100L, auditVo);
+
+        Assert.assertEquals(1, handler.attemptCount);
+        Assert.assertEquals(AlertEventStatus.FAILED.getValue(), auditVo.getStatus());
+        Assert.assertTrue(auditVo.getError().contains("人工重建"));
+        Assert.assertTrue(auditVo.getError().contains("100"));
+    }
+
+    /**
+     * 验证ES刷新成功时不会改写失败审计。
+     */
+    @Test
+    public void successfulIndexRefreshDoesNotMarkAuditFailed() {
+        AlertEventHandlerAuditVo auditVo = new AlertEventHandlerAuditVo();
+        TestAlertApplyEventHandler handler = new TestAlertApplyEventHandler(false);
+
+        handler.submitIndexRefreshAfterCommit(100L, auditVo);
+
+        Assert.assertEquals(1, handler.attemptCount);
+        Assert.assertNull(auditVo.getStatus());
+        Assert.assertNull(auditVo.getError());
+    }
+
+    /**
      * 构造测试使用的JSON数组。
      */
     private JSONArray arrayOf(String... values) {
         JSONArray result = new JSONArray();
         result.addAll(Arrays.asList(values));
         return result;
+    }
+
+    private static class TestAlertApplyEventHandler extends AlertApplyEventHandler {
+        private final boolean alwaysFail;
+        private int attemptCount;
+
+        private TestAlertApplyEventHandler(boolean alwaysFail) {
+            this.alwaysFail = alwaysFail;
+        }
+
+        /**
+         * 使用内存计数模拟ES成功或失败。
+         */
+        @Override
+        protected void rebuildAlertIndex(Long alertId) {
+            attemptCount++;
+            if (alwaysFail) {
+                throw new IllegalStateException("ES unavailable");
+            }
+        }
     }
 }

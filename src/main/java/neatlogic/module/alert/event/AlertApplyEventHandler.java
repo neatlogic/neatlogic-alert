@@ -16,6 +16,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
+import neatlogic.framework.alert.enums.AlertEventStatus;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alertevent.AlertEventHandlerTriggerException;
@@ -29,6 +30,9 @@ import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -37,13 +41,13 @@ import java.util.*;
 @Component
 public class AlertApplyEventHandler extends AlertEventHandlerBase {
 
+    private final Logger logger = LoggerFactory.getLogger(AlertApplyEventHandler.class);
 
     @Resource
     private AlertMapper alertMapper;
 
     @Resource
     private AlertAuditMapper alertAuditMapper;
-
 
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
@@ -102,12 +106,8 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
                 }
             }
             if (hasAssignment) {
-                // 事务提交后按数据库最新关系重建完整文档，避免部分字段覆盖造成数据库与ES不一致。
-                AfterTransactionJob<Long> indexJob = new AfterTransactionJob<>("ALERT-APPLY-INDEX");
-                indexJob.execute(alertVo.getId(), alertId -> {
-                    IElasticsearchDocument<AlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT");
-                    indexHandler.createDocument(alertId);
-                });
+                // 事务提交后按数据库最新关系重建完整文档，失败时直接记录人工干预信息，不自动重试。
+                submitIndexRefreshAfterCommit(alertVo.getId(), alertEventHandlerAuditVo);
 
                 alertVo.setUserList(alertMapper.getAlertUserByAlertId(alertVo.getId()));
                 alertVo.setTeamList(alertMapper.getAlertTeamByAlertId(alertVo.getId()));
@@ -120,6 +120,51 @@ public class AlertApplyEventHandler extends AlertEventHandlerBase {
 
 
         return alertVo;
+    }
+
+    /**
+     * 在APPLY数据库事务提交后同步执行一次索引刷新，避免数据库回滚后ES已经提前更新。
+     */
+    void submitIndexRefreshAfterCommit(Long alertId, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
+        AfterTransactionJob<Long> indexJob = new AfterTransactionJob<>("ALERT-APPLY-INDEX");
+        // 同步回调确保ES失败状态不会被事件主流程随后覆盖为成功。
+        indexJob.execute(alertId, id -> executeIndexRefresh(id, alertEventHandlerAuditVo), true);
+    }
+
+    /**
+     * 执行一次完整告警文档刷新，失败时立即记录人工干预信息。
+     */
+    void executeIndexRefresh(Long alertId, AlertEventHandlerAuditVo alertEventHandlerAuditVo) {
+        try {
+            rebuildAlertIndex(alertId);
+        } catch (Exception ex) {
+            markIndexRefreshFailed(alertId, alertEventHandlerAuditVo, ex);
+        }
+    }
+
+    /**
+     * 从数据库重新读取告警并覆盖ES完整文档。
+     */
+    protected void rebuildAlertIndex(Long alertId) {
+        IElasticsearchDocument<AlertVo> indexHandler = ElasticsearchDocumentFactory.getIndex("ALERT");
+        indexHandler.createDocument(alertId);
+    }
+
+    /**
+     * 索引刷新失败后标记事件审计失败，并给出人工重建指引。
+     */
+    private void markIndexRefreshFailed(Long alertId, AlertEventHandlerAuditVo alertEventHandlerAuditVo, Exception ex) {
+        String exceptionMessage = ex.getMessage();
+        if (StringUtils.isBlank(exceptionMessage)) {
+            exceptionMessage = ex.getClass().getSimpleName();
+        }
+        String error = String.format(
+                "APPLY处理人/组已写入数据库，但告警ES索引刷新失败。请使用alert/index/rebuild接口对告警%s进行人工重建。错误：%s",
+                alertId, exceptionMessage
+        );
+        logger.error(error, ex);
+        alertEventHandlerAuditVo.setStatus(AlertEventStatus.FAILED.getValue());
+        alertEventHandlerAuditVo.setError(error);
     }
 
     /**
