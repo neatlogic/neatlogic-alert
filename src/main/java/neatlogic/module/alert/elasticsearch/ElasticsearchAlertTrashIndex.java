@@ -365,6 +365,9 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchDocumentBase<Aler
     @Override
     protected void myCreateDocument(Long targetId) {
         AlertTrashVo alertVo = alertTrashMapper.getAlertTrashById(targetId);
-        this.myCreateDocument(alertVo);
+        // 记录不存在时仅保留前置的ES删除结果，避免重建孤儿文档时出现空指针异常。
+        if (alertVo != null) {
+            this.myCreateDocument(alertVo);
+        }
     }
 }
