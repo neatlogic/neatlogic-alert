@@ -12,7 +12,6 @@
 
 package neatlogic.module.alert.api.alertaudit;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertEventHandlerAuditVo;
@@ -21,33 +20,27 @@ import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.module.alert.dao.mapper.AlertAuditMapper;
 import neatlogic.module.alert.service.AlertEventAuditService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.util.List;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
 @OperationType(type = OperationTypeEnum.SEARCH)
-public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
+public class GetAlertEventAuditTreeApi extends PrivateApiComponentBase {
 
-    @Resource
-    private AlertAuditMapper alertAuditMapper;
     @Resource
     private AlertEventAuditService alertEventAuditService;
 
-
     @Override
     public String getToken() {
-        return "/alert/event/audit/search";
+        return "/alert/event/audit/tree/get";
     }
 
     @Override
     public String getName() {
-        return "搜索告警事件记录";
+        return "获取告警事件执行审计树";
     }
 
     @Override
@@ -55,17 +48,11 @@ public class SearchAlertEventAuditApi extends PrivateApiComponentBase {
         return null;
     }
 
-    @Input({
-            @Param(name = "alertId", desc = "告警id", isRequired = true, type = ApiParamType.LONG),
-            @Param(name = "currentPage", desc = "当前页", type = ApiParamType.INTEGER),
-            @Param(name = "pageSize", desc = "每页大小", type = ApiParamType.INTEGER)
-    })
-    @Output({@Param(explode = AlertEventHandlerAuditVo[].class)})
-    @Description(desc = "搜索告警事件记录")
+    @Input({@Param(name = "auditId", desc = "审计记录ID", type = ApiParamType.LONG, isRequired = true)})
+    @Output({@Param(explode = AlertEventHandlerAuditVo.class)})
+    @Description(desc = "获取告警事件执行审计树")
     @Override
-    public Object myDoService(JSONObject jsonObj) throws IOException {
-        AlertEventHandlerAuditVo alertEventHandlerAuditVo = JSON.toJavaObject(jsonObj, AlertEventHandlerAuditVo.class);
-        List<AlertEventHandlerAuditVo> auditList = alertAuditMapper.searchAlertEventAudit(alertEventHandlerAuditVo);
-        return alertEventAuditService.buildAuditTree(auditList);
+    public Object myDoService(JSONObject jsonObj) {
+        return alertEventAuditService.getAuditTree(jsonObj.getLong("auditId"));
     }
 }

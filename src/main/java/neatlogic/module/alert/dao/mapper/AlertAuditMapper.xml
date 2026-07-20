@@ -3,44 +3,135 @@
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="neatlogic.module.alert.dao.mapper.AlertAuditMapper">
+    <sql id="alertEventAuditDetailColumn">
+        a.id,
+        a.unique_key       AS uniqueKey,
+        a.parent_id        AS parentId,
+        a.alert_id         AS alertId,
+        a.event,
+        a.handler,
+        a.handler_name     AS handlerName,
+        a.event_handler_id AS eventHandlerId,
+        a.start_time       AS startTime,
+        a.end_time         AS endTime,
+        a.status,
+        a.error,
+        a.config           AS configStr,
+        a.result           AS resultStr,
+        a.is_async         AS isAsync
+    </sql>
+
     <select id="getAlertEventAuditById" parameterType="java.lang.Long"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
-        select id,
-               unique_key       AS uniqueKey,
-               parent_id        AS parentId,
-               alert_id         AS alertId,
-               event,
-               handler,
-               handler_name     AS handlerName,
-               event_handler_id AS eventHandlerId,
-               start_time       AS startTime,
-               end_time         AS endTime,
-               status,
-               error,
-               config           AS configStr,
-               result           AS resultStr,
-               is_async         as isAsync
-        from alert_event_handler_audit
-        where id = #{value}
+        select <include refid="alertEventAuditDetailColumn"></include>
+        from alert_event_handler_audit a
+        where a.id = #{value}
     </select>
 
-    <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
+    <select id="listAlertEventAuditByParentIdList"
+            resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
+        select <include refid="alertEventAuditDetailColumn"></include>
+        from alert_event_handler_audit a
+        where a.parent_id in
+        <foreach collection="list" item="parentId" open="(" separator="," close=")">
+            #{parentId}
+        </foreach>
+        order by a.parent_id, a.id
+    </select>
+
+    <sql id="searchRootAlertEventAuditCondition">
+        <where>
+            a.parent_id is null
+            <if test="rootAuditId != null">
+                and a.id = #{rootAuditId}
+            </if>
+            <if test="alertId != null">
+                and a.alert_id = #{alertId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    a.unique_key like concat('%', #{keyword}, '%')
+                    or a.handler_name like concat('%', #{keyword}, '%')
+                    or a.handler like concat('%', #{keyword}, '%')
+                    or exists (
+                        select 1
+                        from alert keyword_alert
+                        where keyword_alert.id = a.alert_id
+                          and keyword_alert.title like concat('%', #{keyword}, '%')
+                    )
+                )
+            </if>
+            <if test="event != null and event != ''">
+                and a.event = #{event}
+            </if>
+            <if test="handler != null and handler != ''">
+                and a.handler = #{handler}
+            </if>
+            <if test="status != null and status != ''">
+                and a.status = #{status}
+            </if>
+            <if test="timeRange != null and timeRange.size() > 0">
+                and a.start_time &gt;= STR_TO_DATE(#{timeRange[0]}, '%Y-%m-%d %H:%i')
+            </if>
+            <if test="timeRange != null and timeRange.size() > 1">
+                and a.start_time &lt;= STR_TO_DATE(#{timeRange[1]}, '%Y-%m-%d %H:%i')
+            </if>
+            <if test="hasChild != null and hasChild == 1">
+                and exists (
+                    select 1
+                    from alert_event_handler_audit child_audit
+                    where child_audit.parent_id = a.id
+                )
+            </if>
+            <if test="hasChild != null and hasChild == 0">
+                and not exists (
+                    select 1
+                    from alert_event_handler_audit child_audit
+                    where child_audit.parent_id = a.id
+                )
+            </if>
+        </where>
+    </sql>
+
+    <select id="searchRootAlertEventAuditCount"
+            parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditSearchVo"
+            resultType="int">
+        select count(1)
+        from alert_event_handler_audit a
+        <include refid="searchRootAlertEventAuditCondition"></include>
+    </select>
+
+    <select id="searchRootAlertEventAudit"
+            parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditSearchVo"
             resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
         select a.id,
                a.unique_key       AS uniqueKey,
-               a.parent_id        AS parentId,
                a.alert_id         AS alertId,
+               alert_data.title   AS alertTitle,
+               case when alert_data.id is null then 0 else 1 end AS isAlertExists,
                a.event,
                a.handler,
                a.handler_name     AS handlerName,
                a.event_handler_id AS eventHandlerId,
                a.start_time       AS startTime,
                a.end_time         AS endTime,
-               a.is_async         as isAsync,
+               a.is_async         AS isAsync,
                a.status,
-               a.error,
-               a.config           AS configStr,
-               a.result           AS resultStr
+               case when exists (
+                   select 1
+                   from alert_event_handler_audit child_audit
+                   where child_audit.parent_id = a.id
+               ) then 1 else 0 end AS hasChild
+        from alert_event_handler_audit a
+                 left join alert alert_data on alert_data.id = a.alert_id
+        <include refid="searchRootAlertEventAuditCondition"></include>
+        order by a.id desc
+        limit #{startNum}, #{pageSize}
+    </select>
+
+    <select id="searchAlertEventAudit" parameterType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo"
+            resultType="neatlogic.framework.alert.dto.AlertEventHandlerAuditVo">
+        select <include refid="alertEventAuditDetailColumn"></include>
         from alert_event_handler_audit a
         where a.alert_id = #{alertId}
         order by a.id desc
