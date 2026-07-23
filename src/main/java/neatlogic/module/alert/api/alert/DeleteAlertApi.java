@@ -106,7 +106,8 @@ public class DeleteAlertApi extends PrivateApiComponentBase {
                     int limit = 1000;
                     try {
                         // 数据量可能很大，先完成分页标记，避免边删除索引边翻页导致漏删。
-                        AlertVo alertVo = JSON.toJavaObject(searchParam, AlertVo.class);
+                        // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
+                        AlertVo alertVo = JSON.parseObject(searchParam.toJSONString(), AlertVo.class);
                         alertVo.setCurrentPage(1);
                         alertVo.setPageSize(limit);
                         alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
