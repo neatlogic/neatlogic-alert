@@ -105,8 +105,7 @@ public class OriginalAlertManager {
                     }
                     adaptor.setFilePath(fileVo.getPath());
                     JSONObject alertObj = AlertAdaptorManager.convert(alertTypeVo, adaptor, originalAlertVo.getContent());
-                    // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-                    alertVo = JSON.parseObject(alertObj.toJSONString(), AlertVo.class);
+                    alertVo = JSON.toJavaObject(alertObj, AlertVo.class);
                 } else {
                     alertVo = JSON.parseObject(originalAlertVo.getContent(), AlertVo.class);
                 }

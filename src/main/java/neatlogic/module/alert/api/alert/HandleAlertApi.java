@@ -72,13 +72,11 @@ public class HandleAlertApi extends PrivateApiComponentBase {
             throw new ParamNotExistsException("id", "idList");
         }
         if (id != null) {
-            // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-            AlertVo alertVo = JSON.parseObject(jsonObj.toJSONString(), AlertVo.class);
+            AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
             alertService.handleAlert(alertVo);
         } else if (CollectionUtils.isNotEmpty(idList)) {
             for (int i = 0; i < idList.size(); i++) {
-                // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-                AlertVo alertVo = JSON.parseObject(jsonObj.toJSONString(), AlertVo.class);
+                AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
                 alertVo.setId(idList.getLong(i));
                 alertService.handleAlert(alertVo);
             }

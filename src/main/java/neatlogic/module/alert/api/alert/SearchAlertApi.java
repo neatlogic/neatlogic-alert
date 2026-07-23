@@ -98,8 +98,7 @@ public class SearchAlertApi extends PrivateApiComponentBase {
     @Description(desc = "搜索告警")
     @Override
     public Object myDoService(JSONObject jsonObj) throws IOException {
-        // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-        AlertVo alertVo = JSON.parseObject(jsonObj.toJSONString(), AlertVo.class);
+        AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
         JSONObject alertViewConfig = null;
         if (StringUtils.isNotBlank(alertVo.getViewName())) {
             AlertViewVo alertViewVo = alertViewMapper.getAlertViewByName(alertVo.getViewName());

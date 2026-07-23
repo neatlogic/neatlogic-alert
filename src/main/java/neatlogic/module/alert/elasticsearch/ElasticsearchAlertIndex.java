@@ -590,8 +590,7 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
                     .build();
             GetResponse<JSONObject> response = client.get(existsRequest, JSONObject.class);
             JSONObject returnObj = response.source();
-            // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-            return JSON.parseObject(returnObj.toJSONString(), AlertVo.class);// t
+            return JSON.toJavaObject(returnObj, AlertVo.class);// t
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return null;

@@ -102,8 +102,7 @@ public class ExportAlertApi extends PrivateBinaryStreamApiComponentBase {
     @Description(desc = "nmcac.exportcientityapi.getname")
     @Override
     public Object myDoService(JSONObject jsonObj, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        // Fastjson 2 的 JSONObject 转 Bean 不会触发 teamList 自定义反序列化器，需从 JSON 文本解析。
-        AlertVo alertVo = JSON.parseObject(jsonObj.toJSONString(), AlertVo.class);
+        AlertVo alertVo = JSON.toJavaObject(jsonObj, AlertVo.class);
         JSONArray showAttrList = jsonObj.getJSONArray("showAttrList");
         JSONArray idList = jsonObj.getJSONArray("idList");
         //导出告警使用flat搜索模式
