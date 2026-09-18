@@ -1,0 +1,70 @@
+{
+  "moduleId": "alert",
+  "name": "alert_suppression_time",
+  "label": "alert_suppression_time Table",
+  "description": "The alert suppression_time table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "suppression_id",
+      "type": "bigint",
+      "description": "Shielding policy ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "start_time",
+      "type": "datetime",
+      "description": "Start time. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "end_time",
+      "type": "datetime",
+      "description": "End time of the shielded period. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_endtime",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "end_time"
+      ],
+      "description": "Standard index covering the end_time field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_starttime",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "Standard index covering the start_time field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_suppression_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "suppression_id"
+      ],
+      "description": "Standard index covering the suppression_id field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

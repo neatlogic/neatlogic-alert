@@ -1,0 +1,95 @@
+{
+  "moduleId": "alert",
+  "name": "alert_attrtype",
+  "label": "Alert Custom Attribute Type",
+  "description": "Custom attribute type for alert custom attributes, which can be used for filtering enabled states in alert-related reporting scenarios.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "name",
+      "type": "varchar(255)",
+      "description": "Unique identifier. This value must be unique in the database and is suitable for exact-match queries and duplicate detection."
+    },
+    {
+      "name": "label",
+      "type": "varchar(255)",
+      "description": "Name."
+    },
+    {
+      "name": "type",
+      "type": "varchar(50)",
+      "description": "Type."
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "Indicates whether it is active."
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "Configuration."
+    },
+    {
+      "name": "is_normal",
+      "type": "tinyint",
+      "description": "Is this attribute to be displayed as a general attribute."
+    },
+    {
+      "name": "sort",
+      "type": "int",
+      "description": "Sort."
+    },
+    {
+      "name": "is_top",
+      "type": "tinyint",
+      "description": "Is sticky."
+    },
+    {
+      "name": "is_row",
+      "type": "tinyint",
+      "description": "Is it on one line?"
+    },
+    {
+      "name": "is_tab",
+      "type": "tinyint",
+      "description": "Is it a separate tab?"
+    },
+    {
+      "name": "is_index",
+      "type": "tinyint",
+      "description": "Is data written to ES."
+    },
+    {
+      "name": "is_show",
+      "type": "tinyint",
+      "description": "Show."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "uk",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "name"
+      ],
+      "description": "Unique index covering the name field, suitable for exact-match retrieval, uniqueness checks, and duplicate detection."
+    }
+  ]
+}

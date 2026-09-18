@@ -1,0 +1,35 @@
+{
+  "moduleId": "alert",
+  "name": "alert_tag",
+  "label": "AlertTag Table",
+  "description": "Alert tag table, belonging to the alert module, is a data table used for querying, filtering, and reporting of related alert data.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "tag",
+      "type": "varchar(50)",
+      "description": "Tag values."
+    },
+    {
+      "name": "color",
+      "type": "varchar(50)",
+      "description": "Color field of the alert tag table."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

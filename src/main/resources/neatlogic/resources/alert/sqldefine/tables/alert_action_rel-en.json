@@ -1,0 +1,41 @@
+{
+  "moduleId": "alert",
+  "name": "alert_action_rel",
+  "label": "alert_action_rel Table",
+  "description": "The alert_action_rel table, belonging to the alert module, is used for querying related alerts and other reporting scenarios.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert's unique identifier, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "action_name",
+      "type": "varchar(50)",
+      "description": "The action_name field in the alert_action_rel table, used as the primary key or unique identifier for records in this table."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "action_name"
+      ],
+      "description": "Primary key index covering the alert_id, action_name fields, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "name_idx",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "action_name"
+      ],
+      "description": "Standard index covering the action_name field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

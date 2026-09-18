@@ -1,0 +1,91 @@
+{
+  "moduleId": "alert",
+  "name": "alert_subscribe_trigger_audit",
+  "label": "alert_subscribe_trigger_audit Table",
+  "description": "The alert_subscribe_trigger_audit table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "alert_event_audit_id",
+      "type": "bigint",
+      "description": "Alert event audit ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "subscribe_id",
+      "type": "bigint",
+      "description": "Subscription ID."
+    },
+    {
+      "name": "is_triggered",
+      "type": "tinyint",
+      "description": "Triggered."
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "description": "Start time. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp",
+      "description": "End time."
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "description": "Alert."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "Standard index covering the alert_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_start_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "Standard index covering the start_time field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "uk_alert_event_audit_subscribe_id",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "alert_event_audit_id",
+        "subscribe_id"
+      ],
+      "description": "Unique index covering the alert_event_audit_id, subscribe_id fields, suitable for exact-match retrieval, uniqueness checks, and duplicate detection."
+    }
+  ]
+}

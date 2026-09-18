@@ -1,0 +1,46 @@
+{
+  "moduleId": "alert",
+  "name": "alert_alert_mark",
+  "label": "alert_mark Table",
+  "description": "The alert mark table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "mark_uuid",
+      "type": "char(32)",
+      "description": "The unique identifier for the tag is UUID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "mark_time",
+      "type": "timestamp",
+      "description": "Update time."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "mark_uuid"
+      ],
+      "description": "Primary key index covering the alert_id, mark_uuid fields, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_index",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "mark_uuid"
+      ],
+      "description": "Standard index covering the mark_uuid field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

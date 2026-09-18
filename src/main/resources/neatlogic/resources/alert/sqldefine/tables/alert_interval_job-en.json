@@ -1,0 +1,56 @@
+{
+  "moduleId": "alert",
+  "name": "alert_interval_job",
+  "label": "alert_interval_job",
+  "description": "Alert interval_job table, part of the alert module, used for related query scenarios such as reporting.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "alert_event_handler_id",
+      "type": "bigint",
+      "description": "Event component ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "parent_audit_id",
+      "type": "bigint",
+      "description": "Parent component execution record ID."
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "description": "Next start time."
+    },
+    {
+      "name": "interval_minute",
+      "type": "int",
+      "description": "Interval in minutes."
+    },
+    {
+      "name": "repeat_count",
+      "type": "int",
+      "description": "Remaining number of repetitions."
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "Configuration."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "alert_event_handler_id"
+      ],
+      "description": "Primary key index covering the alert_id, alert_event_handler_id fields, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

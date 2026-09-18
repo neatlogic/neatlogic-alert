@@ -1,0 +1,45 @@
+{
+  "moduleId": "alert",
+  "name": "alert_adaptor",
+  "label": "Alert Adaptor Table",
+  "description": "Alert adaptor table, belonging to the alert module, is used for related query scenarios such as reporting.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "alerttype_id",
+      "type": "bigint",
+      "description": "Alert type ID."
+    },
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "Unique identifier."
+    },
+    {
+      "name": "label",
+      "type": "varchar(100)",
+      "description": "Name."
+    },
+    {
+      "name": "file_id",
+      "type": "bigint",
+      "description": "Attachment_id."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

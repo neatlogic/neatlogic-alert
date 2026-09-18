@@ -1,0 +1,140 @@
+{
+  "moduleId": "alert",
+  "name": "alert_breaker_action_audit",
+  "label": "Alert Breaker Action Execution Audit",
+  "description": "Alert fallback action auditing: this feature is designed to track and query related state information for alert-related scenarios, such as reporting on statuses and associations.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "breaker_audit_id",
+      "type": "bigint",
+      "description": "Melted audit ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "policy_id",
+      "type": "bigint",
+      "description": "Breaker strategy ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "state_id",
+      "type": "bigint",
+      "description": "Breaker state ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "trigger",
+      "type": "varchar(50)",
+      "description": "Trigger point: OPEN/AGGREGATE/RECOVER. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "action_uuid",
+      "type": "varchar(64)",
+      "description": "Action configuration UUID."
+    },
+    {
+      "name": "action_name",
+      "type": "varchar(255)",
+      "description": "Action name."
+    },
+    {
+      "name": "action_handler",
+      "type": "varchar(100)",
+      "description": "Action plugin. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "description": "Start time. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp",
+      "description": "End time."
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "Execution status."
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "description": "Alert."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_action_handler",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "action_handler"
+      ],
+      "description": "Standard index covering the action_handler field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_breaker_audit_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "breaker_audit_id"
+      ],
+      "description": "Standard index covering the breaker_audit_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_policy_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "policy_id"
+      ],
+      "description": "Standard index covering the policy_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_start_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "start_time"
+      ],
+      "description": "Standard index covering the start_time field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_state_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "state_id"
+      ],
+      "description": "Standard index covering the state_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_trigger",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "trigger"
+      ],
+      "description": "Standard index covering the trigger field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

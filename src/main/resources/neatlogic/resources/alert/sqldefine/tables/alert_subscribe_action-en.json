@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_subscribe_action",
+  "label": "alert_subscribe_action Table",
+  "description": "The alert_subscribe_action table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "name",
+      "type": "varchar(100)",
+      "description": "Name."
+    },
+    {
+      "name": "subscribe_id",
+      "type": "bigint",
+      "description": "Subscription ID."
+    },
+    {
+      "name": "handler",
+      "type": "varchar(255)",
+      "description": "Plugin."
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "Configuration."
+    },
+    {
+      "name": "sort",
+      "type": "int",
+      "description": "Sort."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "moduleId": "alert",
+  "name": "alert_suppression_eventhandler",
+  "label": "alert_suppression_eventhandler Table",
+  "description": "The alert_suppression_eventhandler table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "suppression_id",
+      "type": "bigint",
+      "description": "The suppression ID is the unique identifier associated with the suppression. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "event_handler",
+      "type": "varchar(100)",
+      "description": "The event_handler field in the alert_suppression_eventhandler table. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_handler",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "event_handler"
+      ],
+      "description": "Standard index covering the event_handler field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_suppression_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "suppression_id"
+      ],
+      "description": "Standard index covering the suppression_id field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

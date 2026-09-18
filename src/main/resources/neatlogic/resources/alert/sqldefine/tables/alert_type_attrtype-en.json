@@ -1,0 +1,36 @@
+{
+  "moduleId": "alert",
+  "name": "alert_type_attrtype",
+  "label": "alert_type_attrtype Table",
+  "description": "Alerttype_attrtype table, part of the alert module, used for related query scenarios such as reporting.",
+  "fields": [
+    {
+      "name": "alerttype_id",
+      "type": "bigint",
+      "description": "Alerttype_id, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "attrtype_id",
+      "type": "bigint",
+      "description": "Attrtype association ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "sort",
+      "type": "int",
+      "description": "Sort."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alerttype_id",
+        "attrtype_id"
+      ],
+      "description": "Primary key index covering the alerttype_id, attrtype_id fields, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

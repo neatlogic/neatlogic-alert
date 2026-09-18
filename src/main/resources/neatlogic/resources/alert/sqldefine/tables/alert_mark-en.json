@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_mark",
+  "label": "alert_mark Table",
+  "description": "The alert mark table, part of the alert module, is used for querying, filtering, and presenting data related to alerts.",
+  "fields": [
+    {
+      "name": "uuid",
+      "type": "char(32)",
+      "description": "MD5, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "Name. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "style",
+      "type": "varchar(255)",
+      "description": "Style."
+    },
+    {
+      "name": "is_show",
+      "type": "tinyint",
+      "description": "Show."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "uuid"
+      ],
+      "description": "Primary key index covering the UUID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_name",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "name"
+      ],
+      "description": "Standard index covering the name field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

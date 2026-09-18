@@ -1,0 +1,155 @@
+{
+  "moduleId": "alert",
+  "name": "alert",
+  "label": "Alert Content",
+  "description": "Alert content can be used for state tracking and time dimension statistics in reports related to alert scenarios.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "level",
+      "type": "int",
+      "description": "Level."
+    },
+    {
+      "name": "title",
+      "type": "longtext",
+      "description": "Title."
+    },
+    {
+      "name": "update_time",
+      "type": "datetime",
+      "description": "Update time. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "alert_time",
+      "type": "datetime",
+      "description": "Alert time. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "close_time",
+      "type": "datetime",
+      "description": "Close time."
+    },
+    {
+      "name": "type",
+      "type": "bigint",
+      "description": "Type."
+    },
+    {
+      "name": "status",
+      "type": "varchar(50)",
+      "description": "Status."
+    },
+    {
+      "name": "source",
+      "type": "varchar(100)",
+      "description": "SOURCE."
+    },
+    {
+      "name": "is_close",
+      "type": "tinyint",
+      "description": "Is it closed."
+    },
+    {
+      "name": "unique_key",
+      "type": "char(32)",
+      "description": "Unique key. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "alert_count",
+      "type": "int",
+      "description": "Alert count."
+    },
+    {
+      "name": "similar_count",
+      "type": "int",
+      "description": "Similar alert count."
+    },
+    {
+      "name": "entity_type",
+      "type": "varchar(255)",
+      "description": "Entity types, such as OS, DB."
+    },
+    {
+      "name": "entity_name",
+      "type": "varchar(255)",
+      "description": "Entity name, for example: HOST1234."
+    },
+    {
+      "name": "ip",
+      "type": "varchar(255)",
+      "description": "IP address."
+    },
+    {
+      "name": "port",
+      "type": "varchar(255)",
+      "description": "Port."
+    },
+    {
+      "name": "is_delete",
+      "type": "tinyint",
+      "description": "Is in progress."
+    },
+    {
+      "name": "delete_batch",
+      "type": "bigint",
+      "description": "Delete batch. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_delete_batch",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "delete_batch"
+      ],
+      "description": "Standard index covering the delete_batch field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_time"
+      ],
+      "description": "Standard index covering the alert_time field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_unique_key",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "unique_key"
+      ],
+      "description": "Standard index covering the unique_key field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_updatetime",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "update_time"
+      ],
+      "description": "Standard index covering the update_time field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

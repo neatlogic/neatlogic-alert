@@ -1,0 +1,31 @@
+{
+  "moduleId": "alert",
+  "name": "alert_tagrel",
+  "label": "alert_tagrel Table",
+  "description": "The alerttagrel table is a data table within the alert module. It is used for querying related alerts and reporting scenarios.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert's unique identifier, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "tag_id",
+      "type": "int",
+      "description": "The tag association ID, used as the primary key or unique identifier for records in this table."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "tag_id"
+      ],
+      "description": "Primary key index covering the alert_id, tag_id fields, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

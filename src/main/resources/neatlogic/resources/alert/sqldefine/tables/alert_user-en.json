@@ -1,0 +1,31 @@
+{
+  "moduleId": "alert",
+  "name": "alert_user",
+  "label": "Alerts User Table",
+  "description": "Alert table, part of the alert module, used for related query scenarios such as reporting.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "user_id",
+      "type": "char(32)",
+      "description": "User_uuid, used as the primary key or unique identifier for records in this table."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "user_id"
+      ],
+      "description": "Primary key index covering the alert_id, user_id fields, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "moduleId": "alert",
+  "name": "alert_enum",
+  "label": "Alert Enum Table",
+  "description": "Alert enum table, related to alert module data. Used for querying, filtering, and reporting of alert-related data.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "attr_type",
+      "type": "bigint",
+      "description": "Attribute type. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "value",
+      "type": "varchar(255)",
+      "description": "Value."
+    },
+    {
+      "name": "text",
+      "type": "varchar(255)",
+      "description": "Display name."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "uk",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "attr_type",
+        "value"
+      ],
+      "description": "Unique index covering the attr_type, value fields, suitable for exact-match retrieval, uniqueness checks, and duplicate detection."
+    }
+  ]
+}

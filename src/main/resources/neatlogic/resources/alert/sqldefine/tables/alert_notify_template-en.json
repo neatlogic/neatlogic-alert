@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_notify_template",
+  "label": "alert_template Table",
+  "description": "The alert_notify_template table, part of the alert module, is used for filtering enabled states in reporting scenarios related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "name",
+      "type": "varchar(255)",
+      "description": "Unique identifier."
+    },
+    {
+      "name": "label",
+      "type": "varbinary(255)",
+      "description": "Name."
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "Indicates whether it is active."
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "description": "Title."
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "description": "Content."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

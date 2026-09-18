@@ -1,0 +1,35 @@
+{
+  "moduleId": "alert",
+  "name": "alert_event_plugin",
+  "label": "alert_event_plugin Table",
+  "description": "The alert_event_plugin table is part of the alert module and is used for filtering enabled states in alert-related reporting scenarios.",
+  "fields": [
+    {
+      "name": "name",
+      "type": "varchar(255)",
+      "description": "Unique identifier, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "Configuration."
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "Indicates whether it is active."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "name"
+      ],
+      "description": "Primary key index covering the name field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

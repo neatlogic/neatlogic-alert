@@ -1,0 +1,75 @@
+{
+  "moduleId": "alert",
+  "name": "alert_origin",
+  "label": "Alerts Table",
+  "description": "Alerts table, part of the alert module, used for tracking status of alert-related reports.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "Primary key ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "content",
+      "type": "longtext",
+      "description": "Retrieve the `content` field from the `alertorigin` table."
+    },
+    {
+      "name": "adaptor",
+      "type": "varchar(100)",
+      "description": "Adapter."
+    },
+    {
+      "name": "type",
+      "type": "varchar(100)",
+      "description": "Type."
+    },
+    {
+      "name": "time",
+      "type": "timestamp",
+      "description": "The time field in the alertorigin table. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "error",
+      "type": "longtext",
+      "description": "Alert origin table's error field."
+    },
+    {
+      "name": "source",
+      "type": "varchar(100)",
+      "description": "SOURCE."
+    },
+    {
+      "name": "status",
+      "type": "enum('succeed','failed','ignored')",
+      "description": "Is the report successful."
+    },
+    {
+      "name": "alert_data",
+      "type": "longtext",
+      "description": "Transferred alert data."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_time",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "time"
+      ],
+      "description": "Standard index covering the time field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

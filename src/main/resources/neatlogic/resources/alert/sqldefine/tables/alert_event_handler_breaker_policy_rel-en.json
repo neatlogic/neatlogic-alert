@@ -1,0 +1,81 @@
+{
+  "moduleId": "alert",
+  "name": "alert_event_handler_breaker_policy_rel",
+  "label": "Event Plugin Circuit Breaker Policy Association",
+  "description": "Event plugin circuit breaker policy can be used for related queries in alert-related scenarios.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "event_handler_id",
+      "type": "bigint",
+      "description": "Event plugin instance ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "policy_id",
+      "type": "bigint",
+      "description": "Breaker strategy ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "sort",
+      "type": "int",
+      "description": "Execution sequence. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_event_handler_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "event_handler_id"
+      ],
+      "description": "Standard index covering the event_handler_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_policy_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "policy_id"
+      ],
+      "description": "Standard index covering the policy_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_sort",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "sort"
+      ],
+      "description": "Standard index covering the sort field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "uk_event_handler_policy",
+      "type": "BTREE",
+      "unique": true,
+      "primary": false,
+      "columns": [
+        "event_handler_id",
+        "policy_id"
+      ],
+      "description": "Unique index covering the event_handler_id, policy_id fields, suitable for exact-match retrieval, uniqueness checks, and duplicate detection."
+    }
+  ]
+}

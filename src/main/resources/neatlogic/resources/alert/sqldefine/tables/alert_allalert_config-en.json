@@ -1,0 +1,50 @@
+{
+  "moduleId": "alert",
+  "name": "alert_allalert_config",
+  "label": "alert_allalert_config Table",
+  "description": "The alert_allalert_config table is a data table under the alert module. It is used for statistical queries related to alert times.",
+  "fields": [
+    {
+      "name": "name",
+      "type": "varchar(50)",
+      "description": "Configuration name, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "config",
+      "type": "text",
+      "description": "Configuration."
+    },
+    {
+      "name": "fcu",
+      "type": "char(32)",
+      "description": "Creator."
+    },
+    {
+      "name": "fcd",
+      "type": "datetime",
+      "description": "Creation time."
+    },
+    {
+      "name": "lcu",
+      "type": "char(32)",
+      "description": "Updated by."
+    },
+    {
+      "name": "lcd",
+      "type": "datetime",
+      "description": "Update the timestamp."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "name"
+      ],
+      "description": "Primary key index covering the name field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

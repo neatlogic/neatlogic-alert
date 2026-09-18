@@ -1,0 +1,70 @@
+{
+  "moduleId": "alert",
+  "name": "alert_suppression_audit",
+  "label": "alert_suppression_audit Table",
+  "description": "The alert_suppression_audit table, part of the alert module, is used for related queries and report queries related to alerts.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "suppression_id",
+      "type": "bigint",
+      "description": "Shielding policy ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "suppression_time",
+      "type": "timestamp",
+      "description": "Silence time."
+    },
+    {
+      "name": "event",
+      "type": "varchar(100)",
+      "description": "Events."
+    },
+    {
+      "name": "event_handler",
+      "type": "varchar(100)",
+      "description": "Event plugin."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "Standard index covering the alert_id field, suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "idx_suppression_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "suppression_id"
+      ],
+      "description": "Standard index covering the suppression_id field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

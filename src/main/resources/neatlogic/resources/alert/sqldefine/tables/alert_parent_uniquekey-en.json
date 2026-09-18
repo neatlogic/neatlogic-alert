@@ -1,0 +1,40 @@
+{
+  "moduleId": "alert",
+  "name": "alert_parent_uniquekey",
+  "label": "alert_parent_uniquekey Table",
+  "description": "Alert parent_uniquekey table, related to alert-related queries and reporting scenarios.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert's unique identifier. A standard index is defined on this field, making it suitable for filtering, join, and sort queries."
+    },
+    {
+      "name": "unique_key",
+      "type": "char(32)",
+      "description": "Update the unique_key field in the parent_uniquekey table, used as the primary key or unique identifier for records in this table."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "unique_key"
+      ],
+      "description": "Primary key index covering the unique_key field, suitable for uniquely identifying records and queries that join the primary table."
+    },
+    {
+      "name": "idx_alert_id",
+      "type": "BTREE",
+      "unique": false,
+      "primary": false,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "Standard index covering the alert_id field, suitable for filtering, join, and sort queries."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "moduleId": "alert",
+  "name": "alert_attr",
+  "label": "Additional Attributes for Alerts",
+  "description": "Additional attributes for alerts can be used for related queries and report scenarios.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert's unique identifier, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "content",
+      "type": "longtext",
+      "description": "Alert additional attribute content field."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id"
+      ],
+      "description": "Primary key index covering the alert_id field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

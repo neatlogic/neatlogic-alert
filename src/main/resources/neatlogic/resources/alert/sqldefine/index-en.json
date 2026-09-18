@@ -1,0 +1,285 @@
+{
+  "moduleId": "alert",
+  "tables": [
+    {
+      "name": "alert",
+      "label": "Alert Content",
+      "description": "Alert content can be used for state tracking and time dimension statistics in reports related to alert scenarios."
+    },
+    {
+      "name": "alert_action",
+      "label": "Custom Actions for Alerts",
+      "description": "Alert custom action can be used for filtering on enabled states of alerts and other reporting scenarios."
+    },
+    {
+      "name": "alert_action_rel",
+      "label": "alert_action_rel Table",
+      "description": "The alert_action_rel table, belonging to the alert module, is used for querying related alerts and other reporting scenarios."
+    },
+    {
+      "name": "alert_adaptor",
+      "label": "Alert Adaptor Table",
+      "description": "Alert adaptor table, belonging to the alert module, is used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_alert_mark",
+      "label": "alert_mark Table",
+      "description": "The alert mark table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_allalert_config",
+      "label": "alert_allalert_config Table",
+      "description": "The alert_allalert_config table is a data table under the alert module. It is used for statistical queries related to alert times."
+    },
+    {
+      "name": "alert_attr",
+      "label": "Additional Attributes for Alerts",
+      "description": "Additional attributes for alerts can be used for related queries and report scenarios."
+    },
+    {
+      "name": "alert_attrtype",
+      "label": "Alert Custom Attribute Type",
+      "description": "Custom attribute type for alert custom attributes, which can be used for filtering enabled states in alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_audit",
+      "label": "Alert Operation Auditing",
+      "description": "Alert operation audit can be used for related queries such as alert-related association queries and report queries."
+    },
+    {
+      "name": "alert_breaker_action_audit",
+      "label": "Alert Breaker Action Execution Audit",
+      "description": "Alert fallback action auditing: this feature is designed to track and query related state information for alert-related scenarios, such as reporting on statuses and associations."
+    },
+    {
+      "name": "alert_breaker_audit",
+      "label": "Alert Breaker Execution Audit",
+      "description": "Alerts resilience auditing: this feature is designed for tracking and querying related state information for alerts, including scenarios for reporting and analytics."
+    },
+    {
+      "name": "alert_breaker_collect_item",
+      "label": "Alert Breaker Collection Details",
+      "description": "Alert breaker collection details: this feature is designed to facilitate time dimension statistical queries and association queries related to alert-related data, enabling users to generate reports for various scenarios."
+    },
+    {
+      "name": "alert_breaker_policy",
+      "label": "Alert Breaker Strategy",
+      "description": "Alert fallback strategy: this strategy can be used for filtering enabled states of alerts and statistical time dimensions in report queries."
+    },
+    {
+      "name": "alert_breaker_state",
+      "label": "Alert Breaker State",
+      "description": "Alarm breaker status this feature is designed to support time-based statistical queries and association queries related to alarm-related scenarios."
+    },
+    {
+      "name": "alert_catalog",
+      "label": "alert_catalog Table",
+      "description": "Alert catalog table, part of the alert module, used for enabling state filtering, time dimension statistics, and association queries for alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_catalog_auth",
+      "label": "alert_catalog_auth Table",
+      "description": "The alert catalog_auth table is part of the alert module and can be used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_comment",
+      "label": "alert_comment Table",
+      "description": "The alert_comment table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_enum",
+      "label": "Alert Enum Table",
+      "description": "Alert enum table, related to alert module data. Used for querying, filtering, and reporting of alert-related data."
+    },
+    {
+      "name": "alert_event_handler",
+      "label": "alert_event_handler Table",
+      "description": "Alert_event_handler table, belonging to the alert module, used for filtering enabled states of alerts and performing associated query scenarios for reporting purposes."
+    },
+    {
+      "name": "alert_event_handler_audit",
+      "label": "alert_event_handler_audit Table",
+      "description": "The event_handler_audit table is a data table within the alert module. It is used for tracking alert-related statuses and queries."
+    },
+    {
+      "name": "alert_event_handler_breaker_policy_rel",
+      "label": "Event Plugin Circuit Breaker Policy Association",
+      "description": "Event plugin circuit breaker policy can be used for related queries in alert-related scenarios."
+    },
+    {
+      "name": "alert_event_handler_data",
+      "label": "alert_event_handler_data Table",
+      "description": "Alert_event_handler_data table, belonging to the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_event_handler_type",
+      "label": "alert_event_handler_type Table",
+      "description": "Alert_event_handler_type table, belonging to the alert module, used for querying, filtering, and reporting of alert-related data."
+    },
+    {
+      "name": "alert_event_plugin",
+      "label": "alert_event_plugin Table",
+      "description": "The alert_event_plugin table is part of the alert module and is used for filtering enabled states in alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_interval_job",
+      "label": "alert_interval_job",
+      "description": "Alert interval_job table, part of the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_level",
+      "label": "alert_level Table",
+      "description": "The alert_level table, part of the alert module, is used for querying, filtering, and reporting on alert-related data."
+    },
+    {
+      "name": "alert_mark",
+      "label": "alert_mark Table",
+      "description": "The alert mark table, part of the alert module, is used for querying, filtering, and presenting data related to alerts."
+    },
+    {
+      "name": "alert_notify_template",
+      "label": "alert_template Table",
+      "description": "The alert_notify_template table, part of the alert module, is used for filtering enabled states in reporting scenarios related to alerts."
+    },
+    {
+      "name": "alert_origin",
+      "label": "Alerts Table",
+      "description": "Alerts table, part of the alert module, used for tracking status of alert-related reports."
+    },
+    {
+      "name": "alert_parent_uniquekey",
+      "label": "alert_parent_uniquekey Table",
+      "description": "Alert parent_uniquekey table, related to alert-related queries and reporting scenarios."
+    },
+    {
+      "name": "alert_rel",
+      "label": "alert_relation Table",
+      "description": "AlertRel table, related to the alert module data. Used for alert-related association queries and report queries."
+    },
+    {
+      "name": "alert_rule",
+      "label": "Alert Rule Table",
+      "description": "Alert rule table, part of the alert module, used for filtering enabled states in alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_similar",
+      "label": "Alert Similar Table",
+      "description": "Analogous table for alerts, belonging to the alert module, is a data table used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_source",
+      "label": "Alert Type",
+      "description": "Alert types are used for querying, filtering, and reporting on alert-related data."
+    },
+    {
+      "name": "alert_status",
+      "label": "alert_status Table",
+      "description": "The alert_status table, part of the alert module, is used for querying, filtering, and reporting on alert-related data."
+    },
+    {
+      "name": "alert_subscribe",
+      "label": "Alert Subscribe Table",
+      "description": "The alert subscribe table, which belongs to the alert module, is used for filtering enabled states for alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_subscribe_action",
+      "label": "alert_subscribe_action Table",
+      "description": "The alert_subscribe_action table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_subscribe_audit",
+      "label": "alert_subscribe_audit Table",
+      "description": "The alert_subscribe_audit table is part of the alert module and is used for tracking and querying related status information for alerts."
+    },
+    {
+      "name": "alert_subscribe_trigger_audit",
+      "label": "alert_subscribe_trigger_audit Table",
+      "description": "The alert_subscribe_trigger_audit table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_suppression",
+      "label": "Alert Suppression Table",
+      "description": "The alert suppression table, part of the alert module, is used for filtering alert statuses in reporting scenarios."
+    },
+    {
+      "name": "alert_suppression_audit",
+      "label": "alert_suppression_audit Table",
+      "description": "The alert_suppression_audit table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_suppression_eventhandler",
+      "label": "alert_suppression_eventhandler Table",
+      "description": "The alert_suppression_eventhandler table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_suppression_eventhandlertype",
+      "label": "Alert suppression_eventhandlertype Table",
+      "description": "Alert_suppression_eventhandler_type table, belonging to the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_suppression_time",
+      "label": "alert_suppression_time Table",
+      "description": "The alert suppression_time table, part of the alert module, is used for related queries and report queries related to alerts."
+    },
+    {
+      "name": "alert_tag",
+      "label": "AlertTag Table",
+      "description": "Alert tag table, belonging to the alert module, is a data table used for querying, filtering, and reporting of related alert data."
+    },
+    {
+      "name": "alert_tagrel",
+      "label": "alert_tagrel Table",
+      "description": "The alerttagrel table is a data table within the alert module. It is used for querying related alerts and reporting scenarios."
+    },
+    {
+      "name": "alert_team",
+      "label": "AlertTeam Table",
+      "description": "Alert team table, part of the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_topo",
+      "label": "Alert Topology Table",
+      "description": "The alert topo table is part of the alert module and is used for filtering enabled states and time dimension statistics in alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_topo_widget",
+      "label": "Alerts_topo_widget Table",
+      "description": "The alert topo_widget table is associated with the alert module and can be used for filtering on enabled states for reporting scenarios related to alerts."
+    },
+    {
+      "name": "alert_trash",
+      "label": "Alert Content",
+      "description": "Alert content can be used for state tracking and time dimension statistics in reports related to alert scenarios."
+    },
+    {
+      "name": "alert_trash_attr",
+      "label": "Additional Attributes for Alerts",
+      "description": "Additional attributes for alerts can be used for related queries and report scenarios."
+    },
+    {
+      "name": "alert_type",
+      "label": "Alert Type",
+      "description": "Alert types are used for filtering enabled states of alerts, time dimension statistics, and query associations."
+    },
+    {
+      "name": "alert_type_attrtype",
+      "label": "alert_type_attrtype Table",
+      "description": "Alerttype_attrtype table, part of the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_user",
+      "label": "Alerts User Table",
+      "description": "Alert table, part of the alert module, used for related query scenarios such as reporting."
+    },
+    {
+      "name": "alert_view",
+      "label": "Alertview Table",
+      "description": "AlertView table, part of the alert module, used for filtering enabled states, time dimension statistics, and association queries for alert-related reporting scenarios."
+    },
+    {
+      "name": "alert_view_auth",
+      "label": "alert_view_auth Table",
+      "description": "Alert view_auth table, related to the alert module data. Used for alert-related association queries and report queries."
+    }
+  ]
+}

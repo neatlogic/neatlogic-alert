@@ -1,0 +1,60 @@
+{
+  "moduleId": "alert",
+  "name": "alert_subscribe",
+  "label": "Alert Subscribe Table",
+  "description": "The alert subscribe table, which belongs to the alert module, is used for filtering enabled states for alert-related reporting scenarios.",
+  "fields": [
+    {
+      "name": "id",
+      "type": "bigint",
+      "description": "ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "name",
+      "type": "varchar(100)",
+      "description": "Name."
+    },
+    {
+      "name": "condition",
+      "type": "longtext",
+      "description": "Conditions."
+    },
+    {
+      "name": "is_active",
+      "type": "tinyint",
+      "description": "Indicates whether it is active."
+    },
+    {
+      "name": "config",
+      "type": "longtext",
+      "description": "Configuration."
+    },
+    {
+      "name": "type",
+      "type": "enum('private','public')",
+      "description": "Type."
+    },
+    {
+      "name": "owner",
+      "type": "char(32)",
+      "description": "All users."
+    },
+    {
+      "name": "action_type",
+      "type": "bigint",
+      "description": "Event action type."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "id"
+      ],
+      "description": "Primary key index covering the ID field, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "moduleId": "alert",
+  "name": "alert_event_handler_data",
+  "label": "alert_event_handler_data Table",
+  "description": "Alert_event_handler_data table, belonging to the alert module, used for related query scenarios such as reporting.",
+  "fields": [
+    {
+      "name": "alert_id",
+      "type": "bigint",
+      "description": "Alert ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "alert_event_handler_id",
+      "type": "bigint",
+      "description": "Event ID, used as the primary key or unique identifier for records in this table."
+    },
+    {
+      "name": "handler",
+      "type": "varchar(255)",
+      "description": "Component type."
+    },
+    {
+      "name": "data",
+      "type": "text",
+      "description": "Data."
+    }
+  ],
+  "indexes": [
+    {
+      "name": "PRIMARY",
+      "type": "BTREE",
+      "unique": true,
+      "primary": true,
+      "columns": [
+        "alert_id",
+        "alert_event_handler_id"
+      ],
+      "description": "Primary key index covering the alert_id, alert_event_handler_id fields, suitable for uniquely identifying records and queries that join the primary table."
+    }
+  ]
+}
