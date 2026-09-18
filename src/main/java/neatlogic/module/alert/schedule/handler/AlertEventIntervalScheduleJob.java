@@ -136,9 +136,10 @@ public class AlertEventIntervalScheduleJob extends JobBase {
             builder.withBeginTime(jobVo.getStartTime());
         }
         int leftExecuteCount = getLeftExecuteCount(jobVo);
-        if (jobVo.getIntervalMinute() != null && jobVo.getIntervalMinute() > 0) {
+        int intervalInSeconds = calculateSeconds(jobVo.getIntervalMinute(), jobVo.getIntervalSecond());
+        if (intervalInSeconds > 0) {
             builder.withRepeatCount(Math.max(leftExecuteCount - 1, 0));
-            builder.withIntervalInSeconds(jobVo.getIntervalMinute() * 60);
+            builder.withIntervalInSeconds(intervalInSeconds);
         }
         builder.addData("alertId", jobVo.getAlertId());
         builder.addData("alertEventHandlerId", jobVo.getAlertEventHandlerId());
@@ -146,7 +147,11 @@ public class AlertEventIntervalScheduleJob extends JobBase {
     }
 
     private int getLeftExecuteCount(AlertIntervalJobVo jobVo) {
-        return jobVo == null || jobVo.getRepeatCount() == null ? 0 : Math.max(jobVo.getRepeatCount(), 0);
+        if (jobVo == null || jobVo.getRepeatCount() == null) {
+            return 0;
+        } else {
+            return Math.max(jobVo.getRepeatCount(), 0);
+        }
     }
 
     @Override
@@ -169,12 +174,26 @@ public class AlertEventIntervalScheduleJob extends JobBase {
             }
             JSONObject oldResultObj = auditVo.getResult();
             JSONObject resultObj = new JSONObject();
-            int oldLeftExecuteCount = oldResultObj == null ? getLeftExecuteCount(jobVo) : oldResultObj.getIntValue("leftExecuteCount");
+            int oldLeftExecuteCount;
+            if (oldResultObj == null) {
+                oldLeftExecuteCount = getLeftExecuteCount(jobVo);
+            } else {
+                oldLeftExecuteCount = oldResultObj.getIntValue("leftExecuteCount");
+            }
             int leftExecuteCount = Math.max(oldLeftExecuteCount - 1, 0);
             //System.out.println("next fire time:" + context.getNextFireTime());
             resultObj.put("nextStartTime", context.getNextFireTime());
             resultObj.put("leftExecuteCount", leftExecuteCount);
-            resultObj.put("intervalMinute", oldResultObj == null ? jobVo.getIntervalMinute() : oldResultObj.get("intervalMinute"));
+            if (oldResultObj == null || oldResultObj.get("intervalMinute") == null) {
+                resultObj.put("intervalMinute", jobVo.getIntervalMinute());
+            } else {
+                resultObj.put("intervalMinute", oldResultObj.get("intervalMinute"));
+            }
+            if (oldResultObj == null || oldResultObj.get("intervalSecond") == null) {
+                resultObj.put("intervalSecond", jobVo.getIntervalSecond());
+            } else {
+                resultObj.put("intervalSecond", oldResultObj.get("intervalSecond"));
+            }
             auditVo.setResult(resultObj);
             alertEventMapper.updateAlertEventAuditResult(auditVo);
             if (context.getNextFireTime() != null) {
@@ -199,6 +218,21 @@ public class AlertEventIntervalScheduleJob extends JobBase {
     @Override
     public String getGroupName() {
         return TenantContext.get().getTenantUuid() + "-ALERT-EVENT-INTERVAL";
+    }
+
+    /**
+     * 将持久化的分钟和秒合并为调度器需要的总秒数。
+     */
+    static int calculateSeconds(Integer minute, Integer second) {
+        long minuteValue = 0;
+        if (minute != null) {
+            minuteValue = minute;
+        }
+        long secondValue = 0;
+        if (second != null) {
+            secondValue = second;
+        }
+        return Math.toIntExact(minuteValue * 60L + secondValue);
     }
 
 }

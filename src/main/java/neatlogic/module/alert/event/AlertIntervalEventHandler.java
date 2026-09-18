@@ -88,11 +88,16 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
                 for (int i = 0; i < intervalList.size(); i++) {
                     JSONObject config = intervalList.getJSONObject(i);
                     Integer delayMinute = config.getInteger("delayMinute");
+                    Integer delaySecond = config.getInteger("delaySecond");
                     Integer intervalMinute = config.getInteger("intervalMinute");
+                    Integer intervalSecond = config.getInteger("intervalSecond");
                     Integer repeatCount = config.getInteger("repeatCount");
                     Calendar calendar = Calendar.getInstance();
                     if (delayMinute == null) {
                         delayMinute = 0;
+                    }
+                    if (delaySecond == null) {
+                        delaySecond = 0;
                     }
                     if (repeatCount == null) {
                         repeatCount = 0;
@@ -100,23 +105,26 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
                     if (intervalMinute == null) {
                         intervalMinute = 0;
                     }
+                    if (intervalSecond == null) {
+                        intervalSecond = 0;
+                    }
+                    int delayInSeconds = calculateSeconds(delayMinute, delaySecond);
+                    int intervalInSeconds = calculateSeconds(intervalMinute, intervalSecond);
                     AlertIntervalJobVo alertIntervalJobVo = null;
-                    int leftExecuteCount = 0;
-                    if (delayMinute == 0) {
+                    int leftExecuteCount = calculateLeftExecuteCount(delayInSeconds, intervalInSeconds, repeatCount);
+                    if (delayInSeconds == 0) {
                         alertVo = triggerIntervalHandler(config, alertVo, alertEventHandlerAuditVo.getId());
-                        if (repeatCount > 0 && intervalMinute > 0) {
-                            leftExecuteCount = repeatCount;
-                            calendar.add(Calendar.MINUTE, intervalMinute);
-                            alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, config);
-                            loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalMinute, leftExecuteCount);
+                        if (leftExecuteCount > 0) {
+                            calendar.add(Calendar.SECOND, intervalInSeconds);
+                            alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, intervalSecond, config);
+                            loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalInSeconds, leftExecuteCount);
                         }
                     } else {
-                        calendar.add(Calendar.MINUTE, delayMinute);
-                        leftExecuteCount = intervalMinute > 0 ? repeatCount + 1 : 1;
-                        alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, config);
-                        loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalMinute, leftExecuteCount);
+                        calendar.add(Calendar.SECOND, delayInSeconds);
+                        alertIntervalJobVo = createIntervalJob(alertVo, alertEventHandlerVo, alertEventHandlerAuditVo, calendar.getTime(), leftExecuteCount, intervalMinute, intervalSecond, config);
+                        loadIntervalJob(alertVo, alertEventHandlerVo, alertIntervalJobVo.getStartTime(), intervalInSeconds, leftExecuteCount);
                     }
-                    updateAuditResult(alertEventHandlerAuditVo, alertIntervalJobVo, intervalMinute, leftExecuteCount);
+                    updateAuditResult(alertEventHandlerAuditVo, alertIntervalJobVo, intervalMinute, intervalSecond, leftExecuteCount);
                 }
 
             }
@@ -140,7 +148,7 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
         return alertVo;
     }
 
-    private AlertIntervalJobVo createIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, Date startTime, Integer repeatCount, Integer intervalMinute, JSONObject config) {
+    private AlertIntervalJobVo createIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, Date startTime, Integer repeatCount, Integer intervalMinute, Integer intervalSecond, JSONObject config) {
         AlertIntervalJobVo alertIntervalJobVo = new AlertIntervalJobVo();
         alertIntervalJobVo.setAlertId(alertVo.getId());
         alertIntervalJobVo.setAlertEventHandlerId(alertEventHandlerVo.getId());
@@ -150,30 +158,72 @@ public class AlertIntervalEventHandler extends AlertEventHandlerBase {
         //这里需要记录还需要执行的次数，每次执行完都会-1，变成0后下次load job就不再加载了
         alertIntervalJobVo.setRepeatCount(repeatCount);
         alertIntervalJobVo.setIntervalMinute(intervalMinute);
+        alertIntervalJobVo.setIntervalSecond(intervalSecond);
         alertIntervalJobVo.setConfig(config);
         alertMapper.insertAlertIntervalJob(alertIntervalJobVo);
         return alertIntervalJobVo;
     }
 
-    private void loadIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, Date startTime, Integer intervalMinute, Integer leftExecuteCount) {
+    private void loadIntervalJob(AlertVo alertVo, AlertEventHandlerVo alertEventHandlerVo, Date startTime, Integer intervalInSeconds, Integer leftExecuteCount) {
         IJob jobHandler = SchedulerManager.getHandler(AlertEventIntervalScheduleJob.class.getName());
         JobObject.Builder builder = new JobObject.Builder(alertVo.getId().toString() + "#" + alertEventHandlerVo.getId(), jobHandler.getGroupName(), jobHandler.getClassName())
                 .addData("alertId", alertVo.getId())
                 .addData("alertEventHandlerId", alertEventHandlerVo.getId())
                 .withBeginTime(startTime);
-        if (leftExecuteCount > 0 && intervalMinute > 0) {
+        if (leftExecuteCount > 0 && intervalInSeconds > 0) {
             builder.withRepeatCount(Math.max(leftExecuteCount - 1, 0));
-            builder.withIntervalInSeconds(intervalMinute * 60);
+            builder.withIntervalInSeconds(intervalInSeconds);
         }
         schedulerManager.loadJob(builder.build(), JobLoadTriggerType.INITIAL_CREATE);
     }
 
-    private void updateAuditResult(AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertIntervalJobVo alertIntervalJobVo, Integer intervalMinute, Integer leftExecuteCount) {
+    private void updateAuditResult(AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertIntervalJobVo alertIntervalJobVo, Integer intervalMinute, Integer intervalSecond, Integer leftExecuteCount) {
         JSONObject resultObj = new JSONObject();
-        resultObj.put("nextStartTime", alertIntervalJobVo == null ? null : alertIntervalJobVo.getStartTime());
-        resultObj.put("leftExecuteCount", leftExecuteCount == null ? 0 : leftExecuteCount);
+        if (alertIntervalJobVo == null) {
+            resultObj.put("nextStartTime", null);
+        } else {
+            resultObj.put("nextStartTime", alertIntervalJobVo.getStartTime());
+        }
+        if (leftExecuteCount == null) {
+            resultObj.put("leftExecuteCount", 0);
+        } else {
+            resultObj.put("leftExecuteCount", leftExecuteCount);
+        }
         resultObj.put("intervalMinute", intervalMinute);
+        resultObj.put("intervalSecond", intervalSecond);
         alertEventHandlerAuditVo.setResult(resultObj);
+    }
+
+    /**
+     * 将分钟和秒合并成调度器需要的总秒数。
+     */
+    static int calculateSeconds(Integer minute, Integer second) {
+        long minuteValue = 0;
+        if (minute != null) {
+            minuteValue = minute;
+        }
+        long secondValue = 0;
+        if (second != null) {
+            secondValue = second;
+        }
+        return Math.toIntExact(minuteValue * 60L + secondValue);
+    }
+
+    /**
+     * 根据首次延时和轮询配置计算需要由调度器执行的剩余次数。
+     */
+    static int calculateLeftExecuteCount(int delayInSeconds, int intervalInSeconds, int repeatCount) {
+        if (delayInSeconds == 0) {
+            if (repeatCount > 0 && intervalInSeconds > 0) {
+                return repeatCount;
+            } else {
+                return 0;
+            }
+        } else if (intervalInSeconds > 0) {
+            return repeatCount + 1;
+        } else {
+            return 1;
+        }
     }
 
     @Override

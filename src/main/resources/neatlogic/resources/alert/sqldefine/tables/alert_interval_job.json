@@ -30,6 +30,11 @@
       "description": "间隔分钟。"
     },
     {
+      "name": "interval_second",
+      "type": "int",
+      "description": "间隔秒数。"
+    },
+    {
       "name": "repeat_count",
       "type": "int",
       "description": "剩余需要重复次数。"

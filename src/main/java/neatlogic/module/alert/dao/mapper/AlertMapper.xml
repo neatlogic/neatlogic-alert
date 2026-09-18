@@ -36,6 +36,7 @@
                parent_audit_id        as parentAuditId,
                start_time             as startTime,
                interval_minute        as intervalMinute,
+               interval_second        as intervalSecond,
                repeat_count           as repeatCount,
                config                 as configStr
         from alert_interval_job
@@ -468,6 +469,7 @@
                parent_audit_id        as parentAuditId,
                start_time             as startTime,
                interval_minute        as intervalMinute,
+               interval_second        as intervalSecond,
                repeat_count           as repeatCount
         from alert_interval_job
         order by alert_id
@@ -552,6 +554,7 @@
          parent_audit_id,
          start_time,
          interval_minute,
+         interval_second,
          repeat_count,
          config)
         values (#{alertId},
@@ -559,6 +562,7 @@
                 #{parentAuditId},
                 #{startTime},
                 #{intervalMinute},
+                #{intervalSecond},
                 #{repeatCount},
                 #{configStr, typeHandler=CompressHandler})
     </insert>
