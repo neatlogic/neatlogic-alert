@@ -1,0 +1,48 @@
+{
+  "term": {
+    "alert": {
+      "alertcenter": "告警中心",
+      "api": {
+        "deletealerteventhandlertype": "删除告警事件插件类型",
+        "savealerteventhandlertype": "保存告警事件插件类型",
+        "searchalerteventhandlertype": "搜索告警事件插件类型"
+      },
+      "event": {
+        "actionhandlerdesc": "为告警添加自定义操作。",
+        "actionhandlername": "添加自定义操作",
+        "applyhandlerdesc": "将告警分配给处理人或分组，处理人和处理分组中的用户可以进行修改告警状态、关闭告警或删除告警等操作。",
+        "applyhandlername": "分配处理人",
+        "cancelintervalhandlerdesc": "取消当前告警类型中由定时调度插件创建的定时作业。",
+        "cancelintervalhandlername": "取消定时调度",
+        "closehandlerdesc": "关闭的告警不能再做修改，新告警也不会再挂载到已关闭告警下。",
+        "closehandlername": "关闭告警",
+        "conditionhandlerdesc": "通过配置条件组合，让系统有条件地触发其他事件插件，例如发通知、分配处理人等。",
+        "conditionhandlername": "条件分支",
+        "deletehandlerdesc": "物理删除告警信息，告警删除后不能恢复，请慎重操作。",
+        "deletehandlername": "删除告警",
+        "emailhandlerdesc": "用 SMTP 方式发送邮件，需要到系统管理中配置邮件服务器信息，收件用户邮箱地址不能为空。",
+        "emailhandlername": "发送邮件",
+        "eventname": "事件唯一标识",
+        "integrationhandlerdesc": "用于调用第三方系统的 RESTful 接口。",
+        "integrationhandlername": "调用集成",
+        "intervalhandlerdesc": "配置时间策略，延缓或周期性地调用其他事件插件，例如发通知、分配处理人等。",
+        "intervalhandlername": "定时调度",
+        "listhandlerplugin": "列出所有告警事件插件",
+        "markhandlerdesc": "给告警打上自定义标签，如果标签已存在则保持不变。",
+        "markhandlername": "添加标签",
+        "openhandlerdesc": "重新打开已经关闭的告警，如果告警已经处于打开状态不会触发。",
+        "openhandlername": "打开告警",
+        "parentplugin": "父插件唯一标识",
+        "savehandlerdesc": "保存告警到数据库，如果有唯一键相同的未关闭告警，将自动挂靠作为其子告警。",
+        "savehandlername": "创建告警",
+        "unactionhandlerdesc": "删除告警已经关联的自定义操作。",
+        "unactionhandlername": "删除自定义操作",
+        "unmarkhandlerdesc": "移除选中的标签。",
+        "unmarkhandlername": "移除标签",
+        "updatehandlerdesc": "修改告警状态，如果告警状态没有变化，不会执行此事件。",
+        "updatehandlername": "修改状态"
+      },
+      "extendattr": "扩展属性"
+    }
+  }
+}

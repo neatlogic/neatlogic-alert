@@ -1,0 +1,48 @@
+{
+  "term": {
+    "alert": {
+      "alertcenter": "Alarm Center",
+      "api": {
+        "deletealerteventhandlertype": "Delete Alert Event Handler Type",
+        "savealerteventhandlertype": "Save Alert Event Handler Type",
+        "searchalerteventhandlertype": "Search Alert Event Handler Types"
+      },
+      "event": {
+        "actionhandlerdesc": "Add custom operations to the alarm.",
+        "actionhandlername": "Add Custom Operation",
+        "applyhandlerdesc": "Assign the alarm to handlers or teams. Handlers and users in assigned teams can update the alarm status, close the alarm, or delete the alarm.",
+        "applyhandlername": "Assign Handler",
+        "cancelintervalhandlerdesc": "Cancel scheduled jobs created by scheduled dispatch plugins in the current alarm type.",
+        "cancelintervalhandlername": "Cancel Scheduled Dispatch",
+        "closehandlerdesc": "Closed alarms cannot be modified, and new alarms will no longer be mounted under closed alarms.",
+        "closehandlername": "Close Alarm",
+        "conditionhandlerdesc": "Trigger other event plugins conditionally through configured condition groups, such as sending notifications or assigning handlers.",
+        "conditionhandlername": "Condition Branch",
+        "deletehandlerdesc": "Physically delete alarm information. Deleted alarms cannot be restored. Use with caution.",
+        "deletehandlername": "Delete Alarm",
+        "emailhandlerdesc": "Send email through SMTP. Mail server information must be configured in System Administration, and recipient email addresses cannot be empty.",
+        "emailhandlername": "Send Mail",
+        "eventname": "Event Unique Key",
+        "integrationhandlerdesc": "Call RESTful APIs of third-party systems.",
+        "integrationhandlername": "Call Integration",
+        "intervalhandlerdesc": "Configure time policies to delay or periodically call other event plugins, such as sending notifications or assigning handlers.",
+        "intervalhandlername": "Scheduled Dispatch",
+        "listhandlerplugin": "List Alert Event Plugins",
+        "markhandlerdesc": "Add custom tags to the alarm. Existing tags remain unchanged.",
+        "markhandlername": "Add Tag",
+        "openhandlerdesc": "Reopen a closed alarm. If the alarm is already open, this event will not be triggered.",
+        "openhandlername": "Open Alarm",
+        "parentplugin": "Parent Plugin Unique Key",
+        "savehandlerdesc": "Save the alarm to the database. If there is an unclosed alarm with the same Unique Key, it will be automatically mounted as a sub alarm.",
+        "savehandlername": "Create Alarm",
+        "unactionhandlerdesc": "Remove custom operations that are already associated with the alarm.",
+        "unactionhandlername": "Remove Custom Operation",
+        "unmarkhandlerdesc": "Remove selected tags.",
+        "unmarkhandlername": "Remove Tag",
+        "updatehandlerdesc": "Update the alarm status. If the alarm status does not change, this event will not be executed.",
+        "updatehandlername": "Update Status"
+      },
+      "extendattr": "Extended Attributes"
+    }
+  }
+}
