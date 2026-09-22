@@ -15,6 +15,7 @@ import neatlogic.framework.integration.core.IIntegrationHandler;
 import neatlogic.framework.integration.core.IntegrationHandlerFactory;
 import neatlogic.framework.integration.dao.mapper.IntegrationMapper;
 import neatlogic.framework.integration.dto.IntegrationVo;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.framework.integration.handler.FrameworkRequestFrom;
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,12 +37,12 @@ public class IntegrationAlertBreakerActionHandler extends AlertBreakerActionTemp
 
     @Override
     public String getLabel() {
-        return "调用集成";
+        return $.t("term.alert.breaker.action.integration.label");
     }
 
     @Override
     public String getDescription() {
-        return "在熔断生命周期中调用集成，可用于推送熔断、聚合或恢复信息。";
+        return $.t("term.alert.breaker.action.integration.description");
     }
 
     @Override

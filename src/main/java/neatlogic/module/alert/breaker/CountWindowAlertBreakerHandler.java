@@ -11,6 +11,7 @@ import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
 import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.schedule.handler.AlertBreakerFlushScheduleJob;
@@ -35,12 +36,12 @@ public class CountWindowAlertBreakerHandler extends AlertBreakerHandlerBase {
 
     @Override
     public String getLabel() {
-        return "触发量窗口熔断策略";
+        return $.t("term.alert.breaker.countwindow.label");
     }
 
     @Override
     public String getDescription() {
-        return "按配置维度统计事件插件在时间窗口内的触发量，超过阈值后进入熔断。";
+        return $.t("term.alert.breaker.countwindow.description");
     }
 
     @Override

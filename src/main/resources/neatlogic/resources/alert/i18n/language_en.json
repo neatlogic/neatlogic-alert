@@ -7,6 +7,30 @@
         "savealerteventhandlertype": "Save Alert Event Handler Type",
         "searchalerteventhandlertype": "Search Alert Event Handler Types"
       },
+      "breaker": {
+        "action": {
+          "integration": {
+            "description": "Call an integration during the circuit breaker lifecycle to send circuit-open, aggregated, or recovery information.",
+            "label": "Call Integration"
+          },
+          "sendmail": {
+            "description": "Send email during the circuit breaker lifecycle for circuit-open, aggregated, and recovery notifications.",
+            "label": "Send Email"
+          }
+        },
+        "consecutivefailure": {
+          "description": "Track consecutive failures by plugin instance or plugin type and open the circuit when the threshold is reached.",
+          "label": "Consecutive Failure Circuit Breaker"
+        },
+        "countwindow": {
+          "description": "Track event plugin executions by configured dimensions within a time window and open the circuit when the threshold is exceeded.",
+          "label": "Execution Count Window Circuit Breaker"
+        },
+        "mailreceiverwindow": {
+          "description": "Track sends by actual email recipient list, then delay and aggregate delivery when the threshold is exceeded.",
+          "label": "Email Recipient Circuit Breaker"
+        }
+      },
       "event": {
         "actionhandlerdesc": "Add custom operations to the alarm.",
         "actionhandlername": "Add Custom Operation",

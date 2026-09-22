@@ -7,6 +7,7 @@ import neatlogic.framework.alert.dto.breaker.AlertBreakerPolicyVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerStateVo;
 import neatlogic.framework.alert.enums.AlertBreakerActionTrigger;
 import neatlogic.framework.alert.utils.AlertEventHandlerContextBuilder;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.EmailUtil;
 import neatlogic.framework.util.FreemarkerUtil;
 import neatlogic.module.alert.dto.AlertMailReceiverVo;
@@ -35,12 +36,12 @@ public class SendMailAlertBreakerActionHandler extends AlertBreakerActionTemplat
 
     @Override
     public String getLabel() {
-        return "发送邮件";
+        return $.t("term.alert.breaker.action.sendmail.label");
     }
 
     @Override
     public String getDescription() {
-        return "在熔断生命周期中发送邮件，可用于熔断通知、聚合通知和恢复通知。";
+        return $.t("term.alert.breaker.action.sendmail.description");
     }
 
     @Override

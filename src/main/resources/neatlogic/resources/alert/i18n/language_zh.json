@@ -7,6 +7,30 @@
         "savealerteventhandlertype": "保存告警事件插件类型",
         "searchalerteventhandlertype": "搜索告警事件插件类型"
       },
+      "breaker": {
+        "action": {
+          "integration": {
+            "description": "在熔断生命周期中调用集成，可用于推送熔断、聚合或恢复信息。",
+            "label": "调用集成"
+          },
+          "sendmail": {
+            "description": "在熔断生命周期中发送邮件，可用于熔断通知、聚合通知和恢复通知。",
+            "label": "发送邮件"
+          }
+        },
+        "consecutivefailure": {
+          "description": "按插件实例或插件类型统计连续失败次数，达到阈值后进入熔断。",
+          "label": "连续失败熔断策略"
+        },
+        "countwindow": {
+          "description": "按配置维度统计事件插件在时间窗口内的触发量，超过阈值后进入熔断。",
+          "label": "触发量窗口熔断策略"
+        },
+        "mailreceiverwindow": {
+          "description": "按邮件实际收件人列表统计发送次数，超过阈值后延迟并聚合发送。",
+          "label": "邮件收件人熔断策略"
+        }
+      },
       "event": {
         "actionhandlerdesc": "为告警添加自定义操作。",
         "actionhandlername": "添加自定义操作",

@@ -12,6 +12,7 @@ import neatlogic.framework.scheduler.core.IJob;
 import neatlogic.framework.scheduler.core.SchedulerManager;
 import neatlogic.framework.scheduler.dto.JobObject;
 import neatlogic.framework.scheduler.enums.JobLoadTriggerType;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import neatlogic.module.alert.dao.mapper.AlertMapper;
 import neatlogic.module.alert.dto.AlertMailReceiverVo;
@@ -42,12 +43,12 @@ public class MailReceiverWindowAlertBreakerHandler extends AlertBreakerHandlerBa
 
     @Override
     public String getLabel() {
-        return "邮件收件人熔断策略";
+        return $.t("term.alert.breaker.mailreceiverwindow.label");
     }
 
     @Override
     public String getDescription() {
-        return "按邮件实际收件人列表统计发送次数，超过阈值后延迟并聚合发送。";
+        return $.t("term.alert.breaker.mailreceiverwindow.description");
     }
 
     @Override

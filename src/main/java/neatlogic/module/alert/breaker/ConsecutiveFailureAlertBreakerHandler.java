@@ -11,6 +11,7 @@ import neatlogic.framework.alert.dto.breaker.AlertBreakerPolicyVo;
 import neatlogic.framework.alert.dto.breaker.AlertBreakerStateVo;
 import neatlogic.framework.alert.enums.AlertBreakerState;
 import neatlogic.framework.alert.enums.AlertEventStatus;
+import neatlogic.framework.util.$;
 import neatlogic.framework.util.Md5Util;
 import org.springframework.stereotype.Component;
 
@@ -26,12 +27,12 @@ public class ConsecutiveFailureAlertBreakerHandler extends AlertBreakerHandlerBa
 
     @Override
     public String getLabel() {
-        return "连续失败熔断策略";
+        return $.t("term.alert.breaker.consecutivefailure.label");
     }
 
     @Override
     public String getDescription() {
-        return "按插件实例或插件类型统计连续失败次数，达到阈值后进入熔断。";
+        return $.t("term.alert.breaker.consecutivefailure.description");
     }
 
     @Override
