@@ -18,6 +18,7 @@ import neatlogic.framework.common.constvalue.InputFrom;
 import neatlogic.framework.exception.mq.SubscribeConfigNotFoundException;
 import neatlogic.framework.mq.core.SubscribeHandlerBase;
 import neatlogic.framework.mq.dto.SubscribeVo;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.queue.OriginalAlertManager;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
@@ -54,6 +55,6 @@ public class AlertSubscribe extends SubscribeHandlerBase {
 
     @Override
     public String getLabel() {
-        return "告警处理组件";
+        return $.t("mq.subscribe.alert.description");
     }
 }
