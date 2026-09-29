@@ -1,4 +1,11 @@
 {
+  "mq": {
+    "subscribe": {
+      "alert": {
+        "description": "Alert Processing Handler"
+      }
+    }
+  },
   "term": {
     "alert": {
       "alertcenter": "Alarm Center",
@@ -67,13 +74,6 @@
         "updatehandlername": "Update Status"
       },
       "extendattr": "Extended Attributes"
-    }
-  },
-  "mq": {
-    "subscribe": {
-      "alert": {
-        "description": "Alert Processing Handler"
-      }
     }
   }
 }

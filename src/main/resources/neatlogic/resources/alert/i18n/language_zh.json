@@ -1,4 +1,11 @@
 {
+  "mq": {
+    "subscribe": {
+      "alert": {
+        "description": "告警处理组件"
+      }
+    }
+  },
   "term": {
     "alert": {
       "alertcenter": "告警中心",
@@ -67,13 +74,6 @@
         "updatehandlername": "修改状态"
       },
       "extendattr": "扩展属性"
-    }
-  },
-  "mq": {
-    "subscribe": {
-      "alert": {
-        "description": "告警处理组件"
-      }
     }
   }
 }
