@@ -31,6 +31,7 @@ import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentEx
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
 import neatlogic.framework.store.elasticsearch.ElasticsearchClientFactory;
 import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentBase;
+import neatlogic.framework.util.$;
 import neatlogic.module.alert.dao.mapper.AlertCommentMapper;
 import neatlogic.module.alert.dao.mapper.AlertTrashMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -63,9 +64,10 @@ public class ElasticsearchAlertTrashIndex extends ElasticsearchDocumentBase<Aler
         return "ALERT_TRASH";
     }
 
+    /** 返回当前语言环境下的已删除告警索引名称。 */
     @Override
     public String getLabel() {
-        return "告警中心已删除告警信息";
+        return $.t("fulltextindex.elasticsearch.alerttrash.label");
     }
 
 

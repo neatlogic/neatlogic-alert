@@ -1,4 +1,24 @@
 {
+  "file": {
+    "handler": {
+      "alerttypehandler": {
+        "displayname": "告警转换插件"
+      }
+    }
+  },
+  "fulltextindex": {
+    "elasticsearch": {
+      "alert": {
+        "label": "告警中心告警信息"
+      },
+      "alertoriginal": {
+        "label": "告警中心原始告警信息"
+      },
+      "alerttrash": {
+        "label": "告警中心已删除告警信息"
+      }
+    }
+  },
   "mq": {
     "subscribe": {
       "alert": {
