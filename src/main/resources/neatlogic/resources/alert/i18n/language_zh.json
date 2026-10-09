@@ -26,6 +26,129 @@
       }
     }
   },
+  "nmaa": {
+    "searchalertapi": {
+      "description": "只读检索告警中心已保存的告警，适用于排查告警、按条件定位异常、查看父子告警关系。MCP 工具名为 alert.search，arguments 直接传筛选对象。需要 ALERT_BASE 权限；工具及下述辅助接口是否可调用取决于服务端 MCP 配置。结果来自 Elasticsearch 检索后回读数据库，未命中时 tbodyList 为空，不表示原始接入记录为空；原始接入记录使用 /alert/origin/search，单条告警详情使用 /alert/get。普通筛选项与高级 rule 之间为 AND；statusList/sourceList/levelList 各列表内部为 OR，markNameList/teamIdList 各列表内部为 AND。默认 tree 只返回顶层告警；需要包含子告警的全量检索时显式传 searchMode=flat。未设置关闭状态条件时会同时检索未关闭和已关闭告警；仅查未关闭告警应通过 rule 中 const_isClose equal [\"0\"]。筛选值使用真实标识，不使用显示文案、不臆造状态或级别。读取 tbodyList 中业务字段，theadList 仅用于界面列展示。分页逐页读取，空 tbodyList 时停止。 顶层 wordList 是 keyword 的分词字符串数组，未传关键字时可能为 null，仅用于展示。",
+      "example": {
+        "children": {
+          "description": "必须将 10001 替换为先前查询结果中的真实父告警 id；只返回直属子告警，不返回父告警本身。",
+          "title": "检索指定父告警的直属子告警"
+        },
+        "open": {
+          "description": "在所有层级将“未关闭”和“标题分词匹配 CPU”以 AND 组合。isClose 的 0 表示未关闭，与可配置 status 标识不同；无需假定任何状态或级别枚举。",
+          "title": "高级规则查询未关闭的 CPU 告警"
+        },
+        "recent": {
+          "description": "在所有层级检索最近 24 小时更新且全文匹配 CPU 的告警，按更新时间降序返回第一页。CPU 可替换为实际检索词。",
+          "title": "检索最近更新的 CPU 告警"
+        },
+        "roots": {
+          "description": "不限定关闭状态，使用默认层级语义查询顶层告警第一页；返回记录可包含 childAlertCount。",
+          "title": "检索顶层告警"
+        }
+      },
+      "input": {
+        "attrfilterlist": {
+          "desc": "自定义属性过滤条件",
+          "help": "对象数组，每项结构为 {\"name\":\"attr_实际属性名\",\"valueList\":[\"值1\",\"值2\"]}；项之间 AND，同项 valueList 内 OR（索引精确值匹配）。从 /alert/attr/list 传 {\"kind\":\"attr\",\"isSearch\":1} 获取可检索的 name。省略空 valueList 条件；不要筛选未建索引的属性。"
+        },
+        "currentpage": {
+          "desc": "当前页码",
+          "help": "从 1 开始，省略默认为 1；读取下一页时加 1 并保持其他筛选条件相同。建议始终传正整数。"
+        },
+        "fromalertid": {
+          "desc": "父告警 ID",
+          "help": "仅 searchMode=tree 生效，传入已存在的告警 ID 后只检索其直属子告警，不包含父告警自身或全部后代；未传时只检索顶层告警。flat 模式忽略此参数。"
+        },
+        "keyword": {
+          "desc": "全文检索关键字",
+          "help": "针对告警索引字段的分词全文搜索，不是标题子串匹配；多个检索词按 AND 匹配。纯数字关键字还会同时按告警 ID 精确过滤，因此不要用数字关键字搜索任意文本；按指定字段检索请使用 rule。"
+        },
+        "level": {
+          "desc": "单个级别（兼容字段）",
+          "help": "当前检索实现不使用该字段过滤；请使用 levelList，即使只有一个级别也传数组。"
+        },
+        "levellist": {
+          "desc": "告警级别数值列表",
+          "help": "整数数组，匹配任一级别（OR）。从 /alert/level/list 返回记录的 level 获取真实值，不使用 label/name，也不要推测数字大小代表的严重程度。"
+        },
+        "marknamelist": {
+          "desc": "标签名称列表",
+          "help": "字符串数组，告警必须同时具有全部指定标签（AND）；使用标签 name，不是标签 uuid。省略或空数组不限制标签。"
+        },
+        "pagesize": {
+          "desc": "每页条数",
+          "help": "省略默认为 20，正整数且最大 1000；超出 1000 会被截为 1000，小于等于 0 时保留默认值。建议 20~100，避免一次获取过多告警。"
+        },
+        "rule": {
+          "desc": "高级组合检索规则",
+          "help": "结构为 {\"conditionGroupList\":[{\"conditionList\":[{\"id\":\"const_title\",\"expression\":\"like\",\"valueList\":[\"CPU\"]}],\"conditionRelList\":[]}],\"conditionGroupRelList\":[]}。id 使用 /alert/attr/list 传 {\"isSearch\":1} 返回的 name，expression 从该属性的 expressionList 选择，valueList 必须为数组；const_ 对应基础字段，attr_ 对应 attrObj 属性。conditionRelList 连接同组相邻条件，conditionGroupRelList 连接相邻组，均用 and/or，数量须为对应条目数减 1；单条时传 []。AND 优先于 OR，先计算组内，再组合组；连接符缺失或数量不符时回退 AND。支持 equal/notequal/like/notlike/gt/lt/gte/lte/range/is-null/is-not-null，且必须同时属于属性允许的运算符；元数据中可能存在 inworktime/outworktime 等当前检索实现不支持的值，不要传入。equal 多值必须全部短语匹配，notequal 排除任一值，like 多值匹配任一分词条件，notlike 排除任一匹配；比较运算仅使用首值，range 使用恰好两个值且含边界；空值判断不需要值。日期字段范围值使用 yyyy-MM-dd HH:mm:ss、yyyy-MM-dd HH:mm 或 Unix 毫秒。非空 rule 替代视图规则并与普通筛选 AND；{} 不会清除视图规则。"
+        },
+        "searchmode": {
+          "desc": "父子告警检索模式",
+          "help": "tree（默认）：未传 fromAlertId 只查顶层告警；传入父告警 ID 只查其直属子告警。flat：检索所有层级并忽略 fromAlertId，不能据其 childAlertCount=0 判断没有子告警。两种模式返回的 tbodyList 都是当前页列表，不自动嵌套子节点。"
+        },
+        "sortdata": {
+          "desc": "排序字段及方向",
+          "help": "对象示例 {\"const_updateTime\":\"desc\"}，方向使用 asc/desc。仅处理 const_ 前缀的基础字段，不支持 attr_ 排序；使用 /alert/attr/list 传 {\"isColumn\":1} 返回 isSort=true 的属性 name。未传或 {} 默认 updateTime 降序。多个字段的排序优先级依赖对象键遍历顺序，建议只传一个字段。"
+        },
+        "source": {
+          "desc": "单个来源（兼容字段）",
+          "help": "当前检索实现不使用该字段过滤；请使用 sourceList，即使只有一个来源也传数组。"
+        },
+        "sourcelist": {
+          "desc": "告警来源标识列表",
+          "help": "字符串数组，匹配任一来源（OR）。从 /alert/source/search 的 tbodyList 中读取 name，不使用 label。省略或空数组不限制来源。"
+        },
+        "status": {
+          "desc": "单个状态（兼容字段）",
+          "help": "当前检索实现不使用该字段过滤；请使用 statusList，即使只有一个状态也传数组。"
+        },
+        "statuslist": {
+          "desc": "告警状态标识列表",
+          "help": "字符串数组，匹配任一状态（OR）。从 /alert/status/list 返回记录的 name 获取标识，label 是展示文案，不用于筛选。省略或空数组不限制状态。"
+        },
+        "teamidlist": {
+          "desc": "处理组 UUID 列表",
+          "help": "字符串数组，实际值是处理组 UUID，不是数字 ID 或组名称；告警必须同时属于全部指定处理组（AND）。兼容 team#UUID 前缀，查询时自动去掉 team#。"
+        },
+        "updatetimehour": {
+          "desc": "最近更新小时数",
+          "help": "正整数 N 表示 updateTime >= 当前时间减 N 小时，包含边界；按更新时间而非首次告警时间过滤。省略或小于等于 0 时不添加此条件。"
+        },
+        "viewname": {
+          "desc": "告警视图唯一标识",
+          "help": "使用 /alert/view/list 返回记录的 name，不是 id 或 label。视图不存在会报错。非空 rule 覆盖视图的 rule，未传 rule 或传 {} 时使用视图 rule；普通筛选条件仍然生效。视图还决定 theadList 的列，未传视图使用所有告警的列配置。"
+        }
+      },
+      "output": {
+        "currentpage": {
+          "desc": "返回的当前页码",
+          "help": "本次返回的页码；有命中时由索引分页结果回填。"
+        },
+        "pagecount": {
+          "desc": "返回的总页数",
+          "help": "有命中时返回索引分页总页数；本页无命中时当前实现保留默认 0，不要用它判断前面页也无数据。"
+        },
+        "pagesize": {
+          "desc": "返回的每页条数",
+          "help": "本次实际使用的分页大小，不一定等于 tbodyList 长度。"
+        },
+        "rownum": {
+          "desc": "返回的匹配记录总数",
+          "help": "有命中时返回索引匹配总数；本页无命中时当前实现保留默认 0。tree 统计当前层级，flat 统计所有层级。"
+        },
+        "tbodylist": {
+          "desc": "当前页告警记录",
+          "help": "告警对象数组，空数组表示本页没有返回记录。常用字段：id、title、level/levelLabel、status/statusName、source/sourceName、isClose（0 未关闭，1 已关闭）、alertTime/updateTime/closeTime 及对应 Str 文本、fromAlertId、childAlertCount、attrObj、userList、teamList、markList、actionList。业务字段无 const_/attr_ 前缀；自定义属性读取 attrObj[真实属性名]。未设置字段可能省略或为 null，不能假定所有字段都有值；flat 未查询子告警数量。后续查询详情使用 /alert/get 并传 id。"
+        },
+        "theadlist": {
+          "desc": "界面表头定义",
+          "help": "对象数组，通常包含 key/title/sort，扩展属性列还含 attrList；const_/attr_ 是展示列键，不是 tbodyList 的同名业务字段。按视图或所有告警配置生成，不代表筛选范围。"
+        }
+      }
+    }
+  },
   "term": {
     "alert": {
       "alertcenter": "告警中心",

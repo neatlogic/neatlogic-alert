@@ -26,6 +26,129 @@
       }
     }
   },
+  "nmaa": {
+    "searchalertapi": {
+      "description": "Read-only search of saved alerts in the alert center for investigation, locating incidents by filters, and inspecting parent/child relationships. The MCP tool name is alert.search; pass the filter object directly as arguments. ALERT_BASE permission is required; availability of this tool and the discovery APIs below depends on server MCP configuration. Elasticsearch finds IDs, then records are read from the database. An empty tbodyList means no records were returned by this search, not that raw ingestion records are empty; use /alert/origin/search for ingestion records and /alert/get for an alert detail. Ordinary filters and the advanced rule are combined with AND. Within statusList/sourceList/levelList, values are OR; within markNameList/teamIdList, values are AND. Default tree returns only top-level alerts; explicitly use searchMode=flat to search both parents and children. Without a closure-state filter, both open and closed alerts are searched; for open alerts use const_isClose equal [\"0\"] in rule. Use real identifiers rather than display labels or invented status/severity values. Read business fields from tbodyList; theadList is display metadata. Read pages sequentially and stop when tbodyList is empty. The top-level wordList is an array of keyword token strings, may be null without a keyword, and is for display only.",
+      "example": {
+        "children": {
+          "description": "Replace 10001 with a real parent id from an earlier search. Returns direct children only, excluding the parent.",
+          "title": "Search direct children of a parent"
+        },
+        "open": {
+          "description": "Search all levels, combining open state and a tokenized title match for CPU with AND. isClose=0 means open and is separate from configurable status identifiers; no status/severity enumeration is assumed.",
+          "title": "Search open CPU alerts with an advanced rule"
+        },
+        "recent": {
+          "description": "Search all levels for alerts updated within the last 24 hours matching CPU via full-text search, newest first. Replace CPU with the actual search term.",
+          "title": "Search recently updated CPU alerts"
+        },
+        "roots": {
+          "description": "Search the first page of top-level alerts with no closure-state restriction. Records can contain childAlertCount.",
+          "title": "Search top-level alerts"
+        }
+      },
+      "input": {
+        "attrfilterlist": {
+          "desc": "Custom attribute filters",
+          "help": "Object array: {\"name\":\"attr_actualAttributeName\",\"valueList\":[\"value1\",\"value2\"]}. Entries are AND; values within an entry are OR using indexed exact values. Discover searchable name values via /alert/attr/list with {\"kind\":\"attr\",\"isSearch\":1}. Entries with empty valueList are ignored. Do not filter unindexed attributes."
+        },
+        "currentpage": {
+          "desc": "Current page",
+          "help": "One-based page number, default 1 when omitted. Increment by 1 for the next page while preserving all other filters. Always use a positive integer."
+        },
+        "fromalertid": {
+          "desc": "Parent alert ID",
+          "help": "Only effective in tree mode. Use an existing alert ID to search its direct children, excluding the parent itself and deeper descendants. Omit to search top-level alerts. Ignored in flat mode."
+        },
+        "keyword": {
+          "desc": "Full-text keyword",
+          "help": "Tokenized full-text search across alert index fields, not a title substring match. Multiple query terms use AND. A numeric keyword also adds an exact alert-ID filter; use rule for searching numeric text in a specific field."
+        },
+        "level": {
+          "desc": "Single severity (legacy field)",
+          "help": "This field is not used as a filter by the current search implementation. Use levelList, including for a single severity."
+        },
+        "levellist": {
+          "desc": "Alert severity values",
+          "help": "Integer array matching any severity (OR). Obtain real values from level in /alert/level/list, not label/name. Do not infer severity from numeric magnitude."
+        },
+        "marknamelist": {
+          "desc": "Tag names",
+          "help": "String array; alerts must have all specified tags (AND). Use tag name, not uuid. Omitted or empty arrays do not filter tags."
+        },
+        "pagesize": {
+          "desc": "Page size",
+          "help": "Default 20. Positive integers are capped at 1000; nonpositive values retain the default. Prefer 20–100 to limit response size."
+        },
+        "rule": {
+          "desc": "Advanced search rule",
+          "help": "Shape: {\"conditionGroupList\":[{\"conditionList\":[{\"id\":\"const_title\",\"expression\":\"like\",\"valueList\":[\"CPU\"]}],\"conditionRelList\":[]}],\"conditionGroupRelList\":[]}. Use name from /alert/attr/list with {\"isSearch\":1} as id and choose expression from that attribute's expressionList; valueList must be an array. const_ addresses built-in fields; attr_ addresses attrObj fields. conditionRelList joins adjacent conditions in a group; conditionGroupRelList joins adjacent groups. Both use and/or with exactly entry-count minus 1 values; use [] for one entry. AND precedes OR within groups and between groups. Missing or mismatched relation lists fall back to AND. Implemented operators: equal/notequal/like/notlike/gt/lt/gte/lte/range/is-null/is-not-null; use only operators in this implemented list that are also allowed by the attribute. Metadata may include inworktime/outworktime, which this search implementation does not support; do not pass them. equal requires all values as phrase matches; notequal excludes any value; like matches any tokenized value condition; notlike excludes any match. Comparisons use only the first value. range requires exactly two values and is inclusive. Null checks do not need values. Date ranges accept yyyy-MM-dd HH:mm:ss, yyyy-MM-dd HH:mm, or Unix milliseconds. A nonempty rule overrides the view rule and is ANDed with ordinary filters; {} does not clear the view rule."
+        },
+        "searchmode": {
+          "desc": "Parent/child search mode",
+          "help": "tree (default): omit fromAlertId for top-level alerts, or supply a parent ID for its direct children. flat: searches all levels and ignores fromAlertId; childAlertCount=0 in this mode does not prove an alert has no children. Both modes return a page list in tbodyList, not an automatically nested tree."
+        },
+        "sortdata": {
+          "desc": "Sort fields and directions",
+          "help": "Example: {\"const_updateTime\":\"desc\"}; use asc/desc. Only const_ built-in fields are processed; attr_ sorting is unsupported. Use name for attributes with isSort=true from /alert/attr/list with {\"isColumn\":1}. Omitted or {} defaults to updateTime descending. Multi-field priority depends on object-key iteration order; prefer one field."
+        },
+        "source": {
+          "desc": "Single source (legacy field)",
+          "help": "This field is not used as a filter by the current search implementation. Use sourceList, including for a single source."
+        },
+        "sourcelist": {
+          "desc": "Alert source identifiers",
+          "help": "String array matching any source (OR). Read name from tbodyList of /alert/source/search, not label. Omitted or empty arrays do not filter source."
+        },
+        "status": {
+          "desc": "Single status (legacy field)",
+          "help": "This field is not used as a filter by the current search implementation. Use statusList, including for a single status."
+        },
+        "statuslist": {
+          "desc": "Alert status identifiers",
+          "help": "String array matching any status (OR). Obtain identifiers from name in /alert/status/list; label is display text. Omitted or empty arrays do not filter status."
+        },
+        "teamidlist": {
+          "desc": "Assigned team UUIDs",
+          "help": "String array of team UUIDs, not numeric IDs or team names. Alerts must belong to every specified team (AND). The team#UUID form is accepted and the prefix is stripped."
+        },
+        "updatetimehour": {
+          "desc": "Hours since last update",
+          "help": "A positive integer N filters updateTime >= now minus N hours, inclusive. This uses update time, not initial alert time. Omitted or nonpositive values do not add this filter."
+        },
+        "viewname": {
+          "desc": "Alert view identifier",
+          "help": "Use name from /alert/view/list, not id or label. A nonexistent view causes an error. A nonempty rule overrides the view rule; omitted rule or {} uses the view rule. Ordinary filters still apply. The view also controls theadList; without a view, all-alert column configuration is used."
+        }
+      },
+      "output": {
+        "currentpage": {
+          "desc": "Returned page number",
+          "help": "Page number returned for this call; populated from index pagination when there are hits."
+        },
+        "pagecount": {
+          "desc": "Returned total pages",
+          "help": "Total index pages when there are hits. When this page has no hits, the current implementation retains default 0; this does not prove earlier pages were empty."
+        },
+        "pagesize": {
+          "desc": "Effective page size",
+          "help": "Effective page size, which may differ from tbodyList length."
+        },
+        "rownum": {
+          "desc": "Returned total matches",
+          "help": "Total index matches when there are hits; an empty page retains default 0. tree counts the current level; flat counts all levels."
+        },
+        "tbodylist": {
+          "desc": "Alerts on this page",
+          "help": "Alert objects; [] means no records were returned for this page. Common fields: id, title, level/levelLabel, status/statusName, source/sourceName, isClose (0 open, 1 closed), alertTime/updateTime/closeTime and their Str text forms, fromAlertId, childAlertCount, attrObj, userList, teamList, markList, actionList. Business fields have no const_/attr_ prefix; read custom values from attrObj[actualAttributeName]. Unset fields may be omitted or null; do not assume every field has a value. Child counts are not queried in flat mode. Use /alert/get with id for details."
+        },
+        "theadlist": {
+          "desc": "Display column definitions",
+          "help": "Objects typically containing key/title/sort; custom-attribute columns can also contain attrList. const_/attr_ are display column keys, not same-named tbodyList fields. Generated from view/all-alert configuration, not a filter specification."
+        }
+      }
+    }
+  },
   "term": {
     "alert": {
       "alertcenter": "Alarm Center",
