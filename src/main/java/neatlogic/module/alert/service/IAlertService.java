@@ -12,6 +12,8 @@
 
 package neatlogic.module.alert.service;
 
+import com.alibaba.fastjson.JSONObject;
+
 import neatlogic.framework.alert.dto.AlertEventHandlerVo;
 import neatlogic.framework.alert.dto.AlertTrashVo;
 import neatlogic.framework.alert.dto.AlertVo;
@@ -37,6 +39,16 @@ public interface IAlertService {
 
     @Transactional
     void handleAlert(AlertVo alertVo);
+
+    /** 校验全部目标权限后逐条修改标签，返回修改、不变、失效和失败数量。 */
+    JSONObject batchUpdateAlertMark(List<Long> idList, List<String> markNameList, String mode);
+
+    /** 独立修改一条告警标签，true表示修改、false表示不变、null表示已失效。 */
+    @Transactional
+    Boolean updateAlertMarkOnly(Long id, List<String> markNameList, String mode);
+
+    /** 提交管理员匹配标签修改任务，后台使用固定搜索快照遍历目标。 */
+    void submitMatchedAlertMarkUpdate(AlertVo searchVo, List<String> markNameList, String mode);
 
     void saveOriginAlert(OriginalAlertVo originalAlertVo);
 

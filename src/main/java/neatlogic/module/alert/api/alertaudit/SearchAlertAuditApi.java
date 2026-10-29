@@ -13,6 +13,7 @@
 package neatlogic.module.alert.api.alertaudit;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_BASE;
 import neatlogic.framework.alert.dto.AlertAuditVo;
@@ -27,6 +28,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 @AuthAction(action = ALERT_BASE.class)
@@ -64,6 +67,29 @@ public class SearchAlertAuditApi extends PrivateApiComponentBase {
         AlertAuditVo alertAuditVo = JSON.toJavaObject(jsonObj, AlertAuditVo.class);
         int rowNum = alertAuditMapper.selectAlertAuditCount(alertAuditVo);
         alertAuditVo.setRowNum(rowNum);
-        return TableResultUtil.getResult(alertAuditMapper.selectAlertAudit(alertAuditVo), alertAuditVo);
+        List<AlertAuditVo> auditList = alertAuditMapper.selectAlertAudit(alertAuditVo);
+        for (AlertAuditVo audit : auditList) {
+            if ("const_markList".equals(audit.getAttrName())) {
+                // 仅规范本次响应，兼容历史手动修改写入的嵌套数组，不回写历史数据。
+                audit.setOldValueList(flattenMarkValues(audit.getOldValueList()));
+                audit.setNewValueList(flattenMarkValues(audit.getNewValueList()));
+            }
+        }
+        return TableResultUtil.getResult(auditList, alertAuditVo);
+    }
+
+    /** 将历史嵌套标签数组展开为名称列表，并将无标签的空值规范为空数组。 */
+    private JSONArray flattenMarkValues(Collection<?> values) {
+        JSONArray result = new JSONArray();
+        if (values != null) {
+            for (Object value : values) {
+                if (value instanceof Collection<?>) {
+                    result.addAll(flattenMarkValues((Collection<?>) value));
+                } else if (value != null) {
+                    result.add(value);
+                }
+            }
+        }
+        return result;
     }
 }

@@ -47,8 +47,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Component
@@ -542,6 +545,76 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
 
         finalQueryBuilder.bool(boolQueryBuilder.build());
         return finalQueryBuilder.build();
+    }
+
+    /**
+     * 使用固定搜索快照遍历匹配告警，避免标签修改导致结果移动或超过普通分页窗口。
+     */
+    public void forEachMatchedAlertIdBatch(AlertVo alertVo, Consumer<List<Long>> consumer) throws IOException {
+        alertVo.setSearchMode(AlertSearchMode.FLAT.getValue());
+        SearchRequest request = new SearchRequest.Builder()
+                .index(getCurrentIndexName())
+                .query(myBuildQuery(alertVo))
+                .source(source -> source.fetch(false))
+                .sort(sort -> sort.field(field -> field.field("_doc").order(SortOrder.Asc)))
+                .size(1000)
+                .scroll(time -> time.time("10m"))
+                .allowPartialSearchResults(false)
+                .build();
+        try {
+            ElasticsearchClient client = ElasticsearchClientFactory.getClient();
+            if (client == null) {
+                throw new IOException("未配置告警搜索客户端");
+            }
+            consumeScroll(client, request, consumer);
+        } catch (GeneralSecurityException e) {
+            throw new IOException("初始化告警搜索客户端失败", e);
+        }
+    }
+
+    /** 分批消费快照中的 ID，并在正常结束或失败时释放最新的 Scroll 上下文。 */
+    private static void consumeScroll(ElasticsearchClient client, SearchRequest request,
+                                      Consumer<List<Long>> consumer) throws IOException {
+        String scrollId = null;
+        Throwable failure = null;
+        try {
+            co.elastic.clients.elasticsearch.core.search.ResponseBody<Void> response = client.search(request, Void.class);
+            while (true) {
+                if (StringUtils.isNotBlank(response.scrollId())) {
+                    scrollId = response.scrollId();
+                }
+                // 超时或分片失败不代表匹配集合已遍历完成，必须向调用方报告失败。
+                if (response.timedOut() || response.shards().failed().intValue() > 0) {
+                    throw new IOException("告警快照搜索超时或存在失败分片");
+                }
+                if (response.hits().hits().isEmpty()) {
+                    break;
+                }
+                if (StringUtils.isBlank(scrollId)) {
+                    throw new IOException("告警快照搜索未返回 Scroll 标识");
+                }
+                List<Long> idList = response.hits().hits().stream()
+                        .map(hit -> Long.parseLong(hit.id())).collect(Collectors.toList());
+                consumer.accept(idList);
+                response = client.scroll(new ScrollRequest.Builder()
+                        .scrollId(scrollId).scroll(time -> time.time("10m")).build(), Void.class);
+            }
+        } catch (IOException | RuntimeException | Error e) {
+            failure = e;
+            throw e;
+        } finally {
+            if (StringUtils.isNotBlank(scrollId)) {
+                try {
+                    client.clearScroll(new ClearScrollRequest.Builder().scrollId(scrollId).build());
+                } catch (IOException | RuntimeException e) {
+                    if (failure != null) {
+                        failure.addSuppressed(e);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        }
     }
 
     protected boolean isDocumentExists(AlertVo alertVo) {

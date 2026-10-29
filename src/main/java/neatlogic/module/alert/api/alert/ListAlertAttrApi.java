@@ -71,6 +71,7 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
             @Param(name = "isExpand", desc = "是否展开", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isCondition", desc = "是否用于条件判断", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isAggregate", desc = "是否用于聚合模板", rule = "0,1", type = ApiParamType.INTEGER),
+            @Param(name = "isAudit", desc = "是否用于审计展示", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isColumn", desc = "是否用于展示", rule = "0,1", type = ApiParamType.INTEGER),
             @Param(name = "isSearch", desc = "是否用于搜索", rule = "0,1", type = ApiParamType.INTEGER)
     })
@@ -86,8 +87,13 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
         int isAggregate = jsonObj.getIntValue("isAggregate");
         int isColumn = jsonObj.getIntValue("isColumn");
         int isSearch = jsonObj.getIntValue("isSearch");
+        Integer isAudit = jsonObj.getInteger("isAudit");
         List<AlertAttrDefineVo> attrList = new ArrayList<>();
-        if (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const")) {
+        // 审计记录可能包含列表未展示的属性，独立返回全量定义，不修改原有列配置。
+        if (Objects.equals(1, isAudit)) {
+            attrList.addAll(AlertAttr.getAllConstAttrList());
+        }
+        if (!Objects.equals(1, isAudit) && (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("const"))) {
             //TODO 逻辑是对的，后面再修改一下写法
             if (isAggregate == 1) {
                 attrList.addAll(AlertAttr.getAggregateConstAttrList());
@@ -104,13 +110,13 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                 isSearch = 1;
             }
         }
-        if (isAggregate != 1 && (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr"))) {
+        if (Objects.equals(1, isAudit) || (isAggregate != 1 && (StringUtils.isBlank(kind) || kind.equalsIgnoreCase("attr")))) {
             List<AlertAttrTypeVo> attrTypeList = alertAttrTypeMapper.listAttrType();
             for (AlertAttrTypeVo attrTypeVo : attrTypeList) {
-                if (isSearch == 1 && !Objects.equals(attrTypeVo.getIsIndex(), 1)) {
+                if (!Objects.equals(1, isAudit) && isSearch == 1 && !Objects.equals(attrTypeVo.getIsIndex(), 1)) {
                     continue;
                 }
-                if (isColumn == 1 && !Objects.equals(attrTypeVo.getIsShow(), 1)) {
+                if (!Objects.equals(1, isAudit) && isColumn == 1 && !Objects.equals(attrTypeVo.getIsShow(), 1)) {
                     continue;
                 }
                 attrList.add(new AlertAttrDefineVo()
@@ -126,6 +132,9 @@ public class ListAlertAttrApi extends PrivateApiComponentBase {
                         .setIsTab(Objects.equals(1, attrTypeVo.getIsTab()))
                         .setIsTop(attrTypeVo.getIsTop()));
             }
+        }
+        if (Objects.equals(1, isAudit)) {
+            return attrList;
         }
         AlertViewVo alertViewVo = null;
         if (viewId != null) {

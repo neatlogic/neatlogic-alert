@@ -21,11 +21,14 @@ import neatlogic.framework.alert.dao.mapper.AlertEventMapper;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.dto.breaker.AlertEventHandlerBreakerPolicyVo;
 import neatlogic.framework.alert.enums.AlertAttrType;
+import neatlogic.framework.alert.enums.AlertSearchMode;
 import neatlogic.framework.alert.event.AlertEventManager;
 import neatlogic.framework.alert.event.AlertEventType;
 import neatlogic.framework.alert.exception.alert.AlertHasNotAuthException;
 import neatlogic.framework.alert.exception.alert.AlertNotFoundException;
+import neatlogic.framework.asynchronization.thread.NeatLogicThread;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
 import neatlogic.framework.auth.core.AuthActionChecker;
 import neatlogic.framework.dto.elasticsearch.IndexResultHighlightVo;
 import neatlogic.framework.dto.elasticsearch.IndexResultVo;
@@ -34,6 +37,7 @@ import neatlogic.framework.store.elasticsearch.ElasticsearchDocumentFactory;
 import neatlogic.framework.store.elasticsearch.IElasticsearchDocument;
 import neatlogic.framework.transaction.core.AfterTransactionJob;
 import neatlogic.module.alert.dao.mapper.*;
+import neatlogic.module.alert.elasticsearch.ElasticsearchAlertIndex;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -82,6 +86,9 @@ public class AlertServiceImpl implements IAlertService {
     @Resource
     private ApplicationContext applicationContext;
 
+    @Resource
+    private ElasticsearchAlertIndex elasticsearchAlertIndex;
+
     private IAlertService getProxy() {
         return applicationContext.getBean(IAlertService.class);
     }
@@ -101,6 +108,145 @@ public class AlertServiceImpl implements IAlertService {
             this.put("markList", alertVo.getMarkNameList());
         }}, false);
         return true;
+    }
+
+    /** 校验既有告警处理权限，单条处理与批量标签修改使用相同规则。 */
+    private void checkAlertHandlePermission(AlertVo oldAlertVo) {
+        boolean hasRole = AuthActionChecker.check(ALERT_ADMIN.class);
+        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getUserList())) {
+            hasRole = oldAlertVo.getUserList().stream().anyMatch(d -> d.getUserId().equals(UserContext.get().getUserUuid(true)));
+        }
+        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getTeamIdList())) {
+            List<String> userTeamList = UserContext.get().getTeamUuidList();
+            hasRole = oldAlertVo.getTeamList().stream().anyMatch(d -> userTeamList.contains(d.getTeamUuid()));
+        }
+        if (!hasRole) {
+            throw new AlertHasNotAuthException();
+        }
+    }
+
+    /** 比较标签集合并复用原有标签关系、索引与修改记录写入流程。 */
+    private boolean updateAlertMarkWithAudit(AlertVo oldAlertVo, AlertVo alertVo) {
+        Set<String> oldMarkSet = new HashSet<>();
+        Set<String> newMarkSet = new HashSet<>();
+        if (CollectionUtils.isNotEmpty(oldAlertVo.getMarkNameList())) {
+            oldMarkSet.addAll(oldAlertVo.getMarkNameList());
+        }
+        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
+            newMarkSet.addAll(alertVo.getMarkNameList());
+        }
+        if (newMarkSet.equals(oldMarkSet)) {
+            return false;
+        }
+        updateAlertMark(alertVo);
+        AlertAuditVo auditVo = new AlertAuditVo(true);
+        auditVo.setAlertId(alertVo.getId());
+        auditVo.setAttrName("const_markList");
+        // 标签审计与事件写入格式一致，标签名称直接存入数组，空标签存空数组。
+        JSONArray oldValues = new JSONArray();
+        if (oldAlertVo.getMarkNameList() != null) {
+            oldValues.addAll(oldAlertVo.getMarkNameList());
+        }
+        JSONArray newValues = new JSONArray();
+        if (alertVo.getMarkNameList() != null) {
+            newValues.addAll(alertVo.getMarkNameList());
+        }
+        auditVo.setOldValueList(oldValues);
+        auditVo.setNewValueList(newValues);
+        alertAuditMapper.insertAlertAudit(auditVo);
+        return true;
+    }
+
+    /** 先校验所有有效目标的权限，避免遇到无权限告警时已经修改前面的记录。 */
+    @Override
+    public JSONObject batchUpdateAlertMark(List<Long> idList, List<String> markNameList, String mode) {
+        List<Long> targetIds = new ArrayList<>(new LinkedHashSet<>(idList));
+        for (Long id : targetIds) {
+            AlertVo oldAlertVo = alertMapper.getAlertById(id);
+            if (oldAlertVo != null && !Objects.equals(1, oldAlertVo.getIsDelete())) {
+                checkAlertHandlePermission(oldAlertVo);
+            }
+        }
+        JSONObject counts = new JSONObject();
+        counts.put("updatedCount", 0);
+        counts.put("unchangedCount", 0);
+        counts.put("skippedCount", 0);
+        counts.put("failedCount", 0);
+        for (Long id : targetIds) {
+            String key;
+            try {
+                // 经代理调用，确保单条失败回滚，不影响已完成或后续目标。
+                Boolean changed = getProxy().updateAlertMarkOnly(id, markNameList, mode);
+                if (changed == null) {
+                    key = "skippedCount";
+                } else if (changed) {
+                    key = "updatedCount";
+                } else {
+                    key = "unchangedCount";
+                }
+            } catch (Exception e) {
+                key = "failedCount";
+                logger.error("批量修改告警标签失败，告警ID：" + id, e);
+            }
+            counts.put(key, counts.getIntValue(key) + 1);
+        }
+        return counts;
+    }
+
+    /** 仅修改标签；每次重新读取数据库标签，追加时保留已有标签。 */
+    @Override
+    @Transactional
+    public Boolean updateAlertMarkOnly(Long id, List<String> markNameList, String mode) {
+        AlertVo oldAlertVo = alertMapper.getAlertById(id);
+        if (oldAlertVo == null || Objects.equals(1, oldAlertVo.getIsDelete())) {
+            return null;
+        }
+        checkAlertHandlePermission(oldAlertVo);
+        LinkedHashSet<String> merged = new LinkedHashSet<>();
+        if ("append".equals(mode) && CollectionUtils.isNotEmpty(oldAlertVo.getMarkNameList())) {
+            merged.addAll(oldAlertVo.getMarkNameList());
+        }
+        merged.addAll(markNameList);
+        // 使用独立载荷保留旧标签，审计中的旧值不能被合并结果覆盖。
+        AlertVo target = new AlertVo();
+        target.setId(id);
+        target.setMarkNameList(new ArrayList<>(merged));
+        if (!updateAlertMarkWithAudit(oldAlertVo, target)) {
+            return false;
+        }
+        IElasticsearchDocument<AlertVo> index = ElasticsearchDocumentFactory.getIndex("ALERT");
+        index.createDocument(id);
+        return true;
+    }
+
+    /** 使用固定搜索快照后台遍历匹配目标，并汇总每条处理结果。 */
+    @Override
+    public void submitMatchedAlertMarkUpdate(AlertVo searchVo, List<String> markNameList, String mode) {
+        if (!AuthActionChecker.check(ALERT_ADMIN.class)) {
+            throw new AlertHasNotAuthException();
+        }
+        searchVo.setSearchMode(AlertSearchMode.FLAT.getValue());
+        CachedThreadPool.execute(new NeatLogicThread("ALERT-UPDATE-MARK-MATCH") {
+            @Override
+            protected void execute() {
+                JSONObject totals = new JSONObject();
+                for (String key : Arrays.asList("updatedCount", "unchangedCount", "skippedCount", "failedCount")) {
+                    totals.put(key, 0);
+                }
+                try {
+                    elasticsearchAlertIndex.forEachMatchedAlertIdBatch(searchVo, ids -> {
+                        JSONObject counts = getProxy().batchUpdateAlertMark(ids, markNameList, mode);
+                        for (String key : totals.keySet()) {
+                            totals.put(key, totals.getIntValue(key) + counts.getIntValue(key));
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("匹配告警标签修改任务执行异常，已处理统计：" + totals, e);
+                } finally {
+                    logger.info("匹配告警标签修改任务结束，统计：{}", totals);
+                }
+            }
+        });
     }
 
     private boolean updateAlertStatus(AlertVo oldAlertVo, AlertVo alertVo) {
@@ -305,17 +451,7 @@ public class AlertServiceImpl implements IAlertService {
         if (oldAlertVo == null) {
             throw new AlertNotFoundException(alertVo.getId());
         }
-        boolean hasRole = AuthActionChecker.check(ALERT_ADMIN.class);
-        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getUserList())) {
-            hasRole = oldAlertVo.getUserList().stream().anyMatch(d -> d.getUserId().equals(UserContext.get().getUserUuid(true)));
-        }
-        if (!hasRole && CollectionUtils.isNotEmpty(oldAlertVo.getTeamIdList())) {
-            List<String> userTeamList = UserContext.get().getTeamUuidList();
-            hasRole = oldAlertVo.getTeamList().stream().anyMatch(d -> userTeamList.contains(d.getTeamUuid()));
-        }
-        if (!hasRole) {
-            throw new AlertHasNotAuthException();
-        }
+        checkAlertHandlePermission(oldAlertVo);
         boolean hasChange = false;
         if (Objects.equals(1, alertVo.getIsClose())) {
             //需要传入旧告警，否则会导致判断状态错误而不执行
@@ -328,27 +464,9 @@ public class AlertServiceImpl implements IAlertService {
         }
 
 
-        Set<String> newMarkSet = new HashSet<>();
-        Set<String> oldMarkSet = new HashSet<>();
-        if (CollectionUtils.isNotEmpty(oldAlertVo.getMarkNameList())) {
-            oldMarkSet.addAll(oldAlertVo.getMarkNameList());
-        }
-        if (CollectionUtils.isNotEmpty(alertVo.getMarkNameList())) {
-            newMarkSet.addAll(alertVo.getMarkNameList());
-        }
-        if (!newMarkSet.equals(oldMarkSet)) {
+        if (updateAlertMarkWithAudit(oldAlertVo, alertVo)) {
             hasChange = true;
-
-            updateAlertMark(alertVo);
-
-            AlertAuditVo alertAuditVo = new AlertAuditVo(true);
-            alertAuditVo.setAlertId(alertVo.getId());
-            alertAuditVo.setAttrName("const_markList");
-            alertAuditVo.addOldValue(oldAlertVo.getMarkNameList());
-            alertAuditVo.addNewValue(alertVo.getMarkNameList());
-            alertAuditMapper.insertAlertAudit(alertAuditVo);
         }
-
 
         if (!Objects.equals(oldAlertVo.getStatus(), alertVo.getStatus())) {
             hasChange = true;
