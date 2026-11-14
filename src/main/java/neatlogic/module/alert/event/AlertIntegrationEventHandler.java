@@ -61,6 +61,12 @@ public class AlertIntegrationEventHandler extends AlertEventHandlerBase {
         return true;
     }
 
+    /** 外部接口耗时不可控，由基类安排无事务执行，回调插件使用各自的事务策略。 */
+    @Override
+    protected boolean isTransactionRequired() {
+        return false;
+    }
+
     @Override
     protected AlertVo myTrigger(AlertEventHandlerVo alertEventHandlerVo, AlertEventPluginVo alertEventPluginVo, AlertVo alertVo, AlertEventHandlerAuditVo alertEventHandlerAuditVo, AlertEventStatusVo alertEventStatusVo) throws AlertEventHandlerTriggerException {
         JSONObject config = alertEventHandlerVo.getConfig();
