@@ -28,6 +28,9 @@ public interface AlertAttrTypeMapper {
 
     List<AlertAttrTypeVo> listAttrType();
 
+    /** 读取该告警类型推荐的扩展属性。 */
+    List<Long> listAssociatedIds(Long alertTypeId);
+
     void updateAlertAttrTypeSort(AlertAttrTypeVo alertAttrTypeVo);
 
     void saveAlertAttrTypeEnum(AlertAttrTypeEnumVo alertAttrTypeEnumVo);

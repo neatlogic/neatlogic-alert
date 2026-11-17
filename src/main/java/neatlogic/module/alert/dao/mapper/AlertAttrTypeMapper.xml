@@ -143,6 +143,10 @@
         limit #{startNum}, #{pageSize}
     </select>
 
+    <select id="listAssociatedIds" resultType="long" useCache="false">
+        select attrtype_id from alert_type_attrtype where alerttype_id = #{value}
+    </select>
+
     <select id="listAttrType" resultType="neatlogic.framework.alert.dto.AlertAttrTypeVo" useCache="true">
         select id,
                name,
