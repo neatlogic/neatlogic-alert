@@ -16,6 +16,7 @@ import neatlogic.framework.alert.event.AlertEventHandlerBase;
 import neatlogic.framework.alert.event.AlertEventHandlerFactory;
 import neatlogic.framework.alert.utils.AlertEventHandlerContextBuilder;
 import neatlogic.framework.asynchronization.thread.ModuleInitApplicationListener;
+import neatlogic.framework.asynchronization.threadlocal.InputFromContext;
 import neatlogic.framework.asynchronization.threadlocal.TenantContext;
 import neatlogic.framework.asynchronization.threadlocal.UserContext;
 import neatlogic.framework.asynchronization.threadpool.CachedThreadPool;
@@ -45,10 +46,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +77,8 @@ public class AlertEventTransactionTest {
     private AlertEventHandlerVo callbackConfig;
     private Object callerResource;
     private boolean suppress;
+    private Long suppressedTypeId;
+    private final List<Long> checkedTypes = new ArrayList<>();
     private boolean breaked;
     private boolean failUpdate;
 
@@ -154,7 +154,8 @@ public class AlertEventTransactionTest {
         replaceMapEntry(CrossoverServiceFactory.class, "apiMap", IAlertSuppressionCrossoverService.class,
                 proxy(IAlertSuppressionCrossoverService.class, (method, args) -> {
                     assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
-                    return suppress;
+                    checkedTypes.add((Long) args[1]);
+                    return suppress || (suppressedTypeId != null && suppressedTypeId.equals(args[1]));
                 }));
         replaceMapEntry(AlertBreakerHandlerFactory.class, "handlerMap", "tx-test",
                 proxy(IAlertBreakerHandler.class, (method, args) -> {
@@ -276,6 +277,41 @@ public class AlertEventTransactionTest {
         assertEquals(3, saved.size()); assertEquals(2, parents.size());
         for (String status : saved.values()) { assertEquals(AlertEventStatus.SUCCEED.getValue(), status); }
         for (Long id : parents.values()) { assertTrue(saved.containsKey(id)); }
+    }
+
+    /** 邮件分类在外层判定成功时子插件不会启动，外层通过后子插件独立检查其配置的分类。 */
+    @Test public void nestedMailUsesOuterAndInnerSuppressionChecks() throws Exception {
+        AlertConditionEventHandler condition = wire(new AlertConditionEventHandler());
+        AlertSendMailEventHandler mail = wire(new AlertSendMailEventHandler());
+        replaceMapEntry(AlertEventHandlerFactory.class, "eventMap", mail.getName(), mail);
+        AlertEventHandlerVo outer = config(0);
+        outer.setHandler(condition.getName());
+        outer.setTypeId(10L);
+        outer.setConfig(JSONObject.parseObject("{'conditionList':[{'handler':{'uuid':'mail','handler':'EMAIL'}}]}"));
+        callbackConfig = config(0);
+        callbackConfig.setHandler(mail.getName());
+        callbackConfig.setTypeId(11L);
+        suppressedTypeId = 10L;
+        condition.trigger(outer, alert());
+        assertEquals(Collections.singletonList(10L), checkedTypes);
+        assertEquals(AlertEventStatus.SUPPRESS.getValue(), onlyStatus());
+
+        checkedTypes.clear();
+        suppressedTypeId = 11L;
+        InputFromContext previous = InputFromContext.get();
+        try {
+            condition.trigger(outer, alert());
+            assertEquals(Arrays.asList(10L, 11L), checkedTypes);
+            assertEquals(AlertEventStatus.SUCCEED.getValue(), saved.get(102L));
+            assertEquals(AlertEventStatus.SUPPRESS.getValue(), saved.get(103L));
+            assertEquals(Long.valueOf(102L), parents.get(103L));
+        } finally {
+            if (previous != null) {
+                InputFromContext.init(previous);
+            } else if (InputFromContext.get() != null) {
+                InputFromContext.get().release();
+            }
+        }
     }
 
     /** 禁用、屏蔽、熔断均跳过插件，并分别保存原有状态。 */

@@ -33,6 +33,21 @@
       "name": "event_handler",
       "type": "varchar(100)",
       "description": "Event plugin."
+    },
+    {
+      "name": "event_handler_type_id",
+      "type": "bigint",
+      "description": "Configured action type ID at the time of evaluation."
+    },
+    {
+      "name": "event_handler_type_label",
+      "type": "varchar(50)",
+      "description": "Configured action type label at the time of evaluation."
+    },
+    {
+      "name": "is_suppressed",
+      "type": "tinyint",
+      "description": "Suppression result. 1 means suppressed and 0 means the condition was not met."
     }
   ],
   "indexes": [

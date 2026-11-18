@@ -33,6 +33,21 @@
       "name": "event_handler",
       "type": "varchar(100)",
       "description": "事件插件。"
+    },
+    {
+      "name": "event_handler_type_id",
+      "type": "bigint",
+      "description": "判定时的动作类型ID。"
+    },
+    {
+      "name": "event_handler_type_label",
+      "type": "varchar(50)",
+      "description": "判定时的动作类型名称。"
+    },
+    {
+      "name": "is_suppressed",
+      "type": "tinyint",
+      "description": "判定结果，1 表示已屏蔽，0 表示条件未满足。"
     }
   ],
   "indexes": [
