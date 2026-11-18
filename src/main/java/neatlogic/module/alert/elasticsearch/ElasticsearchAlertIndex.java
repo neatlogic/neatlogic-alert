@@ -29,6 +29,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.enums.AlertSearchMode;
+import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.framework.common.constvalue.GroupSearch;
+import neatlogic.framework.common.constvalue.UserType;
 import neatlogic.framework.dto.ElasticsearchVo;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchDeleteDocumentException;
 import neatlogic.framework.exception.elasticsearch.ElasticSearchGetDocumentCountException;
@@ -106,12 +109,18 @@ public class ElasticsearchAlertIndex extends ElasticsearchDocumentBase<AlertVo> 
         return true;
     }
 
+    /** 将视图人员动态值按本次查询的登录用户解析，保留原始规则供其他用户复用。 */
     private JSONArray convertValue(String field, JSONArray value) {
         if (Objects.equals(field, "const_userList")) {
             if (CollectionUtils.isNotEmpty(value)) {
                 JSONArray newValue = new JSONArray();
                 for (int i = 0; i < value.size(); i++) {
-                    newValue.add(value.getString(i).replace("user#", ""));
+                    String user = value.getString(i);
+                    if ((GroupSearch.COMMON.getValuePlugin() + UserType.LOGIN_USER.getValue()).equals(user)) {
+                        newValue.add(UserContext.get().getUserUuid(true));
+                    } else {
+                        newValue.add(user.replace(GroupSearch.USER.getValuePlugin(), ""));
+                    }
                 }
                 return newValue;
             }

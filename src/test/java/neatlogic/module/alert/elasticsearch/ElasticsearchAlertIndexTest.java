@@ -15,11 +15,16 @@ package neatlogic.module.alert.elasticsearch;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import neatlogic.framework.alert.dto.AlertViewVo;
 import neatlogic.framework.alert.dto.AlertVo;
 import neatlogic.framework.alert.enums.AlertSearchMode;
+import neatlogic.framework.asynchronization.threadlocal.UserContext;
+import neatlogic.module.alert.dao.mapper.AlertViewMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.List;
 
@@ -176,6 +181,113 @@ public class ElasticsearchAlertIndexTest {
         buildRuleQuery(rule(groups(
                 group(fields("a", "b"), relations("xor"))
         ), relations()));
+    }
+
+    /** 同一规则随访问用户动态解析，并保留已保存的动态标识。 */
+    @Test
+    public void loginUserResolvesForEachViewerWithoutChangingRule() {
+        JSONObject rule = userRule("like", "common#loginuser");
+        String original = rule.toJSONString();
+        UserContext context = UserContext.init((UserContext) null);
+        try {
+            context.setUserUuid("viewer-a");
+            assertUserMatch(buildRuleQuery(rule).bool().should().get(0), "viewer-a");
+            context.setUserUuid("viewer-b");
+            assertUserMatch(buildRuleQuery(rule).bool().should().get(0), "viewer-b");
+            Assert.assertEquals(original, rule.toJSONString());
+        } finally {
+            context.release();
+        }
+    }
+
+    /** 动态用户与指定用户混选时，包含和不包含均使用原有组合语义。 */
+    @Test
+    public void loginUserCanMixWithExplicitUsers() {
+        UserContext context = UserContext.init((UserContext) null);
+        try {
+            context.setUserUuid("viewer-a");
+            for (String expression : new String[]{"like", "notlike"}) {
+                JSONObject rule = userRule(expression, "common#loginuser", "user#explicit", "legacy-uuid");
+                Query query = buildRuleQuery(rule);
+                List<Query> clauses;
+                if ("like".equals(expression)) {
+                    clauses = query.bool().should();
+                } else {
+                    clauses = query.bool().mustNot();
+                }
+                Assert.assertEquals(3, clauses.size());
+                assertUserMatch(clauses.get(0), "viewer-a");
+                assertUserMatch(clauses.get(1), "explicit");
+                assertUserMatch(clauses.get(2), "legacy-uuid");
+                Assert.assertEquals("common#loginuser", rule.getJSONArray("conditionGroupList").getJSONObject(0)
+                        .getJSONArray("conditionList").getJSONObject(0).getJSONArray("valueList").getString(0));
+            }
+        } finally {
+            context.release();
+        }
+    }
+
+    /** 按视图名加载的规则同样动态解析，且不改变组间逻辑或持久化配置。 */
+    @Test
+    public void savedViewResolvesLoginUserAcrossConditionGroups() throws Exception {
+        JSONObject rule = userRule("like", "common#loginuser");
+        rule.getJSONArray("conditionGroupList").add(group(fields("a"), relations()));
+        rule.put("conditionGroupRelList", relations("or"));
+        String original = rule.toJSONString();
+        AlertViewVo view = new AlertViewVo();
+        JSONObject config = new JSONObject();
+        config.put("rule", rule);
+        view.setConfig(config);
+        Field mapper = ElasticsearchAlertIndex.class.getDeclaredField("alertViewMapper");
+        mapper.setAccessible(true);
+        mapper.set(alertIndex, Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{AlertViewMapper.class},
+                (proxy, method, args) -> {
+                    Assert.assertEquals("getAlertViewByName", method.getName());
+                    Assert.assertEquals("shared-view", args[0]);
+                    return view;
+                }));
+        UserContext context = UserContext.init((UserContext) null);
+        try {
+            for (String viewer : new String[]{"viewer-a", "viewer-b"}) {
+                context.setUserUuid(viewer);
+                AlertVo request = buildAlertVo(null);
+                request.setViewName("shared-view");
+                Query query = alertIndex.myBuildQuery(request).bool().must().get(0);
+                Assert.assertEquals("1", query.bool().minimumShouldMatch());
+                assertUserMatch(query.bool().should().get(0).bool().should().get(0), viewer);
+                assertExistsField(query.bool().should().get(1), "attrObj.a");
+            }
+            Assert.assertEquals(original, rule.toJSONString());
+        } finally {
+            context.release();
+        }
+    }
+
+    /** 人员条件的空值判断继续使用存在性查询。 */
+    @Test
+    public void userNullChecksRemainCompatible() {
+        Query present = buildRuleQuery(userRule("is-not-null"));
+        assertExistsField(present, "userList");
+        Query absent = buildRuleQuery(userRule("is-null"));
+        assertExistsField(absent.bool().mustNot().get(0), "userList");
+    }
+
+    /** 构建视图处理人条件。 */
+    private JSONObject userRule(String expression, String... users) {
+        JSONObject condition = new JSONObject();
+        condition.put("id", "const_userList");
+        condition.put("expression", expression);
+        condition.put("valueList", fields(users));
+        JSONArray conditions = new JSONArray();
+        conditions.add(condition);
+        return rule(groups(groupWithConditionList(conditions, relations())), relations());
+    }
+
+    /** 验证最终匹配的是人员索引中的实际 UUID。 */
+    private void assertUserMatch(Query query, String userUuid) {
+        Assert.assertTrue(query.isMatch());
+        Assert.assertEquals("userList", query.match().field());
+        Assert.assertEquals(userUuid, query.match().query().stringValue());
     }
 
     /**
