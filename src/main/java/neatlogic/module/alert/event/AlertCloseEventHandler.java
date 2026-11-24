@@ -12,7 +12,6 @@
 
 package neatlogic.module.alert.event;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.dto.*;
 import neatlogic.framework.alert.event.AlertEventHandlerBase;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class AlertCloseEventHandler extends AlertEventHandlerBase {
@@ -80,40 +78,7 @@ public class AlertCloseEventHandler extends AlertEventHandlerBase {
                     ruleList = alertRuleMapper.getAlertRuleByIdList(ruleIdList);
                 }
 
-                List<String> attrList = new ArrayList<>();
-                for (int i = 0; i < config.getJSONArray("uniqueAttrList").size(); i++) {
-                    attrList.add(config.getJSONArray("uniqueAttrList").getJSONObject(i).getString("name"));
-                }
-                //按属性名排序，避免由于顺序不同导致结果不同
-                attrList.sort(String::compareTo);
-                String key = "";
-                JSONObject alertObj = JSON.parseObject(JSON.toJSONString(alertVo));
-                for (String attr : attrList) {
-                    if (attr.startsWith("const_")) {
-                        if (StringUtils.isNotBlank(key)) {
-                            key += "#";
-                        }
-                        String value = alertObj.getString(attr.substring("const_".length()));
-                        List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
-                        if (CollectionUtils.isNotEmpty(tmpRuleList)) {
-                            value = AlertRuleUtils.doRule(value, tmpRuleList);
-                        }
-                        key += value;
-                    } else if (attr.startsWith("attr_")) {
-                        JSONObject attrObj = alertObj.getJSONObject("attrObj");
-                        if (attrObj != null && attrObj.get(attr.substring("attr_".length())) != null) {
-                            if (StringUtils.isNotBlank(key)) {
-                                key += "#";
-                            }
-                            String value = attrObj.getString(attr.substring("attr_".length()));
-                            List<AlertRuleVo> tmpRuleList = ruleList.stream().filter(d -> d.getAttrName().equals(attr)).collect(Collectors.toList());
-                            if (CollectionUtils.isNotEmpty(tmpRuleList)) {
-                                value = AlertRuleUtils.doRule(value, tmpRuleList);
-                            }
-                            key += value;
-                        }
-                    }
-                }
+                String key = AlertRuleUtils.buildUniqueKey(alertVo, config.getJSONArray("uniqueAttrList"), ruleList, false);
                 //一定要判断，因为可能直接选唯一键作为唯一键，这时候就需要二次转换
                 if (StringUtils.isNotBlank(key)) {
                     if (!Md5Util.isMd5(key)) {

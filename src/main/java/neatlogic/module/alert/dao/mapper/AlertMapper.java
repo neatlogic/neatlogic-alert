@@ -4,6 +4,7 @@ import neatlogic.framework.alert.dto.*;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 public interface AlertMapper {
     int getAlertCountByIdList(@Param("idList") List<Long> idList);
@@ -28,6 +29,10 @@ public interface AlertMapper {
     List<AlertVo> getCloseAlertByParentId(Long parentId);
 
     List<AlertVo> getOpenAlertByUniqueKey(String uniqueKey);
+
+    /** 锁定待修改的告警，并复核查询时的打开状态、删除状态和唯一键。 */
+    Long lockAlertForScriptUpdate(@Param("id") Long id, @Param("currentAlert") boolean currentAlert,
+                                  @Param("uniqueKey") String uniqueKey, @Param("parentIds") Set<Long> parentIds);
 
     List<AlertVo> getCloseAlertByUniqueKey(String uniqueKey);
 

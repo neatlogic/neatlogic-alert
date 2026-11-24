@@ -276,6 +276,31 @@
         and a.is_close = 1
     </select>
 
+    <select id="lockAlertForScriptUpdate" resultType="java.lang.Long">
+        select a.id
+        from alert a
+        where a.id = #{id}
+        and (a.is_delete is null or a.is_delete = 0)
+        <if test="!currentAlert">
+            and a.is_close = 0
+            <trim prefix="and (" suffix=")" prefixOverrides="OR">
+                <if test="uniqueKey != null">
+                    a.unique_key = #{uniqueKey}
+                </if>
+                <if test="!parentIds.isEmpty">
+                    or exists (
+                        select 1 from alert_rel rel
+                        where rel.to_alert_id = a.id and rel.from_alert_id in
+                        <foreach collection="parentIds" item="parentId" open="(" separator="," close=")">
+                            #{parentId}
+                        </foreach>
+                    )
+                </if>
+            </trim>
+        </if>
+        for update
+    </select>
+
 
     <select id="getAlertOriginById" parameterType="java.lang.Long"
             resultType="neatlogic.framework.alert.dto.OriginalAlertVo">

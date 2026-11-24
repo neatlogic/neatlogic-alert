@@ -96,6 +96,7 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
         sort++;
         alertEventHandlerVo.setSort(sort);
         handler.makeupChildHandler(alertEventHandlerVo);
+        handler.validateConfig(alertEventHandlerVo);
         alertEventMapper.saveAlertEventHandler(alertEventHandlerVo);
         saveBreakerPolicy(alertEventHandlerVo);
         saveSubHandler(alertEventHandlerVo.getId(), alertEventHandlerVo);
@@ -126,6 +127,10 @@ public class SaveAlertEventHandlerApi extends PrivateApiComponentBase {
             }
             int sort = 1;
             for (AlertEventHandlerVo handlerVo : alertEventHandlerVo.getHandlerList()) {
+                IAlertEventHandler childHandler = AlertEventHandlerFactory.getHandler(handlerVo.getHandler());
+                if (childHandler != null) {
+                    childHandler.validateConfig(handlerVo);
+                }
                 AlertEventHandlerVo oldHandlerVo = alertEventMapper.getAlertEventHandlerByUuid(handlerVo.getUuid());
                 if(oldHandlerVo!=null){
                     handlerVo.setId(oldHandlerVo.getId());

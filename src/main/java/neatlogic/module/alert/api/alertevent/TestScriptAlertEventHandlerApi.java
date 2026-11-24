@@ -14,12 +14,12 @@ package neatlogic.module.alert.api.alertevent;
 
 import com.alibaba.fastjson.JSONObject;
 import neatlogic.framework.alert.auth.ALERT_EVENT_MODIFY;
+import neatlogic.framework.alert.utils.AlertScriptUtils;
 import neatlogic.framework.auth.core.AuthAction;
 import neatlogic.framework.common.constvalue.ApiParamType;
 import neatlogic.framework.restful.annotation.*;
 import neatlogic.framework.restful.constvalue.OperationTypeEnum;
 import neatlogic.framework.restful.core.privateapi.PrivateApiComponentBase;
-import neatlogic.framework.util.javascript.JavascriptUtil;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -54,7 +54,7 @@ public class TestScriptAlertEventHandlerApi extends PrivateApiComponentBase {
         String script = jsonObj.getString("script");
         JSONObject returnObj = new JSONObject();
         try {
-            returnObj.put("result", JavascriptUtil.transform(alertData, script));
+            returnObj.put("result", AlertScriptUtils.transform(alertData, script));
         } catch (Exception e) {
             returnObj.put("error", e.getMessage());
         }
